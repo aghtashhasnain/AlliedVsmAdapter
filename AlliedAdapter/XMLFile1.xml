@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+	<soapenv:Body><NS1:GetCustomerAccountsResponse xmlns:NS1="http://GetAccounts">
+		<ResponseCode>00</ResponseCode>
+		<ResponseDesc>Success</ResponseDesc>
+		<Data>
+			<AccountDetails>
+				<AccountNumber>00051003650709</AccountNumber>
+				<AccountTitle>Title-1 1003650709</AccountTitle>
+			</AccountDetails>
+		</Data>
+	</NS1:GetCustomerAccountsResponse>
+	</soapenv:Body>
+</soapenv:Envelope>

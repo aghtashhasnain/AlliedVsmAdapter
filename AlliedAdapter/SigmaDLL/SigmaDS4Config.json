@@ -1,0 +1,9 @@
+{
+  "KGS": {
+    "URL": "http://10.20.0.2:8220",
+    "Username": "",
+    "Password": "",
+    "Authentication": "None"
+  },
+  "LogsPath": "C:\\CardPrinterLogs\\SigmaDS4"
+}

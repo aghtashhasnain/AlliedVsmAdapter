@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://smpp_ws_sendsms/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="smpp_ws_sendsms" targetNamespace="http://smpp_ws_sendsms/" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <documentation>
+    <appinfo source="WMQI_APPINFO">
+      <MRWSDLAppInfo imported="true">
+        <binding hasEncoding="false" imported="true" name="smpp_ws_sendsmsPortBinding" originalBindingStyle="document" />
+      </MRWSDLAppInfo>
+    </appinfo>
+  </documentation>
+  <types>
+    <xsd:schema>
+      <xsd:import schemaLocation="G:\AlliedBankAdapter\AlliedAdapter\OTP.xsd" namespace="http://smpp_ws_sendsms/" />
+    </xsd:schema>
+  </types>
+  <message name="QueueSMS">
+    <part name="parameters" element="tns:QueueSMS" />
+  </message>
+  <message name="QueueSMSResponse">
+    <part name="parameters" element="tns:QueueSMSResponse" />
+  </message>
+  <portType name="smpp_ws_sendsms">
+    <operation name="QueueSMS">
+      <input wsam:Action="http://smpp_ws_sendsms/smpp_ws_sendsms/QueueSMSRequest" message="tns:QueueSMS" />
+      <output wsam:Action="http://smpp_ws_sendsms/smpp_ws_sendsms/QueueSMSResponse" message="tns:QueueSMSResponse" />
+    </operation>
+  </portType>
+  <binding name="smpp_ws_sendsmsPortBinding" type="tns:smpp_ws_sendsms">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="QueueSMS">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+  </binding>
+  <service name="smpp_ws_sendsms">
+    <port name="smpp_ws_sendsmsPort" binding="tns:smpp_ws_sendsmsPortBinding">
+      <soap:address location="http://10.224.20.27:7823/smpp_ws/smpp_ws_sendsms" />
+    </port>
+  </service>
+</definitions>

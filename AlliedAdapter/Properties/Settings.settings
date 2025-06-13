@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="AlliedAdapter.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="AlliedAdapter_WebReference_InstantCard" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://irisprodwebsuiteclone.abl.com.pk/WSInstantCard/InstantCard.asmx</Value>
+    </Setting>
+    <Setting Name="AlliedAdapter_WebReference1_InstantCard" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://irisprodwebsuiteclone.abl.com.pk/WSInstantCard/InstantCard.asmx</Value>
+    </Setting>
+    <Setting Name="AlliedAdapter_BioService_ATMMSGSetSOAP_HTTP_Service" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://10.224.20.27:7815/ATMMSGSetSOAP_HTTP_Service</Value>
+    </Setting>
+    <Setting Name="AlliedAdapter_CardListing_wsABLCARDSTATUSCHANGE" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://10.136.0.3/wsABLCARDSTATUSCHANGE/wsABLCARDSTATUSCHANGE.asmx</Value>
+    </Setting>
+    <Setting Name="AlliedAdapter_AlliedSMSService_smpp_ws_sendsms" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://192.168.51.13:8080/smpp_ws/smpp_ws_sendsms</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

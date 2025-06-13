@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:tns="http://smpp_ws_sendsms/" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" targetNamespace="http://smpp_ws_sendsms/" version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element ibmSchExtn:docRoot="true" name="QueueSMS" type="tns:QueueSMS" />
+  <xsd:element ibmSchExtn:docRoot="true" name="QueueSMSResponse" type="tns:QueueSMSResponse" />
+  <xsd:complexType name="QueueSMS">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="srcapp" type="xsd:string" />
+      <xsd:element minOccurs="0" name="number" type="xsd:string" />
+      <xsd:element minOccurs="0" name="message" type="xsd:string" />
+      <xsd:element minOccurs="0" name="opcode" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="QueueSMSResponse">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="return" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

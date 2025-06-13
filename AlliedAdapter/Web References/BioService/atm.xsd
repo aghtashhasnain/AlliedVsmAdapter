@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:mrm="http://tempuri.org/ATMMSGSet" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://tempuri.org/ATMMSGSet" xmlns="http://tempuri.org/ATMMSGSet" targetNamespace="http://tempuri.org/ATMMSGSet" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="complexType">
+    <xsd:sequence>
+      <xsd:element name="CNIC" type="xsd:string" />
+      <xsd:element name="FINGER_NO" type="xsd:string" />
+      <xsd:element name="CONTACT_NO" type="xsd:string" />
+      <xsd:element name="ISO_NADRA" type="xsd:string" />
+      <xsd:element name="ISO_LOCAL" type="xsd:string" />
+      <xsd:element name="FLAG" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element ibmSchExtn:docRoot="true" name="ATMReq" type="tns:complexType" />
+  <xsd:complexType name="complexType1">
+    <xsd:sequence>
+      <xsd:element name="CODE" type="xsd:string" />
+      <xsd:element name="MESSAGE" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element ibmSchExtn:docRoot="true" name="ATMRes" type="tns:complexType1" />
+</xsd:schema>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:tns="http://tempuri.org/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="ImportCustomer">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ActionCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CNIC" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TrackingID" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="FullName" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DateOfBirth" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="MothersName" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="BillingFlag" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="MobileNumber" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="ActivationDate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="FathersName" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CardName" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CustomerType" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="ProductCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="AccountNo" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="AccountType" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="AccountCurrency" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="AccountStatus" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="AccountTitle" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="BankIMD" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Branchcode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DefaultAccount" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Title" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Prefered_Address_FLag" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomeAddress1" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomeAddress2" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomeAddress3" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomeAddress4" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomePostalCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HomePhone" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Email" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Company" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficeAddress1" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficeAddress2" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficeAddress3" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficeAddress4" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficeAddress5" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficePostalCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OfficePhone" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="PassportNo" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Nationality" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="OldCardNumber" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ImportCustomerResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ImportCustomerResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="ImportCustomerSoapIn">
+    <wsdl:part name="parameters" element="tns:ImportCustomer" />
+  </wsdl:message>
+  <wsdl:message name="ImportCustomerSoapOut">
+    <wsdl:part name="parameters" element="tns:ImportCustomerResponse" />
+  </wsdl:message>
+  <wsdl:portType name="InstantCardSoap">
+    <wsdl:operation name="ImportCustomer">
+      <wsdl:input message="tns:ImportCustomerSoapIn" />
+      <wsdl:output message="tns:ImportCustomerSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="InstantCardSoap" type="tns:InstantCardSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="ImportCustomer">
+      <soap:operation soapAction="http://tempuri.org/ImportCustomer" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="InstantCardSoap12" type="tns:InstantCardSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="ImportCustomer">
+      <soap12:operation soapAction="http://tempuri.org/ImportCustomer" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="InstantCard">
+    <wsdl:port name="InstantCardSoap" binding="tns:InstantCardSoap">
+      <soap:address location="https://irisprodwebsuiteclone.abl.com.pk/WSInstantCard/InstantCard.asmx" />
+    </wsdl:port>
+    <wsdl:port name="InstantCardSoap12" binding="tns:InstantCardSoap12">
+      <soap12:address location="https://irisprodwebsuiteclone.abl.com.pk/WSInstantCard/InstantCard.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

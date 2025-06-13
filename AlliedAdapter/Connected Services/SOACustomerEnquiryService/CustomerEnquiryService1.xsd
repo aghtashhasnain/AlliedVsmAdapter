@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="CustomerDetailsType">
+    <xsd:sequence>
+      <xsd:element name="CustomerId" type="xsd:string" />
+      <xsd:element name="CustomerName" type="xsd:string" />
+      <xsd:element name="CellNumber" type="xsd:string" />
+      <xsd:element name="CustomerEmail" type="xsd:string" />
+      <xsd:element name="CustomerBranchNo" type="xsd:string" />
+      <xsd:element name="AccountType" type="xsd:string" />
+      <xsd:element name="Address" type="xsd:string" />
+      <xsd:element name="AccountCurrency" type="xsd:string" />
+      <xsd:element name="DateOfBirth" type="xsd:string" />
+      <xsd:element name="CNIC" type="xsd:string" />
+      <xsd:element name="PlaceOfBirth" type="xsd:string" />
+      <xsd:element name="Nationality" type="xsd:string" />
+      <xsd:element name="Filer" type="xsd:string" />
+      <xsd:element name="AccountStatus" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetDetailsByCustomerIdResultType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="GetDetailsByCustomerIdDataType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetDetailsByCustomerIdResultOldType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="GetDetailsByCustomerIdDataOldType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetCustomerDetailsByCustomerIdCustomerType_Original">
+    <xsd:sequence>
+      <xsd:element name="CustomerId" type="xsd:string" />
+      <xsd:element name="CustomerName" type="xsd:string" />
+      <xsd:element name="Nationality" type="xsd:string" />
+      <xsd:element name="CellNumber" type="xsd:string" />
+      <xsd:element name="Email" type="xsd:string" />
+      <xsd:element name="DateOfBirth" type="xsd:string" />
+      <xsd:element name="IdType" type="xsd:string" />
+      <xsd:element name="IdNumber" type="xsd:string" />
+      <xsd:element name="Address" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountDetails" type="AccountDetailsType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="AccountDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountTitle" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BranchId" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountInactiveStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountCurrency" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="TaxExemption" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ZakatExemption" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FilerStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountOpeningDate" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetDetailsByCustomerIdResult" type="GetDetailsByCustomerIdResultType" />
+  <xsd:complexType name="GetDetailsByCustomerIdDataType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Customer" type="GetDetailsByCustomerIdCustomerType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetDetailsByCustomerIdDataOldType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Customer" type="GetCustomerDetailsByCustomerIdCustomerType_Original" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GetDetailsByCustomerIdCustomerType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerDetails" type="AllCustomerDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountDetails" type="AccountDetailsType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="IdDetailsType">
+    <xsd:sequence>
+      <xsd:element name="IdType" type="xsd:string" />
+      <xsd:element name="IdNumber" type="xsd:string" />
+      <xsd:element name="IdValidityDate" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="AddressType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AddressType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FlatHouseNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GBStreet" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GBArea" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GBPostalCode" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="City" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Province" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GBCountry" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="EmailAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="WebsiteAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PermanentAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RegisteredOffice" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ProvinceState" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="PhoneNumberType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PhoneNoOffice" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CellNo" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="PhoneNoResidence" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="RelationDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationCode" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationCustomer" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ReverseRelation" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="DeathNotificationType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DeathDate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DeathNotificationDate" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OtherAccountsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountNo" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Bank" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Branch" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OtherCustomerDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SpouseName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SpouseDOB" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ChildrenDetails" type="ChildrenDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="WeddingDate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ExistingAccountHolder" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PriorityCustomer" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Hobbies" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="LoyaltyPoints" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DiscontinuedPriorityService" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DiscontinuedReason" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RMContactFrequency" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PreferredCommunicationMedium" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationWithOtherBanks" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="MothersMaidenName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ImportanceRating" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RMCode" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BasicRequestInformationType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BusinessOwners" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="EntityType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerSegment" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationshipManager" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationshipManagerId" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BAFLEmployeeNumber" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CustomerInformationType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IdDetails" type="IdDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerTitle" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GBCustomerName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DateOfBirth" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AddressDetails" type="AddressType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PhoneNumberDetails" type="PhoneNumberType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Nationality" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Residence" type="xsd:string" />
+      <xsd:element name="CountryOfBirth" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerOccupation" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerSalary" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FilerStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NationalTaxNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="LanguagePreference" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SBPIndustryParent" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SBPIndustry" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="MaritalStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="EducationLevel" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerOpeningDate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerRelationshipContract" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerSubSegment" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Industry" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="VisuallyImpaired" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ReferedBy" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerMnemonic" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DateOfIssuePassport" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PlaceOfIssuePassport" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DualNationality" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PersonalBanker" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DeptAccountOfficer" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PremierCustomer" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PremierThresholds" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Gender" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FatherHusbandName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SignatureStatus" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="LearnAbout" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="OpeningReason" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationDetails" type="RelationDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DeathNotification" type="DeathNotificationType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="OtherAccountsDetails" type="OtherAccountsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BranchName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AsanAccount" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SoleProprietorName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IntroducerNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FatcaClassification" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="TINNumberofUSEntity" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="IntroducerDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="AccountNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IntroducerMaintainingSince" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IntroducerName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BankDetails" type="BankDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Address" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactNumber" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ContactPersonsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactPosition" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactPhoneNoOffice" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactFaxNoOffice" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactCellularNo" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactPhoneNoResidence" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactEmailAddress" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="NextOfKinsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NameOfKin" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelationKin" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="KinIdType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="KinIdNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="KinAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="KinPhoneNumber" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="CustomerKYCDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Occupation" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NameOfEmployer" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Title" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="EmployedSince" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Status" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Salary" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NameOfBusiness" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NatureOfBusiness" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DateOfIncorporation" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="InvestmentInBusiness" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BusinessTurnover" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="StatusOfOwnership" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="SourcesOfFunds" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RelativePoliticalFigure" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PoliticalFigureName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="PoliticalFigureApprovedObtained" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RiskLevel" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="HighRiskApproval" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerProfile" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ExpectedCitiesTxn" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ExpectedCountriesTxn" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ExpectedCounterParties" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FATCADetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W9" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W8BEN" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W8BENValidity" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W8ECI" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W8ECIValidity" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="W8IMY" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FORM8233W4" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FORM8233W4Validitiy" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NONUSPassport" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NONUSPassportValidity" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="USNationalityLossCertificate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IdDocumentExpiryDate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IdDocumentPermanentAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="USNationalityExplanantion" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NoFATCARequired" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="DocumentPending" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BankDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BankName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BankBranchName" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ChildrenDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ChildrenName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ChildrenDOB" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="AllCustomerDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BPMRequestId" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BPMUserId" type="xsd:string" />
+      <xsd:element name="CustomerId" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="BasicRequestInformation" type="BasicRequestInformationType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerInformation" type="CustomerInformationType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="IntroducerDetails" type="IntroducerDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactPersons" type="ContactPersonsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="NextOfKinsDetails" type="NextOfKinsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="CustomerKYCDetails" type="CustomerKYCDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="OtherCustomerDetails" type="OtherCustomerDetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FATCADetails" type="FATCADetailsType" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianDetails" type="GuardianDetailsType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="GuardianDetailsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianIdType" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianIdNumber" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianIdExpiryDate" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianAddress" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianFatherOrHusbandName" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianRelationshipWithMinor" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="FATCAClassForGuardian" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="GuardianTinNumber" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetDetailsByCustomerIdResultOld" type="GetDetailsByCustomerIdResultOldType" />
+</xsd:schema>

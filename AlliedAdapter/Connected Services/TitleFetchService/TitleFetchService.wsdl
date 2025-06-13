@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://TitleFetchService" name="TitleFetchService" targetNamespace="http://TitleFetchService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation>
+    <wsdl:appinfo source="WMQI_APPINFO">
+      <MRWSDLAppInfo imported="true">
+        <binding hasEncoding="false" imported="true" name="TitleFetchServiceHttpBinding" originalBindingStyle="document" />
+        <generatedXSD location="TitleFetchService_InlineSchema1.xsd" />
+      </MRWSDLAppInfo>
+    </wsdl:appinfo>
+  </wsdl:documentation>
+  <wsdl:types>
+    <xsd:schema xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" targetNamespace="http://TitleFetchService">
+      <xsd:include schemaLocation="http://172.24.81.152:7800/TitleFetchService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.24.81.152:7800/TitleFetchService?xsd=xsd1" />
+      <xsd:include schemaLocation="http://172.24.81.152:7800/TitleFetchService?xsd=xsd2" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="TitleFetchRequestMsg">
+    <wsdl:part name="TitleFetchParameters" element="tns:TitleFetch" />
+  </wsdl:message>
+  <wsdl:message name="TitleFetchResponseMsg">
+    <wsdl:part name="TitleFetchResult" element="tns:TitleFetchResponse" />
+  </wsdl:message>
+  <wsdl:portType name="TitleFetchService">
+    <wsdl:operation name="TitleFetch">
+      <wsdl:input name="TitleFetchRequest" message="tns:TitleFetchRequestMsg" />
+      <wsdl:output name="TitleFetchResponse" message="tns:TitleFetchResponseMsg" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="TitleFetchServiceHttpBinding" type="tns:TitleFetchService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="TitleFetch">
+      <soap:operation soapAction="http://TitleFetchService/TitleFetch" />
+      <wsdl:input name="TitleFetchRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="TitleFetchResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="TitleFetchServiceHttpService">
+    <wsdl:port name="TitleFetchServiceHttpPort" binding="tns:TitleFetchServiceHttpBinding">
+      <soap:address location="http://172.24.81.152:7800/TitleFetchService" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://NADRAVerificationService" name="NADRAVerificationService" targetNamespace="http://NADRAVerificationService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation>
+    <wsdl:appinfo source="WMQI_APPINFO">
+      <MRWSDLAppInfo imported="true">
+        <binding hasEncoding="false" imported="true" name="NADRAVerificationServiceHttpBinding" originalBindingStyle="document" />
+        <generatedXSD location="NADRAVerificationService_InlineSchema1.xsd" />
+      </MRWSDLAppInfo>
+    </wsdl:appinfo>
+  </wsdl:documentation>
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://NADRAVerificationService">
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+      <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd1" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="VerifyFingerPrintRequestMsg">
+    <wsdl:part name="VerifyFingerPrintParameters" element="tns:VerifyFingerPrint" />
+  </wsdl:message>
+  <wsdl:message name="VerifyFingerPrintResponseMsg">
+    <wsdl:part name="VerifyFingerPrintResult" element="tns:VerifyFingerPrintResponse" />
+  </wsdl:message>
+  <wsdl:message name="VerifyCNICRequestMsg">
+    <wsdl:part name="VerifyCNICParameters" element="tns:VerifyCNIC" />
+  </wsdl:message>
+  <wsdl:message name="VerifyCNICResponseMsg">
+    <wsdl:part name="VerifyCNICResult" element="tns:VerifyCNICResponse" />
+  </wsdl:message>
+  <wsdl:message name="VerifyFingerPrintOTCRequestMsg">
+    <wsdl:part name="VerifyFingerPrintOTCParameters" element="tns:VerifyFingerPrintOTC" />
+  </wsdl:message>
+  <wsdl:message name="VerifyFingerPrintOTCResponseMsg">
+    <wsdl:part name="VerifyFingerPrintOTCResult" element="tns:VerifyFingerPrintOTCResponse" />
+  </wsdl:message>
+  <wsdl:message name="VerifyFingerPrintsMobileRequestMsg">
+    <wsdl:part name="VerifyFingerPrintsMobileParameters" element="tns:VerifyFingerPrintsMobile" />
+  </wsdl:message>
+  <wsdl:message name="VerifyFingerPrintsMobileResponseMsg">
+    <wsdl:part name="VerifyFingerPrintsMobileResult" element="tns:VerifyFingerPrintsMobileResponse" />
+  </wsdl:message>
+  <wsdl:message name="VerifyDetailsRequestMsg">
+    <wsdl:part name="VerifyDetailsParameters" element="tns:VerifyDetails" />
+  </wsdl:message>
+  <wsdl:message name="VerifyDetailsResponseMsg">
+    <wsdl:part name="VerifyDetailsResult" element="tns:VerifyDetailsResponse" />
+  </wsdl:message>
+  <wsdl:portType name="NADRAVerificationService">
+    <wsdl:operation name="VerifyFingerPrint">
+      <wsdl:input name="VerifyFingerPrintRequest" message="tns:VerifyFingerPrintRequestMsg" />
+      <wsdl:output name="VerifyFingerPrintResponse" message="tns:VerifyFingerPrintResponseMsg" />
+    </wsdl:operation>
+    <wsdl:operation name="VerifyCNIC">
+      <wsdl:input name="VerifyCNICRequest" message="tns:VerifyCNICRequestMsg" />
+      <wsdl:output name="VerifyCNICResponse" message="tns:VerifyCNICResponseMsg" />
+    </wsdl:operation>
+    <wsdl:operation name="VerifyFingerPrintOTC">
+      <wsdl:input name="VerifyFingerPrintOTCRequest" message="tns:VerifyFingerPrintOTCRequestMsg" />
+      <wsdl:output name="VerifyFingerPrintOTCResponse" message="tns:VerifyFingerPrintOTCResponseMsg" />
+    </wsdl:operation>
+    <wsdl:operation name="VerifyFingerPrintsMobile">
+      <wsdl:input name="VerifyFingerPrintsMobileRequest" message="tns:VerifyFingerPrintsMobileRequestMsg" />
+      <wsdl:output name="VerifyFingerPrintsMobileResponse" message="tns:VerifyFingerPrintsMobileResponseMsg" />
+    </wsdl:operation>
+    <wsdl:operation name="VerifyDetails">
+      <wsdl:input name="VerifyDetailsRequest" message="tns:VerifyDetailsRequestMsg" />
+      <wsdl:output name="VerifyDetailsResponse" message="tns:VerifyDetailsResponseMsg" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="NADRAVerificationServiceHttpBinding" type="tns:NADRAVerificationService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="VerifyFingerPrint">
+      <soap:operation soapAction="http://NADRAVerificationService/VerifyFingerPrint" />
+      <wsdl:input name="VerifyFingerPrintRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="VerifyFingerPrintResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="VerifyCNIC">
+      <soap:operation soapAction="http://NADRAVerificationService/VerifyCNIC" />
+      <wsdl:input name="VerifyCNICRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="VerifyCNICResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="VerifyFingerPrintOTC">
+      <soap:operation soapAction="http://NADRAVerificationService/VerifyFingerPrintOTC" />
+      <wsdl:input name="VerifyFingerPrintOTCRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="VerifyFingerPrintOTCResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="VerifyFingerPrintsMobile">
+      <soap:operation soapAction="http://NADRAVerificationService/VerifyFingerPrintsMobile" />
+      <wsdl:input name="VerifyFingerPrintsMobileRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="VerifyFingerPrintsMobileResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="VerifyDetails">
+      <soap:operation soapAction="http://NADRAVerificationService/VerifyDetails" />
+      <wsdl:input name="VerifyDetailsRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="VerifyDetailsResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="NADRAVerificationServiceHttpService">
+    <wsdl:port name="NADRAVerificationServiceHttpPort" binding="tns:NADRAVerificationServiceHttpBinding">
+      <soap:address location="http://172.21.95.11:7811/NADRATranslationService" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

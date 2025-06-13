@@ -1,0 +1,506 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sedco.SelfService.Server</name>
+    </assembly>
+    <members>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager">
+            <summary>
+            logs messages of messages with backend
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager.#ctor">
+            <summary>
+            default constructor
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager.AddLogger(Sedco.SelfService.Server.BackEndAdapters.ICommunicationLogger)">
+            <summary>
+            Add logger to list that will be used to log backend communication messages
+            </summary>
+            <param name="logger">Object that will be used to log backend communication messages</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager.LogRequestMessage(System.String,System.String)">
+            <summary>
+            Log back end request message
+            </summary>
+            <param name="message">Message that is being sent to back end request</param>
+            <param name="requestID">ID that uniquely identify request at server</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager.LogResponseMessage(System.String,System.String)">
+            <summary>
+            Log back end response message
+            </summary>
+            <param name="message">Message that is returned from back end</param>
+            <param name="requestID">ID that uniquely identify request at server, this ID must be equal to it's request ID so we can match each request and it's response</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.CommunicationLoggerManager.ForceLogFailedRequestResponse(System.String,System.String)">
+            <summary>
+            Can be used to log request when service call fails before sending the request. ex: in case port number is wrong or not opened
+            </summary>
+            <param name="request">Message that is being sent to back end request</param>
+            <param name="response">Message that is returned from back end; If exists</param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.IBackendServerAdapter">
+            @brief This interface should be implemented by the class that is responsible of communicating with back end
+            @details For more information about how to create an Adapter check example 
+            in CustomBackEndServerAdapter.cs: @include CustomBackEndServerAdapter.cs 
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.IBackendServerAdapter.Initialize">
+            <summary>
+            Called once at Transaction Server Startup
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.IBackendServerAdapter.CallBackEnd(System.Xml.Linq.XDocument,System.String,Sedco.SelfService.RequestContent)">
+            <summary>
+            Called from Transaction Server when a request to backend should be sent.
+            This function is responsible for mapping incoming kiosk xml request into a format that back end server can understand (i.e. Json request) and 
+            map back back end resposne into a xml fomat that kiosk can understand.
+            </summary>
+            <param name="requestContent">Kiosk request XML as xDocument, file name and file as stream</param>
+            <param name="referenceNumber">Reference number that is uniquely identify each request. It is used to simplify traces and exceptions tracing</param>
+            <param name="requestContent">this object has the request xml as string, and it also has the stream object if a file was uploaded in this request</param>
+            <returns>Response XML as string</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.IBackendServerAdapter.CheckBackEndHeartbeat">
+            <summary>
+            Will be called periodically by Transaction Server to check back end server staus
+            </summary>
+            <returns>True if back end server is up and running otheriwse if back end server is down it should return False</returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.IReplacementHelper">
+            <summary>
+            helper for replacing tokens in the request/response
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.IReplacementHelper.Initialize">
+            <summary>
+            Initialize object
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.IReplacementHelper.ReplaceToken(System.String,System.String)">
+            <summary>
+            Used to replace token using external dll
+            </summary>
+            <param name="operation">Required operation type that external helper will use to process kiosk request</param>
+            <param name="kioskRequest">kiosk request as xml</param>
+            <returns>String contains replacement result</returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.ICommunicationLogger">
+            <summary>
+            Interface that is used to write communication messages with back end
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.ICommunicationLogger.LogRequestMessage(System.String,System.String)">
+            <summary>
+            Used to log backend request message
+            </summary>
+            <param name="message">Message that is being sent to back end request</param>
+            <param name="requestID">ID that uniquely identify request at server</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.ICommunicationLogger.LogResponseMessage(System.String,System.String)">
+            <summary>
+            Used to log backend response message
+            </summary>
+            <param name="message">Message that is returned from back end</param>
+            <param name="requestID">ID that uniquely identify request at server, this ID must be equal to it's request ID so we can match each request and it's response</param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.FileCommunicationLogger">
+            <summary>
+            file logger
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.FileCommunicationLogger.LogRequestMessage(System.String,System.String)">
+            <summary>
+            logs the request message
+            </summary>
+            <param name="message">message</param>
+            <param name="requestID">request id</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.FileCommunicationLogger.LogResponseMessage(System.String,System.String)">
+            <summary>
+            logs response message
+            </summary>
+            <param name="message">message</param>
+            <param name="requestID">related request id</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.FileCommunicationLogger.LogMessage(Sedco.SelfService.Server.BackEndAdapters.FileCommunicationLogger.MessageType,System.String,System.String)">
+            <summary>
+            log general message
+            </summary>
+            <param name="messageType">the message type</param>
+            <param name="message">message</param>
+            <param name="requestID">request id</param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.RegisterSOAP">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.RegisterSOAP.RegisterSoapExtension(System.Type,System.Int32,System.Web.Services.Configuration.PriorityGroup)">
+            <summary>
+            
+            </summary>
+            <param name="type"></param>
+            <param name="priority"></param>
+            <param name="group"></param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension">
+            <summary>
+            trace extensions for wsdl. Helps tracing the request/response when commincating with wsdl backend
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.#ctor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.TraceExtensionAttribute">
+            <summary>
+            attribute to be added to methods
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.TraceExtensionAttribute.ExtensionType">
+            <summary>
+            check base class SoapExtensionAttribute
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.TraceExtensionAttribute.Priority">
+            <summary>
+            check base class SoapExtensionAttribute
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.ChainStream(System.IO.Stream)">
+            <summary>
+            Save the Stream representing the SOAP request or SOAP response into a local memory buffer.
+            </summary>
+            <param name="stream">the stream</param>
+            <returns>the new stream</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.GetInitializer(System.Web.Services.Protocols.LogicalMethodInfo,System.Web.Services.Protocols.SoapExtensionAttribute)">
+            <summary>
+            When the SOAP extension is accessed for the first time, the XML Web service method it is applied to is accessed to store the file.name passed in, using the corresponding SoapExtensionAttribute.
+            </summary>
+            <param name="methodInfo"></param>
+            <param name="attribute"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.GetInitializer(System.Type)">
+            <summary>
+            The SOAP extension was configured to run using a configuration file instead of an attribute applied to a specific Web service method.  Return a file name based on the class implementing the Web Service's type.
+            </summary>
+            <param name="serviceType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.Initialize(System.Object)">
+            <summary>
+            Receive the file name stored by GetInitializer and store it in a member variable for this specific instance.
+            </summary>
+            <param name="initializer"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.ProcessMessage(System.Web.Services.Protocols.SoapMessage)">
+            <summary>
+            If the SoapMessageStage is such that the SoapRequest or SoapResponse is still in the SOAP format to be sent or received over the network, save it out to file.
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.WriteRequest(System.Web.Services.Protocols.SoapMessage)">
+            <summary>
+            Log request SOAP message
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.BackEndAdapters.WSDLTraceExtension.WriteResponse(System.Web.Services.Protocols.SoapMessage)">
+            <summary>
+            Log response SOAP message
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.Examples.CustomBackEndServerAdapter">
+            @example CustomBackEndServerAdapter.cs
+            This is an example of how to create a back end adapter, it only shows the general structure of the class. Check example "ReqresBackEndServerAdapter.cs" to see a more real example
+        </member>
+        <member name="M:Sedco.SelfService.Server.Examples.CustomBackEndServerAdapter.Initialize">
+            <summary>
+            Check interface documentation for more details
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.Examples.CustomBackEndServerAdapter.CallBackEnd(System.Xml.Linq.XDocument,System.String,Sedco.SelfService.RequestContent)">
+            <summary>
+            Check interface documentation for more details
+            </summary>
+            <param name="request"></param>
+            <param name="referenceNumber"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.Examples.CustomBackEndServerAdapter.CheckBackEndHeartbeat">
+            <summary>
+            Check interface documentation for more details
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.ConfigurationsExtensions">
+            <summary>
+            extensions methods related to Sedco.SelfService.Server
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.ConfigurationsExtensions.GetServiceConfigurationValue(Sedco.SelfService.Server.IApplicationConfiguration,System.String,System.String)">
+            <summary>
+            gets the value for a config or API parameter. The function will search in configuration that is available in config file, and config from portal, and service mapping file.
+            </summary>
+            <param name="configs">the config object</param>
+            <param name="configKey">the key of the required config</param>
+            <param name="serviceName">service name if applicable</param>
+            <returns></returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.Helpers.KioskResponseHelper">
+            <summary>
+            Kiosk Response Helper
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.Helpers.KioskResponseHelper.ComposeHeader(System.Xml.Linq.XDocument,System.Net.HttpStatusCode,System.String,System.String)">
+            <summary>
+            Used to compose the header for the kiosk response
+            </summary>
+            <param name="requestFromKiosk">Request from kioks used to fill some values for the response header, e.g. "Channel, KioskID, KioskIdentity, TransactionID, RequestID, RequestType, Language"</param>
+            <param name="httpStatusCode">HTTP status code that is needed to be returned to the kiosk in the header</param>
+            <param name="technicalDescription">Technical description that is needed to be returned to the kiosk in the header</param>
+            <param name="message">Message that is needed to be returned to the kiosk in the header</param>
+            <returns>XElement contatining the header that is ready to be added to kiosk response</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.Helpers.KioskResponseHelper.ComposeBody(System.Xml.Linq.XElement[])">
+            <summary>
+            Used to compose the body for the kiosk response
+            </summary>
+            <param name="content">list of elements that is needed to be added to response body of the kiosk</param>
+            <returns>XElement contatining the body that is ready to be added to kiosk response</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.Helpers.KioskResponseHelper.CreateKioskResponse(System.Xml.Linq.XElement,System.Xml.Linq.XElement)">
+            <summary>
+            Creates final kiosk response ready to be returned to the kiosk
+            </summary>
+            <param name="header">Header of the response</param>
+            <param name="body">Body of the response</param>
+            <returns>Kiosk response</returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.IApplicationConfiguration">
+            <summary>
+            application configuration
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.ApplicationPath">
+            <summary>
+            application path
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.TransactionServerModulePath">
+            <summary>
+            Transaction server module path; Which could be an area inside CEM or a self-hosted application
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.FrameworkAssemblyVersion">
+            <summary>
+            the assembly version for SS
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.IsHostedInWeb">
+            <summary>
+            Indicates if WCF service is hosted in web or desktop application
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.ConfigurationList">
+            <summary>
+            web.config 
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.IApplicationConfiguration.DatabaseConnectionStringList">
+            <summary>
+            database connections string as list
+            </summary>
+        </member>
+        <member name="T:Sedco.SelfService.Server.KioskResponseHeader">
+            <summary>
+            KioskResponseHeader
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.Channel">
+            <summary>
+            Channel
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.KioskID">
+            <summary>
+            KioskID
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.TransactionID">
+            <summary>
+            TransactionID
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.RequestID">
+            <summary>
+            RequestID
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.RequestType">
+            <summary>
+            RequestType
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.Language">
+            <summary>
+            Language
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.ResultCode">
+            <summary>
+            ResultCode
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.TechnicalDescription">
+            <summary>
+            TechnicalDescription
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.KioskResponseHeader.Message">
+            <summary>
+            Message
+            </summary>
+        </member>
+        <member name="T:Sedco.SelfService.Server.LogHandler">
+            <summary>
+            logger helper
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Information(System.String,System.String,System.String,System.String)">
+            <summary>
+            log information message
+            </summary>
+            <param name="information"></param>
+            <param name="category"></param>
+            <param name="filePath"></param>
+            <param name="functionName"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Error(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            log error message
+            </summary>
+            <param name="errorDescription"></param>
+            <param name="errorStackTrace"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+            <param name="filePath"></param>
+            <param name="functionName"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Error(System.Exception,System.String,System.String)">
+            <summary>
+            log error message
+            </summary>
+            <param name="ex"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Warning(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            log warning message
+            </summary>
+            <param name="errorDescription"></param>
+            <param name="errorStackTrace"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+            <param name="filePath"></param>
+            <param name="functionName"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Warning(System.Exception,System.String,System.String)">
+            <summary>
+            log warning message
+            </summary>
+            <param name="ex"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Stopper(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            log show stopper message
+            </summary>
+            <param name="errorDescription"></param>
+            <param name="errorStackTrace"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+            <param name="filePath"></param>
+            <param name="functionName"></param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.LogHandler.Stopper(System.Exception,System.String,System.String)">
+            <summary>
+            log show stopper message
+            </summary>
+            <param name="ex"></param>
+            <param name="additionalInformation"></param>
+            <param name="category"></param>
+        </member>
+        <member name="T:Sedco.SelfService.Server.SharedObjectsLocator">
+            <summary>
+            singleton class to share objects
+            </summary>
+        </member>
+        <member name="P:Sedco.SelfService.Server.SharedObjectsLocator.Instance">
+            <summary>
+            the singleton instance
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.SharedObjectsLocator.Add``1(``0,System.Boolean)">
+            <summary>
+            adds object
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="objectToAdd">the object to add</param>
+            <param name="replaceIfExist">if true and object already exist, then it will be replaced</param>
+        </member>
+        <member name="M:Sedco.SelfService.Server.SharedObjectsLocator.Get``1">
+            <summary>
+            gets the object
+            </summary>
+            <typeparam name="T">the object type</typeparam>
+            <returns>the object</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.SharedObjectsLocator.Remove``1">
+            <summary>
+            removes the object
+            </summary>
+            <typeparam name="T">the object type to remove</typeparam>
+            <returns>True if successful otherwise Flase</returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.SharedObjectsLocator.GetObjects``1">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Sedco.SelfService.Server.SharedObjectsLocator.RemoveObject``1">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="T:Sedco.SelfService.Server.TransactionManager.ITransactionManager">
+            <summary>
+            transaction server manager interface
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.TransactionManager.ITransactionManager.Initialize">
+            <summary>
+            Will be called after object initialization to do anything is required at startup
+            </summary>
+        </member>
+        <member name="M:Sedco.SelfService.Server.TransactionManager.ITransactionManager.Save(System.Xml.Linq.XDocument)">
+            <summary>
+            Save transaction into database
+            </summary>
+            <param name="transaction">Transaction to be saved</param>
+            <returns>True if transaction saved successfully otherwise False</returns>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:Q1="http://TitleFetchService" targetNamespace="http://TitleFetchService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="TitleFetchRequestType">
+    <xsd:sequence>
+      <xsd:element name="ChannelID" type="xsd:string" />
+      <xsd:element name="DeliveryChannelType" type="xsd:string" />
+      <xsd:element name="CustomerID" type="xsd:string" />
+      <xsd:element name="channelSpecificDataField" type="xsd:string" />
+      <xsd:element name="AccountBankIMD" type="xsd:string" />
+      <xsd:element name="AccountNumber" type="xsd:string" />
+      <xsd:element name="AccountType" type="xsd:string" />
+      <xsd:element name="AccountCurrency" type="xsd:string" />
+      <xsd:element name="IBAN" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="TitleFetchRequest" type="Q1:TitleFetchRequestType" />
+</xsd:schema>

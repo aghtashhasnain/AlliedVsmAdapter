@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://tempuri.org/ATMMSGSet" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://tempuri.org/ATMMSGSet" name="ATMMSGSet" targetNamespace="http://tempuri.org/ATMMSGSet" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation>
+    <wsdl:appinfo source="WMQI_APPINFO">
+      <MRWSDLAppInfo xmlns="http://tempuri.org/ATMMSGSet" imported="true">
+        <generatedXSD location="ATMMSGSetService_InlineSchema1.xsd" />
+        <binding hasEncoding="false" imported="true" name="ATMMSGSetSOAP_HTTP_Binding" originalBindingStyle="document" />
+      </MRWSDLAppInfo>
+    </wsdl:appinfo>
+  </wsdl:documentation>
+  <wsdl:types>
+    <xsd:schema xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:mrm="http://tempuri.org/ATMMSGSet" targetNamespace="http://tempuri.org/ATMMSGSet">
+      <xsd:include schemaLocation="atm.xsd" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="Operation1_in">
+    <wsdl:part name="ATMReq" element="tns:ATMReq" />
+  </wsdl:message>
+  <wsdl:message name="Operation1_out">
+    <wsdl:part name="ATMRes" element="tns:ATMRes" />
+  </wsdl:message>
+  <wsdl:portType name="ATMMSGSetPortType">
+    <wsdl:operation name="Operation1">
+      <wsdl:input name="Operation1_Input" message="tns:Operation1_in" />
+      <wsdl:output name="Operation1_Output" message="tns:Operation1_out" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ATMMSGSetSOAP_HTTP_Binding" type="tns:ATMMSGSetPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Operation1">
+      <soap:operation soapAction="" />
+      <wsdl:input name="Operation1_Input">
+        <soap:body use="literal" parts="ATMReq" />
+      </wsdl:input>
+      <wsdl:output name="Operation1_Output">
+        <soap:body use="literal" parts="ATMRes" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="ATMMSGSetSOAP_HTTP_Service">
+    <wsdl:port name="ATMMSGSetSOAP_HTTP_Port" binding="tns:ATMMSGSetSOAP_HTTP_Binding">
+      <soap:address location="http://localhost:7800/ATMMSGSetSOAP_HTTP_Service" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://CustomerEnquiryService" name="CustomerEnquiryService" targetNamespace="http://CustomerEnquiryService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation>
+    <wsdl:appinfo source="WMQI_APPINFO">
+      <MRWSDLAppInfo imported="true">
+        <binding hasEncoding="false" imported="true" name="CustomerEnquiryServiceHttpBinding" originalBindingStyle="document" />
+        <generatedXSD location="CustomerEnquiryService_InlineSchema1.xsd" />
+      </MRWSDLAppInfo>
+    </wsdl:appinfo>
+  </wsdl:documentation>
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://CustomerEnquiryService">
+      <xsd:import schemaLocation="http://172.24.81.152:7800/CustomerEnquiryService?xsd=xsd0" />
+      <xsd:import schemaLocation="http://172.24.81.152:7800/CustomerEnquiryService?xsd=xsd1" />
+      <xsd:include schemaLocation="http://172.24.81.152:7800/CustomerEnquiryService?xsd=xsd2" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="GetDetailsByCustomerIdRequestMsg">
+    <wsdl:part name="GetDetailsByCustomerIdParameters" element="tns:GetDetailsByCustomerId" />
+  </wsdl:message>
+  <wsdl:message name="GetDetailsByCustomerIdResponseMsg">
+    <wsdl:part name="GetDetailsByCustomerIdResult" element="tns:GetDetailsByCustomerIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetCustomerDetailsRequestMsg">
+    <wsdl:part name="GetCustomerDetailsParameters" element="tns:GetCustomerDetails" />
+  </wsdl:message>
+  <wsdl:message name="GetCustomerDetailsResponseMsg">
+    <wsdl:part name="GetCustomerDetailsResult" element="tns:GetCustomerDetailsResponse" />
+  </wsdl:message>
+  <wsdl:portType name="CustomerEnquiryService">
+    <wsdl:operation name="GetDetailsByCustomerId">
+      <wsdl:input name="GetDetailsByCustomerIdRequest" message="tns:GetDetailsByCustomerIdRequestMsg" />
+      <wsdl:output name="GetDetailsByCustomerIdResponse" message="tns:GetDetailsByCustomerIdResponseMsg" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCustomerDetails">
+      <wsdl:input name="GetCustomerDetailsRequest" message="tns:GetCustomerDetailsRequestMsg" />
+      <wsdl:output name="GetCustomerDetailsResponse" message="tns:GetCustomerDetailsResponseMsg" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="CustomerEnquiryServiceHttpBinding" type="tns:CustomerEnquiryService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="GetDetailsByCustomerId">
+      <soap:operation soapAction="http://CustomerEnquiryService/GetDetailsByCustomerId" />
+      <wsdl:input name="GetDetailsByCustomerIdRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="GetDetailsByCustomerIdResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCustomerDetails">
+      <soap:operation soapAction="http://CustomerEnquiryService/GetCustomerDetails" />
+      <wsdl:input name="GetCustomerDetailsRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="GetCustomerDetailsResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="CustomerEnquiryServiceHttpService">
+    <wsdl:port name="CustomerEnquiryServiceHttpPort" binding="tns:CustomerEnquiryServiceHttpBinding">
+      <soap:address location="http://172.24.81.152:7800/CustomerEnquiryService" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

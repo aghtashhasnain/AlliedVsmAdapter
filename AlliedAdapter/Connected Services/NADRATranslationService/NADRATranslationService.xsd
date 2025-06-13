@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:Q1="http://NADRAVerificationService" targetNamespace="http://NADRAVerificationService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="VerifyFingerPrintRequestType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="ACCOUNT_TYPE" type="xsd:string" />
+      <xsd:element name="CHANNEL_ID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintOTCInputRequestType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="PRIMARY_CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="PRIMARY_CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="REMITTANCE_AMOUNT" type="xsd:string" />
+      <xsd:element name="REMITTANCE_TYPE" type="xsd:string" />
+      <xsd:element name="SECONDARY_CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="SECONDARY_CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="ACCOUNT_NUMBER" type="xsd:string" />
+      <xsd:element name="CHANNEL_ID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="XML_Request_Data_Type">
+    <xsd:sequence>
+      <xsd:element name="BIOMETRIC_VERIFICATION" type="Q1:BIOMETRIC_VERIFICATION" />
+      <xsd:element name="ChannelID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyFingerPrintsRequest" type="Q1:XML_Request_Data_Type" />
+  <xsd:element name="VerifyFingerPrintRequest" type="Q1:VerifyFingerPrintRequestType" />
+  <xsd:element name="VerifyFingerPrintOTCRequest" type="Q1:VerifyFingerPrintOTCRequestType" />
+  <xsd:element name="GetLastVerificationResults" type="Q1:GetLastVerificationResultsType" />
+  <xsd:complexType name="GetLastVerificationResultsType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="franchizeID" nillable="true" type="xsd:string" />
+      <xsd:element minOccurs="0" name="xml_request_data" nillable="true" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintResultType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyFingerPrintResult" type="Q1:VerifyFingerPrintResultType" />
+  <xsd:element name="VerifyFingerPrintOTCResult" type="Q1:VerifyCNICResultType" />
+  <xsd:complexType name="BIOMETRIC_VERIFICATION">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="USER_VERIFICATION" type="Q1:USER_VERIFICATION" />
+      <xsd:element name="REQUEST_DATA" type="Q1:REQUEST_DATA" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="USER_VERIFICATION">
+    <xsd:sequence>
+      <xsd:element name="USERNAME" type="xsd:string" />
+      <xsd:element name="PASSWORD" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="REQUEST_DATA">
+    <xsd:sequence>
+      <xsd:element name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="ACCOUNT_TYPE" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyCNICInputRequestType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="ISSUE_DATE" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="CHANNEL_ID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyCNICInputRequest" type="Q1:VerifyCNICInputRequestType" />
+  <xsd:element name="VerifyFingerPrintOTCInputRequest" type="Q1:VerifyFingerPrintOTCInputRequestType" />
+  <xsd:complexType name="VerifyCNICRequestData">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyCNICBiometricVerfication">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="USER_VERIFICATION" type="Q1:USER_VERIFICATION" />
+      <xsd:element name="REQUEST_DATA" type="Q1:VerifyCNICRequestData" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyCNICRequestType">
+    <xsd:sequence>
+      <xsd:element name="CITIZEN_VERIFICATION" type="Q1:CITIZEN_VERIFICATION" />
+      <xsd:element name="ChannelID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyCNICResultType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyCNICResult" type="Q1:VerifyCNICResultType" />
+  <xsd:element name="VerifyCNICRequest" type="Q1:VerifyCNICRequestType" />
+  <xsd:complexType name="VerifyFingerPrintOTCRequestType">
+    <xsd:sequence>
+      <xsd:element name="BIOMETRIC_VERIFICATION" type="Q1:VerifyFingerPrintOTCBiometricVerfication" />
+      <xsd:element name="ChannelID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintOTCRequestData">
+    <xsd:sequence>
+      <xsd:element name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="REMITTANCE_AMOUNT" type="xsd:string" />
+      <xsd:element name="REMITTANCE_TYPE" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="SECONDARY_CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="ACCOUNT_NUMBER" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintOTCBiometricVerfication">
+    <xsd:sequence>
+      <xsd:element name="USER_VERIFICATION" type="Q1:USER_VERIFICATION" />
+      <xsd:element name="REQUEST_DATA" type="Q1:VerifyFingerPrintOTCRequestData" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintMobileInputRquestType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element name="CHANNEL_ID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyFingerPrintMobileInputRquest" type="Q1:VerifyFingerPrintMobileInputRquestType" />
+  <xsd:complexType name="VerifyFingerPrintMobileRequestData">
+    <xsd:sequence>
+      <xsd:element name="TRANSACTION_ID" type="xsd:string" />
+      <xsd:element name="SESSION_ID" type="xsd:string" />
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintMobileBiometricVerification">
+    <xsd:sequence>
+      <xsd:element name="USER_VERIFICATION" type="Q1:USER_VERIFICATION" />
+      <xsd:element name="REQUEST_DATA" type="Q1:VerifyFingerPrintMobileRequestData" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="VerifyFingerPrintMobileRequestType">
+    <xsd:sequence>
+      <xsd:element name="BIOMETRIC_VERIFICATION" type="Q1:VerifyFingerPrintMobileBiometricVerification" />
+      <xsd:element name="ChannelID" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyFingerPrintsMobileRequest" type="Q1:VerifyFingerPrintMobileRequestType" />
+  <xsd:element name="VerifyFingerPrintMobileResult" type="Q1:VerifyFingerPrintResultType" />
+  <xsd:complexType name="VerifyDetailsInputRequestType">
+    <xsd:sequence>
+      <xsd:element name="CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element name="CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element name="AREA_NAME" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="FINGER_INDEX" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="FINGER_TEMPLATE" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="TEMPLATE_TYPE" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="REMITTANCE_AMOUNT" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="REMITTANCE_TYPE" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SECONDARY_CITIZEN_NUMBER" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="SECONDARY_CONTACT_NUMBER" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="ACCOUNT_NUMBER" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="ACCOUNT_TYPE" type="xsd:string" />
+      <xsd:element name="CHANNEL_ID" type="xsd:string" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="PHOTOGRAPH_REQUIRED" type="xsd:boolean" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="OTC" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyDetailsInputRequest" type="Q1:VerifyDetailsInputRequestType" />
+  <xsd:complexType name="VerifyDetailsResultType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyDetailsResult" type="Q1:VerifyDetailsResultType" />
+  <xsd:complexType name="CITIZEN_VERIFICATION">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="USER_VERIFICATION" type="Q1:USER_VERIFICATION" />
+      <xsd:element name="REQUEST_DATA" type="Q1:REQUEST_DATA" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="DataElementType">
+    <xsd:sequence>
+      <xsd:element name="SessionId" type="xsd:string" />
+      <xsd:element name="CitizenNumber" type="xsd:string" />
+      <xsd:element name="Name" type="xsd:string" />
+      <xsd:element name="MotherName" type="xsd:string" />
+      <xsd:element name="PresentAddress" type="xsd:string" />
+      <xsd:element name="DateOfBirth" type="xsd:string" />
+      <xsd:element name="BirthPlace" type="xsd:string" />
+      <xsd:element name="ExpiryDate" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FingerMobileRespType">
+    <xsd:sequence>
+      <xsd:element name="ResponseCode" type="xsd:string" />
+      <xsd:element name="ResponseDescription" type="xsd:string" />
+      <xsd:element name="Data" type="Q1:DataElementType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="VerifyFingerMobileResult" type="Q1:FingerMobileRespType" />
+</xsd:schema>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:tns="http://CustomerEnquiryService" targetNamespace="http://CustomerEnquiryService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:import schemaLocation="http://172.24.81.152:7800/CustomerEnquiryService?xsd=xsd0" />
+  <xsd:import schemaLocation="http://172.24.81.152:7800/CustomerEnquiryService?xsd=xsd1" />
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="GetDetailsByCustomerId">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="GetDetailsByCustomerIdRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="GetDetailsByCustomerIdResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="GetDetailsByCustomerIdResultOld" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="GetCustomerDetails">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="GetDetailsByCustomerIdRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="GetCustomerDetailsResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="GetDetailsByCustomerIdResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

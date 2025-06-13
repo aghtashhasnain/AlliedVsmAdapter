@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="GetCustomerDetailsRequestType">
+    <xsd:sequence>
+      <xsd:element name="ChannelID" type="xsd:string" />
+      <xsd:element name="AccountNo" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetCustomerDetailsRequest" type="GetCustomerDetailsRequestType" />
+  <xsd:complexType name="GetCustomerDetailsByCustomerIdRequestType">
+    <xsd:sequence>
+      <xsd:element name="ChannelId" type="xsd:string" />
+      <xsd:element name="CustomerId" type="xsd:string" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="IDNumber" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetDetailsByCustomerIdRequest" type="GetCustomerDetailsByCustomerIdRequestType" />
+  <xsd:complexType name="GetDetailsByCNICRequestType">
+    <xsd:sequence>
+      <xsd:element name="ChannelId" type="xsd:string" />
+      <xsd:element name="CNIC" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="GetDetailsByCNICRequest" type="GetDetailsByCNICRequestType" />
+</xsd:schema>

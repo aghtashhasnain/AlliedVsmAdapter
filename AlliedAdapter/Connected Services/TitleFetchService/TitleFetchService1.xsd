@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:tns="http://TitleFetchService" targetNamespace="http://TitleFetchService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:include schemaLocation="http://172.24.81.152:7800/TitleFetchService?xsd=xsd0" />
+  <xsd:include schemaLocation="http://172.24.81.152:7800/TitleFetchService?xsd=xsd1" />
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="TitleFetch">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:TitleFetchRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="TitleFetchResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:TitleFetchResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:tns="http://NADRAVerificationService" targetNamespace="http://NADRAVerificationService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:include schemaLocation="http://172.21.95.11:7811/NADRATranslationService?xsd=xsd0" />
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrint">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrintResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyCNIC">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyCNICInputRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyCNICResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyCNICResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrintOTC">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintOTCInputRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrintOTCResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintOTCResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrintsMobile">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintMobileInputRquest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" ibmSchExtn:docRoot="true" name="VerifyFingerPrintsMobileResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyFingerPrintResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="VerifyDetails">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyDetailsInputRequest" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="VerifyDetailsResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="tns:VerifyDetailsResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
