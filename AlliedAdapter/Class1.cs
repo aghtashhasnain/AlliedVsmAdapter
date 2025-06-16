@@ -473,8 +473,8 @@ namespace AlliedAdapter
                 {
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Failed", _MethodName);
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation Failed";
 
                     bodyElement.Add(new XElement("Message", "Bio Validation Failed"));
@@ -484,8 +484,8 @@ namespace AlliedAdapter
             {
                 Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: Exception occurred: {ex}", _MethodName);
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
             }
 
@@ -671,11 +671,11 @@ namespace AlliedAdapter
                     return response.ToString();
                 }
 
-                // List<CardFormats> cardFormats = GetCardFormats(ComputerName, kioskID);
+                List<CardFormats> cardFormats = GetCardFormats(ComputerName, kioskID);
                 Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 8]: Fetching predefined card formats.", _MethodName);
 
-                string jsonCardFormat = "[{\"name\":\"UPI PAYPAK CLASSIC DEBIT CARD\"},{\"name\":\"VISA CLASSIC DEBIT CARD\"},{\"name\":\"VISA ISLAMIC CLASSIC DEBIT CARD\"},{\"name\":\"VISA PLATINUM DEBIT CARD\"},{\"name\":\"VISA PREMIUM DEBIT CARD\"}]";
-                List<CardFormats> cardFormats = JsonConvert.DeserializeObject<List<CardFormats>>(jsonCardFormat);
+                //string jsonCardFormat = "[{\"name\":\"UPI PAYPAK CLASSIC DEBIT CARD\"},{\"name\":\"VISA CLASSIC DEBIT CARD\"},{\"name\":\"VISA ISLAMIC CLASSIC DEBIT CARD\"},{\"name\":\"VISA PLATINUM DEBIT CARD\"},{\"name\":\"VISA PREMIUM DEBIT CARD\"}]";
+                //List<CardFormats> cardFormats = JsonConvert.DeserializeObject<List<CardFormats>>(jsonCardFormat);
 
                 if (cardFormats == null || cardFormats.Count == 0)
                 {
@@ -691,8 +691,8 @@ namespace AlliedAdapter
 
                 foreach (var item in atmCardList)
                 {
-                    //bool isValidCard = cardFormats.Any(cf => cf.name == item.name);
-                    //if (!isValidCard) continue;
+                    bool isValidCard = cardFormats.Any(cf => cf.name == item.name);
+                    if (!isValidCard) continue;
 
                     if (transactionType == "AsanAccount")
                     {
@@ -997,228 +997,87 @@ namespace AlliedAdapter
 
         #endregion
 
-        //#region PrinterStatus
-        //public async Task<string> GetPrinterStatus(XDocument request, string RefrenceNumber)
-        //{
-        //    string _MethodName = "GetPrinterStatus";
-        //    XDocument response = request.GetBasicResponseFromRequest();
-        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-        //    try
-        //    {
-        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-        //        Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
-
-        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-        //        Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
-
-        //        string[] parts = PcName.Split('|');
-
-        //        string ComputerName = parts[0].Trim();
-        //        string BranchCode = parts[1].Trim();
-
-        //        Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
-        //        Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
-
-
-        //        Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
-        //        string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
-
-        //        var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
-        //        Logs.WriteLogEntry("Info", "", "Get Printer Status Response Code:" + getPrinterStatus.code, _MethodName);
-
-        //        if (getPrinterStatus.code == 0)
-        //        {
-        //            string jsonPrinterStatus = getPrinterStatus.data.ToString();
-        //            Logs.WriteLogEntry("Info", "", "Printer Status: " + jsonPrinterStatus, _MethodName);
-
-        //            PrinterStatus printerStatus = JsonConvert.DeserializeObject<PrinterStatus>(jsonPrinterStatus);
-        //            Logs.WriteLogEntry("Info", "", "Printer Status Deserialized: " + printerStatus, _MethodName);
-
-        //            if (printerStatus.status.ToLower() == "ready")
-        //            {
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-        //                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-        //                bodyElement.Add(
-        //                     new XElement("RespMessage", APIResultCodes.Success)
-        //                );
-        //            }
-        //            else
-        //            {
-        //                Logs.WriteLogEntry("Info", "", "Printer Not Ready:" + printerStatus.status, _MethodName);
-
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Ready:" + printerStatus.status;
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Connected"));
-        //            }
-
-        //        }
-        //        else
-        //        {
-        //            Logs.WriteLogEntry("Info", "", "Printer Not Available", _MethodName);
-
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Available";
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Available"));
-
-        //        }
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logs.WriteLogEntry("Error", "", "Error in Failed to Get Printer Status!: " + ex, _MethodName);
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
-        //    }
-
-        //    return response.ToString();
-        //}
-
-        //#endregion
-
-        //#region Hopper Status
-        //public async Task<string> GetHopperStatus(XDocument request, string RefrenceNumber)
-        //{
-        //    string _MethodName = "GetHopperStatus";
-        //    XDocument response = request.GetBasicResponseFromRequest();
-        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-
-
-        //    try
-        //    {
-
-        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-        //        Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
-
-        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-        //        Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
-
-        //        string[] parts = PcName.Split('|');
-
-        //        string ComputerName = parts[0].Trim();
-        //        string BranchCode = parts[1].Trim();
-
-        //        Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
-        //        Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
-
-
-        //        Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
-        //        string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
-
-        //        var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
-
-        //        Logs.WriteLogEntry("Info", "", "Get Hopper Status Response :" + getHopperStatus, _MethodName);
-
-        //        if (getHopperStatus.code == 0)
-        //        {
-        //            string jsonHopperStatus = getHopperStatus.data.ToString();
-
-        //            HopperStatus HopperStatus = JsonConvert.DeserializeObject<HopperStatus>(jsonHopperStatus);
-
-        //            Logs.WriteLogEntry("Info", "", "Hopper Status Desrelized: " + HopperStatus, _MethodName);
-        //            if (HopperStatus.productAvailable)
-        //            {
-
-        //                Logs.WriteLogEntry("Info", "", "Hopper Status: " + jsonHopperStatus, _MethodName);
-
-
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-        //                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-        //                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-        //                bodyElement.Add(
-        //                     new XElement("RespMessage", APIResultCodes.Success)
-        //                );
-
-        //            }
-
-
-        //        }
-        //        else
-        //        {
-        //            Logs.WriteLogEntry("Info", "", "Hopper Not Available", _MethodName);
-
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Hopper Not Available";
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Not Available"));
-        //            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Requested Card is Currently Not Availabe , You May Select Another Card!"));
-
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logs.WriteLogEntry("Error", "", "Error in Failed to Get Hopper Status!: " + ex, _MethodName);
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
-        //    }
-
-        //    return response.ToString();
-        //}
-
-        //#endregion
-
         #region PrinterStatus
         public async Task<string> GetPrinterStatus(XDocument request, string RefrenceNumber)
         {
             string _MethodName = "GetPrinterStatus";
             XDocument response = request.GetBasicResponseFromRequest();
             SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
-
             try
             {
-
-                //CardInfo cardInfo = DecryptEmbossingFile("0010", "0070", KioskId);
-
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
-
                 string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
+                Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
+                Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
 
                 string[] parts = PcName.Split('|');
+
                 string ComputerName = parts[0].Trim();
                 string BranchCode = parts[1].Trim();
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
+                Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
+                Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
 
-                // Call to device operation and logging
-                // var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
-                // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Printer Status Response Code: {getPrinterStatus.code}", _MethodName);
+                Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
+                string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
 
-                // Continue with processing...
+                var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
+                Logs.WriteLogEntry("Info", "", "Get Printer Status Response Code:" + getPrinterStatus.code, _MethodName);
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                if (getPrinterStatus.code == 0)
+                {
+                    string jsonPrinterStatus = getPrinterStatus.data.ToString();
+                    Logs.WriteLogEntry("Info", "", "Printer Status: " + jsonPrinterStatus, _MethodName);
 
-                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                    PrinterStatus printerStatus = JsonConvert.DeserializeObject<PrinterStatus>(jsonPrinterStatus);
+                    Logs.WriteLogEntry("Info", "", "Printer Status Deserialized: " + printerStatus, _MethodName);
+
+                    if (printerStatus.status.ToLower() == "ready")
+                    {
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+
+                        bodyElement.Add(
+                             new XElement("RespMessage", APIResultCodes.Success)
+                        );
+                    }
+                    else
+                    {
+                        Logs.WriteLogEntry("Info", "", "Printer Not Ready:" + printerStatus.status, _MethodName);
+
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Ready:" + printerStatus.status;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Connected"));
+                    }
+
+                }
+                else
+                {
+                    Logs.WriteLogEntry("Info", "", "Printer Not Available", _MethodName);
+
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Available";
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Available"));
+
+                }
+
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry("Error", "", "Error in Failed to Get Printer Status!: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
             }
 
             return response.ToString();
         }
-
 
         #endregion
 
@@ -1228,53 +1087,194 @@ namespace AlliedAdapter
             string _MethodName = "GetHopperStatus";
             XDocument response = request.GetBasicResponseFromRequest();
             SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
 
             try
             {
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
 
                 string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
+                Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
+                Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
 
                 string[] parts = PcName.Split('|');
+
                 string ComputerName = parts[0].Trim();
                 string BranchCode = parts[1].Trim();
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
+                Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
+                Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
 
-                // Call to device operation and logging
-                // var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
-                // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Hopper Status Response: {getHopperStatus.code}", _MethodName);
+                Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
+                string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
 
-                // Continue with processing...
+                var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                Logs.WriteLogEntry("Info", "", "Get Hopper Status Response :" + getHopperStatus, _MethodName);
 
-                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                if (getHopperStatus.code == 0)
+                {
+                    string jsonHopperStatus = getHopperStatus.data.ToString();
+
+                    HopperStatus HopperStatus = JsonConvert.DeserializeObject<HopperStatus>(jsonHopperStatus);
+
+                    Logs.WriteLogEntry("Info", "", "Hopper Status Desrelized: " + HopperStatus, _MethodName);
+                    if (HopperStatus.productAvailable)
+                    {
+
+                        Logs.WriteLogEntry("Info", "", "Hopper Status: " + jsonHopperStatus, _MethodName);
+
+
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+
+                        bodyElement.Add(
+                             new XElement("RespMessage", APIResultCodes.Success)
+                        );
+
+                    }
+
+
+                }
+                else
+                {
+                    Logs.WriteLogEntry("Info", "", "Hopper Not Available", _MethodName);
+
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Hopper Not Available";
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Not Available"));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Requested Card is Currently Not Availabe , You May Select Another Card!"));
+
+                }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry("Error", "", "Error in Failed to Get Hopper Status!: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
             }
 
             return response.ToString();
         }
 
-
         #endregion
+
+        //#region PrinterStatus
+        //public async Task<string> GetPrinterStatus(XDocument request, string RefrenceNumber)
+        //{
+        //    string _MethodName = "GetPrinterStatus";
+        //    XDocument response = request.GetBasicResponseFromRequest();
+        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
+        //    string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+        //    try
+        //    {
+
+        //        //CardInfo cardInfo = DecryptEmbossingFile("0010", "0070", KioskId);
+
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
+
+        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
+
+        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
+
+        //        string[] parts = PcName.Split('|');
+        //        string ComputerName = parts[0].Trim();
+        //        string BranchCode = parts[1].Trim();
+
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
+
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
+
+        //        // Call to device operation and logging
+        //        // var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
+        //        // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Printer Status Response Code: {getPrinterStatus.code}", _MethodName);
+
+        //        // Continue with processing...
+
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+
+        //        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
+
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
+        //    }
+
+        //    return response.ToString();
+        //}
+
+
+        //#endregion
+
+        //#region Hopper Status
+        //public async Task<string> GetHopperStatus(XDocument request, string RefrenceNumber)
+        //{
+        //    string _MethodName = "GetHopperStatus";
+        //    XDocument response = request.GetBasicResponseFromRequest();
+        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
+        //    string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+        //    try
+        //    {
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
+
+        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
+
+        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
+
+        //        string[] parts = PcName.Split('|');
+        //        string ComputerName = parts[0].Trim();
+        //        string BranchCode = parts[1].Trim();
+
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
+
+        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
+
+        //        // Call to device operation and logging
+        //        // var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
+        //        // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Hopper Status Response: {getHopperStatus.code}", _MethodName);
+
+        //        // Continue with processing...
+
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+
+        //        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
+
+        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
+        //    }
+
+        //    return response.ToString();
+        //}
+
+
+        //#endregion
 
         #region Check Account Balance
         public async Task<string> CheckAccountBalance(XDocument request, string RefrenceNumber)
@@ -2203,45 +2203,43 @@ namespace AlliedAdapter
                     {
                         Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
 
-                        // CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
-                        //Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
+                         CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
+                        Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
 
-                        //if (cardInfo != null)
-                        //{
+                        if (cardInfo != null)
+                        {
 
-                        //    string Description = "";
-                        //    HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, CardName, out Description, kioskID);
-                        //    Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse. description, _MethodName);
-                        //    if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
-                        //    {
-                        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        //        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
-                        //            new XElement("RequestId", hardwareResponse.data));
+                            string Description = "";
+                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, CardName, out Description, kioskID);
+                            Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
+                            if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
+                            {
+                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
+                                    new XElement("RequestId", hardwareResponse.data));
 
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                        //    }
-                        //    else
-                        //    {
-                        //        Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
-                        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
-                        //    }
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
+                            }
+                            else
+                            {
+                                Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
+                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                                //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
+                            }
 
-                        //}
+                        }
 
-
-
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                        ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
 
                     }
@@ -2301,9 +2299,9 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("info", KioskId, "Final Request" + request.ToString(), _MethodName);
 
-                //Random random = new Random();
-                //int otp = random.Next(100000, 999999);
-                int otp = 111111;
+                Random random = new Random();
+                int otp = random.Next(100000, 999999);
+
 
                 string url = ConfigurationManager.AppSettings["SendOtp"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
@@ -2498,17 +2496,6 @@ namespace AlliedAdapter
                 string RequestId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("RequestId")?.Value ?? string.Empty;
 
 
-                if (UETflag)
-                {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(
-                      new XElement("RespMessage", ""));
-                    return response.ToString();
-                }
-                else
-                {
                     Logs.WriteLogEntry("info", KioskId, KioskId, _MethodName);
 
                     if (RequestId != null)
@@ -2563,7 +2550,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
 
                     }
-                }
+                
             }
             catch (Exception ex)
             {

@@ -1,14 +1,45 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-	<soapenv:Body><NS1:GetCustomerAccountsResponse xmlns:NS1="http://GetAccounts">
-		<ResponseCode>00</ResponseCode>
-		<ResponseDesc>Success</ResponseDesc>
-		<Data>
-			<AccountDetails>
-				<AccountNumber>00051003650709</AccountNumber>
-				<AccountTitle>Title-1 1003650709</AccountTitle>
-			</AccountDetails>
-		</Data>
-	</NS1:GetCustomerAccountsResponse>
-	</soapenv:Body>
-</soapenv:Envelope>
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--File SPMM.wsdl, application SMPP-->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" name="smpp_ws_sendsms" targetNamespace="http://smpp_ws_sendsms/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://smpp_ws_sendsms/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<documentation>
+		<appinfo source="WMQI_APPINFO">
+			<MRWSDLAppInfo imported="true">
+				<binding hasEncoding="false" imported="true" name="smpp_ws_sendsmsPortBinding" originalBindingStyle="document"/>
+			</MRWSDLAppInfo>
+		</appinfo>
+	</documentation>
+	<types>
+		<xsd:schema>
+			<xsd:import namespace="http://smpp_ws_sendsms/" schemaLocation="http://localhost/smpp_ws/smpp_ws_sendsms?xsd=xsd0"/>
+		</xsd:schema>
+	</types>
+	<message name="QueueSMS">
+		<part element="tns:QueueSMS" name="parameters"/>
+	</message>
+	<message name="QueueSMSResponse">
+		<part element="tns:QueueSMSResponse" name="parameters"/>
+	</message>
+	<portType name="smpp_ws_sendsms">
+		<operation name="QueueSMS">
+			<input message="tns:QueueSMS" wsam:Action="http://smpp_ws_sendsms/smpp_ws_sendsms/QueueSMSRequest"/>
+			<output message="tns:QueueSMSResponse" wsam:Action="http://smpp_ws_sendsms/smpp_ws_sendsms/QueueSMSResponse"/>
+		</operation>
+	</portType>
+	<binding name="smpp_ws_sendsmsPortBinding" type="tns:smpp_ws_sendsms">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="QueueSMS">
+			<soap:operation soapAction=""/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+	</binding>
+	<service name="smpp_ws_sendsms">
+		<port binding="tns:smpp_ws_sendsmsPortBinding" name="smpp_ws_sendsmsPort">
+			<soap:address location="http://10.224.20.27:7823/smpp_ws/smpp_ws_sendsms"/>
+		</port>
+	</service>
+</definitions>
