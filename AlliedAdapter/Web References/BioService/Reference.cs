@@ -35,7 +35,7 @@ namespace AlliedAdapter.BioService {
         
         /// <remarks/>
         public ATMMSGSetSOAP_HTTP_Service() {
-            this.Url = ConfigurationManager.AppSettings["T24Url"] +ConfigurationManager.AppSettings["BiometricVerification"];
+            this.Url = ConfigurationManager.AppSettings["BiometricVerification"];
 
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
