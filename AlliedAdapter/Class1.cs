@@ -354,7 +354,8 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                                new XElement("Message", "Not"),
+                                new XElement("Message", "AccountNotExist"),
+                                new XElement("IsAvailable", "Not"),
                                 new XElement("TNCURL", tncurl));
                         }
                     }
@@ -366,7 +367,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
                 else
@@ -377,7 +378,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
             }
             catch (Exception ex)
@@ -474,19 +475,19 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Failed", _MethodName);
 
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.NotFound;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation Failed";
 
                     bodyElement.Add(new XElement("Message", "Bio Validation Failed"));
                 }
             }
             catch (Exception ex)
-            {
+            { 
                 Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: Exception occurred: {ex}", _MethodName);
 
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 9]: Final Response: {response}", _MethodName);
@@ -582,8 +583,7 @@ namespace AlliedAdapter
 
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Cnic Verification Failed"));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Account does not exist! Please open an account first to proceed with card issuance."));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "AccountNotExist"));
 
                         }
                     }
@@ -595,7 +595,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
                 else
@@ -605,7 +605,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
             }
             catch (Exception ex)
@@ -667,7 +667,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Failed to retrieve ABL ATM card list";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "NoCardAllowed"));
                     return response.ToString();
                 }
 
@@ -683,7 +683,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Failed to get card formats";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     return response.ToString();
                 }
 
@@ -744,10 +744,8 @@ namespace AlliedAdapter
                                 {"eCommerceLimit", item.eCommerceLimit},
                                 {"imagePath", CardImageBaseUrl + item.ImagePath}
                         });
-
                         Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 14]: Card Processed - ID: {item.IrisCardProductCode}, Name: {item.name}", _MethodName);
                     }
-
                 }
                 if (finalATMCardList.Count == 0)
                 {
@@ -755,7 +753,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "No matching card formats found in ABL Card List";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
                 else
                 {
@@ -766,7 +764,6 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "ABLCardList Received";
                     bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success), new XElement("CardList", finalATMCardList));
                 }
-
             }
             catch (Exception ex)
             {
@@ -776,7 +773,6 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "An error occurred while processing your request.";
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Exception occurred: " + ex.Message));
             }
-
             return response.ToString();
         }
 
@@ -1003,77 +999,64 @@ namespace AlliedAdapter
             string _MethodName = "GetPrinterStatus";
             XDocument response = request.GetBasicResponseFromRequest();
             SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
+            string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
             try
             {
-                string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
-
+                Logs.WriteLogEntry("info", kioskID, "Pc Name and Branch Code: " + PcName, _MethodName);
                 string[] parts = PcName.Split('|');
-
                 string ComputerName = parts[0].Trim();
                 string BranchCode = parts[1].Trim();
 
-                Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
-                Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "Computer Name:" + ComputerName, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "Branch Code:" + BranchCode, _MethodName);
 
-
-                Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry("Info", kioskID, "Request " + request.ToString(), _MethodName);
                 string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
-
                 var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
-                Logs.WriteLogEntry("Info", "", "Get Printer Status Response Code:" + getPrinterStatus.code, _MethodName);
-
+                Logs.WriteLogEntry("Info", kioskID, "Get Printer Status Response Code:" + getPrinterStatus.code, _MethodName);
                 if (getPrinterStatus.code == 0)
                 {
                     string jsonPrinterStatus = getPrinterStatus.data.ToString();
-                    Logs.WriteLogEntry("Info", "", "Printer Status: " + jsonPrinterStatus, _MethodName);
-
+                    Logs.WriteLogEntry("Info", kioskID, "Printer Status: " + jsonPrinterStatus, _MethodName);
                     PrinterStatus printerStatus = JsonConvert.DeserializeObject<PrinterStatus>(jsonPrinterStatus);
-                    Logs.WriteLogEntry("Info", "", "Printer Status Deserialized: " + printerStatus, _MethodName);
-
+                    Logs.WriteLogEntry("Info", kioskID, "Printer Status Deserialized: " + printerStatus, _MethodName);
                     if (printerStatus.status.ToLower() == "ready")
                     {
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
                         bodyElement.Add(
                              new XElement("RespMessage", APIResultCodes.Success)
                         );
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Info", "", "Printer Not Ready:" + printerStatus.status, _MethodName);
-
+                        Logs.WriteLogEntry("Info", kioskID, "Printer Not Ready:" + printerStatus.status, _MethodName);
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Ready:" + printerStatus.status;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Connected"));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "PrinterNotConnected"));
                     }
-
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", "", "Printer Not Available", _MethodName);
-
+                    Logs.WriteLogEntry("Info", kioskID, "Printer Not Available", _MethodName);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Available";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Printer Not Available"));
-
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "PrinterNotAvailable"));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", "", "Error in Failed to Get Printer Status!: " + ex, _MethodName);
+                Logs.WriteLogEntry("Error", kioskID, "Error in Failed to Get Printer Status!: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -1088,31 +1071,31 @@ namespace AlliedAdapter
             XDocument response = request.GetBasicResponseFromRequest();
             SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
 
+            string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
 
             try
             {
 
-                string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", "", "KIOSK ID: " + kioskID, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", "", "Pc Name and Branch Code: " + PcName, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "Pc Name and Branch Code: " + PcName, _MethodName);
 
                 string[] parts = PcName.Split('|');
 
                 string ComputerName = parts[0].Trim();
                 string BranchCode = parts[1].Trim();
 
-                Logs.WriteLogEntry("info", "", "Computer Name:" + ComputerName, _MethodName);
-                Logs.WriteLogEntry("info", "", "Branch Code:" + BranchCode, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "Computer Name:" + ComputerName, _MethodName);
+                Logs.WriteLogEntry("info", kioskID, "Branch Code:" + BranchCode, _MethodName);
 
 
-                Logs.WriteLogEntry("Info", "", "Request " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry("Info", kioskID, "Request " + request.ToString(), _MethodName);
                 string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
 
                 var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
 
-                Logs.WriteLogEntry("Info", "", "Get Hopper Status Response :" + getHopperStatus, _MethodName);
+                Logs.WriteLogEntry("Info", kioskID, "Get Hopper Status Response :" + getHopperStatus, _MethodName);
 
                 if (getHopperStatus.code == 0)
                 {
@@ -1120,11 +1103,11 @@ namespace AlliedAdapter
 
                     HopperStatus HopperStatus = JsonConvert.DeserializeObject<HopperStatus>(jsonHopperStatus);
 
-                    Logs.WriteLogEntry("Info", "", "Hopper Status Desrelized: " + HopperStatus, _MethodName);
+                    Logs.WriteLogEntry("Info", kioskID, "Hopper Status Desrelized: " + HopperStatus, _MethodName);
                     if (HopperStatus.productAvailable)
                     {
 
-                        Logs.WriteLogEntry("Info", "", "Hopper Status: " + jsonHopperStatus, _MethodName);
+                        Logs.WriteLogEntry("Info", kioskID, "Hopper Status: " + jsonHopperStatus, _MethodName);
 
 
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
@@ -1141,29 +1124,29 @@ namespace AlliedAdapter
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", "", "Hopper Not Available", _MethodName);
+                    Logs.WriteLogEntry("Info", kioskID, "Hopper Not Available", _MethodName);
 
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Hopper Not Available";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Not Available"));
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Requested Card is Currently Not Availabe , You May Select Another Card!"));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "CardNotAvailable"));
 
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", "", "Error in Failed to Get Hopper Status!: " + ex, _MethodName);
+                Logs.WriteLogEntry("Error", kioskID, "Error in Failed to Get Hopper Status!: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
         }
 
         #endregion
+
 
         //#region PrinterStatus
         //public async Task<string> GetPrinterStatus(XDocument request, string RefrenceNumber)
@@ -1441,12 +1424,12 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "Request Payload 1: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
-
+                string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
 
 
-                    var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
+                    var responseData = JsonConvert.DeserializeObject<dynamic>(aa);
                     var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
                     Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
 
@@ -1648,7 +1631,7 @@ namespace AlliedAdapter
                             {
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                             }
 
 
@@ -1661,7 +1644,7 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", ""));
                             if (errorMessage == "Customer do not meet Basic Eligibility Criteria, Please select Other Criteria.")
                             {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer, you do not meet the basic eligibility criteria for this card. Please choose a different card type for issuance."));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "DoNotMeetCriteria"));
                             }
                             else
                             {
@@ -1676,7 +1659,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in CustomerVerification: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -1855,7 +1838,7 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                             bodyElement.Add(
                                 new XElement("MessageHead", "Card Replace Failed !"),
-                                new XElement("Message", "Fresh Issued Card Is Not Allowed For Replacement !"));
+                                new XElement("Message", "FreshCardNotAllowed"));
                         }
                         else if (BlockedCardFound && !CardFoundForReplace)
                         {
@@ -1910,7 +1893,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
                 else
@@ -1920,7 +1903,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
             }
             catch (ArgumentNullException argEx)
@@ -1929,7 +1912,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             catch (InvalidOperationException invOpEx)
             {
@@ -1937,7 +1920,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                    new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    new XElement("Message", "UnableToProcessRequest"));
             }
             catch (Exception ex)
             {
@@ -1945,7 +1928,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                    new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -2003,6 +1986,7 @@ namespace AlliedAdapter
                 string Email = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Email")?.Value ?? string.Empty;
                 string Nationality = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Nationality")?.Value ?? string.Empty;
                 string AccountCategory = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountCategory")?.Value ?? string.Empty;
+                string SelectedCardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("SelectedCardName")?.Value ?? string.Empty;
 
                 CNIC = CNIC.Replace("-", "");
 
@@ -2210,10 +2194,10 @@ namespace AlliedAdapter
                         {
 
                             string Description = "";
-                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, CardName, out Description, kioskID);
-                            Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
+                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
                             if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
                             {
+                                Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
                                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                                 bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
                                     new XElement("RequestId", hardwareResponse.data));
@@ -2221,13 +2205,13 @@ namespace AlliedAdapter
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                            }
+                            } 
                             else
                             {
                                 Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
                                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                                 //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
@@ -2249,7 +2233,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
 
@@ -2261,7 +2245,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             catch (InvalidOperationException invOpEx)
             {
@@ -2269,7 +2253,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             catch (Exception ex)
             {
@@ -2277,7 +2261,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -2301,6 +2285,7 @@ namespace AlliedAdapter
 
                 Random random = new Random();
                 int otp = random.Next(100000, 999999);
+               // int otp = 111111;
 
 
                 string url = ConfigurationManager.AppSettings["SendOtp"].ToString();
@@ -2338,7 +2323,7 @@ namespace AlliedAdapter
                         Logs.WriteLogEntry("error", KioskId, "Failed to send OTP. Response: " + serviceResponse, _MethodName);
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Failed to send OTP, Please try again."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "OtpSendFailed"));
                     }
                 }
             }
@@ -2347,7 +2332,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -2449,7 +2434,8 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("info", KioskId, "Personlization Request : " + json, _MethodName);
                     hardwareResponse = deviceOperations.StartCardPersonalization(ComputerName, CardName, personalizationRequest);
 
-                    Logs.WriteLogEntry("info", KioskId, $"{hardwareResponse.data.ToString() + "|" + hardwareResponse.code + "|" + hardwareResponse.description}" + "", _MethodName);
+
+                    Logs.WriteLogEntry("info", KioskId, $"{hardwareResponse?.data?.ToString() + "|" + hardwareResponse?.code  + "|" + hardwareResponse?.description?.ToString()}" + "", _MethodName);
 
                     if (hardwareResponse.code == 0 || hardwareResponse.data != null)
                     {
@@ -2470,7 +2456,7 @@ namespace AlliedAdapter
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to Get Card Status!: " + ex, _MethodName);
+                Logs.WriteLogEntry("Error", KioskId, "Error in Personlization!: " + ex, _MethodName);
 
             }
             return hardwareResponse;
@@ -2547,7 +2533,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                     }
                 
@@ -2558,7 +2544,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
             }
 
@@ -2623,7 +2609,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
             }
@@ -2633,7 +2619,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
 
@@ -2697,7 +2683,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
             }
@@ -2708,7 +2694,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
             }
 
@@ -2861,7 +2847,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                         bodyElement.Add(new XElement("RespMessage", "PmdFailed"));
 
                         Logs.WriteLogEntry("Error", KioskId, $"API Call PMD Failed: {Status} - {Description} - {errorDetail}", _MethodName);
@@ -2875,7 +2861,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -3188,7 +3174,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                     Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
                 }
@@ -3200,7 +3186,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
 
@@ -3362,7 +3348,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
                 }
@@ -3373,7 +3359,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
 
             }
@@ -3382,7 +3368,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in {{PersonalInfo}}: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -3488,7 +3474,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
 
             }
@@ -3497,7 +3483,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in {{CurrentAddress}}: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
 
@@ -3661,7 +3647,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
 
             }
@@ -3670,7 +3656,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in {{CustomerAccountList}}: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -3759,7 +3745,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
 
@@ -3770,7 +3756,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
 
@@ -3900,7 +3886,7 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("Error", KioskId, " {AccountsDetails} Error Message: " + aPIResponse.Message, _MethodName);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
 
             }
@@ -3911,7 +3897,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -4089,7 +4075,7 @@ namespace AlliedAdapter
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                             }
 
@@ -4150,7 +4136,7 @@ namespace AlliedAdapter
                                 {
                                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                                 }
 
                             }
@@ -4168,7 +4154,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
                 else
@@ -4177,7 +4163,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
 
             }
@@ -4186,7 +4172,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in {{Review Details}}: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -5216,7 +5202,7 @@ namespace AlliedAdapter
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
             }
@@ -5225,7 +5211,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in AOABLDebitCardIssuance: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
 
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -5493,7 +5479,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance."));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
 
@@ -5550,7 +5536,7 @@ namespace AlliedAdapter
                 JToken hostDesc = rsp?["HostData"]?["HostDesc"];
 
                 if (hostDesc == null)
-                    return "We are unable to process your request. Please visit ABL branch or call the ABL helpline 021-111-225-225 for assistance.";
+                    return "UnableToProcessRequest";
 
                 // Case 1: HostDesc is a string
                 if (hostDesc.Type == JTokenType.String)
@@ -5804,7 +5790,6 @@ namespace AlliedAdapter
                 int recordCount = Math.Min(nameMatches.Count, Math.Min(cardMatches.Count, Math.Min(cvv2Matches.Count,
                                   Math.Min(memberSinceMatches.Count, Math.Min(iCVVMatches.Count, Math.Min(track1Matches.Count,
                                   Math.Min(track2Matches.Count, cvv1Matches.Count)))))));
-
                 for (int i = 0; i < recordCount; i++)
                 {
                     string name = nameMatches[i].Groups[1].Value.Trim();
@@ -5818,13 +5803,9 @@ namespace AlliedAdapter
                     string membersince = memberSinceMatches[i].Groups[1].Value;
                     string track1 = track1Matches[i].Groups[0].Value;
                     string track2 = track2Matches[i].Groups[0].Value;
-
                     string validFrom = $"{validFromRaw.Substring(2, 2)}/{validFromRaw.Substring(0, 2)}";
-
                     string validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
-
                     string pan = Regex.Replace(cardNumber, ".{4}", "$0 ");
-
                     cardList = new CardInfo
                     {
                         PAN = pan,
@@ -5838,18 +5819,14 @@ namespace AlliedAdapter
                         ICVV = icvv,
                     };
                 }
-
                 System.IO.File.Delete(VSMCardBaesUrl);
             }
             catch (Exception ex)
             {
                 // System.IO.File.Delete(VSMCardBaesUrl);
-
                 Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!: " + ex.Message, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!, Inner Exception: " + ex.InnerException, "DecryptEmbossingFile");
-
             }
-
             return cardList;
         }
         #endregion
