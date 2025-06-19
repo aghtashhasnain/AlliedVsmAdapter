@@ -288,7 +288,7 @@ namespace AlliedAdapter
                 CnicNumber = CnicNumber.Replace("-", "");
 
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: CNIC Number: {CnicNumber}", _MethodName);
-                string url = T24Url+ConfigurationManager.AppSettings["CustomerVerification"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["CustomerVerification"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 var requestPayload = new ABLCustomerVerificationRequest
@@ -475,14 +475,14 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Failed", _MethodName);
 
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.NotFound;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation Failed";
 
                     bodyElement.Add(new XElement("Message", "Bio Validation Failed"));
                 }
             }
             catch (Exception ex)
-            { 
+            {
                 Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: Exception occurred: {ex}", _MethodName);
 
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
@@ -514,7 +514,7 @@ namespace AlliedAdapter
                 string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
                 string CustomerNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CustomerNumber")?.Value ?? string.Empty;
 
-                string url = T24Url+ConfigurationManager.AppSettings["ABLCustomerAccountList"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["ABLCustomerAccountList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {url}", _MethodName);
 
                 var requestPayload = new ABLCustomerAccountListRequest
@@ -922,7 +922,7 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: Generating TransactionId and Formatting Date: TransactionId={TransactionId}, FormattedDate={formattedDate}", _MethodName);
 
-                string url = T24Url+ConfigurationManager.AppSettings["DebitCardCharges"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["DebitCardCharges"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {url}", _MethodName);
 
 
@@ -1119,8 +1119,6 @@ namespace AlliedAdapter
                         );
 
                     }
-
-
                 }
                 else
                 {
@@ -1385,7 +1383,7 @@ namespace AlliedAdapter
                 string TransactionId = GenerateTransactionId();
                 DateTime dateTime = DateTime.Now;
                 string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
-                string url = T24Url+ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
 
@@ -1424,12 +1422,12 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "Request Payload 1: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
-                string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
+                //string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
 
 
-                    var responseData = JsonConvert.DeserializeObject<dynamic>(aa);
+                    var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
                     var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
                     Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
 
@@ -1675,7 +1673,7 @@ namespace AlliedAdapter
             bool flag = false;
             try
             {
-                string url = T24Url+ConfigurationManager.AppSettings["ABLAtmFlagUpdate"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["ABLAtmFlagUpdate"].ToString();
                 Logs.WriteLogEntry("Info", kioskId, $"{methodName} [URL]:  {url}", methodName);
 
                 var requestPayload = new
@@ -1739,7 +1737,7 @@ namespace AlliedAdapter
                 string accountNumber = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("accountNumber")?.Value ?? string.Empty;
                 string branchCode = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("branchCode")?.Value ?? string.Empty;
                 CnicNumber = CnicNumber.Replace("-", "");
-                string url = IrisUrl+ConfigurationManager.AppSettings["IRISExistingCardList"].ToString();
+                string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
                 Logs.WriteLogEntry("info", KioskId, "IRISExistingCardList Step 1: " + request.ToString(), _MethodName);
 
@@ -1756,14 +1754,14 @@ namespace AlliedAdapter
 
                 Root responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
 
-                string UpdateType= "0";
+                string UpdateType = "0";
                 string CardGenerationType = "";
                 string CardNumber = "";
                 string CardExpiryDate = "";
                 string AccountId = "";
                 string CardName = "";
                 string ProductDescription = "";
-                string CardStatus = ""; 
+                string CardStatus = "";
 
                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
 
@@ -1796,7 +1794,7 @@ namespace AlliedAdapter
                                 if (card.CARDSTATUS == "03")
                                 {
                                     CardFoundButFreshCard = true;
-                           
+
                                     Logs.WriteLogEntry("info", KioskId, $"Fresh/Not Active Card Found: {ProductCode}", _MethodName);
                                     break;
                                 }
@@ -1805,7 +1803,7 @@ namespace AlliedAdapter
 
                                     BlockedCardFound = true;
                                     Logs.WriteLogEntry("info", KioskId, $"Blocked/Hot Card Found: {ProductCode}", _MethodName);
-                                     break;
+                                    break;
                                 }
                                 else
                                 {
@@ -1822,7 +1820,7 @@ namespace AlliedAdapter
                                     break;
                                 }
                             }
-                            
+
                         }
 
                         if (!CardFoundForReplace && !CardFoundButFreshCard && !BlockedCardFound)
@@ -1847,22 +1845,22 @@ namespace AlliedAdapter
                         }
                         if (!Flag)
                         {
-                                bodyElement.Add(
-                                new XElement("RespMessage", APIResultCodes.Success),
-                                new XElement("CardGenerationType", CardGenerationType),
-                                new XElement("UpdateType", UpdateType),
-                                new XElement("CardNumber", CardNumber),
-                                new XElement("CardExpiryDate", CardExpiryDate),
-                                new XElement("AccountId", AccountId),
-                                new XElement("DefaultAccount", AccountId),
-                                new XElement("CardName", CardName),
-                                new XElement("ProductDescription", ProductDescription),
-                                new XElement("CardProductCode", ProductCode));
+                            bodyElement.Add(
+                            new XElement("RespMessage", APIResultCodes.Success),
+                            new XElement("CardGenerationType", CardGenerationType),
+                            new XElement("UpdateType", UpdateType),
+                            new XElement("CardNumber", CardNumber),
+                            new XElement("CardExpiryDate", CardExpiryDate),
+                            new XElement("AccountId", AccountId),
+                            new XElement("DefaultAccount", AccountId),
+                            new XElement("CardName", CardName),
+                            new XElement("ProductDescription", ProductDescription),
+                            new XElement("CardProductCode", ProductCode));
 
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
-                        
+
                         }
                     }
                     else if (responseObject.WebMethodResponse.ResponseDescription == "Invalid CNIC")
@@ -1990,17 +1988,7 @@ namespace AlliedAdapter
 
                 CNIC = CNIC.Replace("-", "");
 
-                if (UETflag)
-                {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(
-                       new XElement("RespMessage", APIResultCodes.Success));
-                }
-                else
-                {
-
+             
                     string lastFourDigits = BranceCode.Substring(BranceCode.Length - 4);
                     string finalAccountNumber = lastFourDigits + AccountNumber;
 
@@ -2066,7 +2054,7 @@ namespace AlliedAdapter
                         ActionCode = "A";
                     }
 
-                    string URL = IrisUrl+ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
+                    string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
                     InstantCard webService = new InstantCard();
                     webService.Url = URL;
@@ -2187,7 +2175,7 @@ namespace AlliedAdapter
                     {
                         Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
 
-                         CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
+                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
                         Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
 
                         if (cardInfo != null)
@@ -2205,7 +2193,7 @@ namespace AlliedAdapter
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                            } 
+                            }
                             else
                             {
                                 Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
@@ -2237,7 +2225,7 @@ namespace AlliedAdapter
                     }
 
 
-                }
+                
             }
             catch (ArgumentNullException argEx)
             {
@@ -2285,7 +2273,7 @@ namespace AlliedAdapter
 
                 Random random = new Random();
                 int otp = random.Next(100000, 999999);
-               // int otp = 111111;
+                //int otp = 111111;
 
 
                 string url = ConfigurationManager.AppSettings["SendOtp"].ToString();
@@ -2293,39 +2281,28 @@ namespace AlliedAdapter
 
                 string message = $"Your OTP for verification is: {otp}. Please enter this code to proceed.";
 
-                if (UETflag)
+                Logs.WriteLogEntry("info", KioskId, "Going to send otp sms", _MethodName);
+
+                var serviceResponse = service.QueueSMS("SSK", mobileNumber, message, "3");
+
+                if (serviceResponse != null)
                 {
+                    Logs.WriteLogEntry("info", KioskId, "SendOTP Response: " + serviceResponse, _MethodName);
+
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                     bodyElement.Add(
                       new XElement("OTP", otp));
-                    return response.ToString();
                 }
                 else
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Going to send otp sms", _MethodName);
-
-                    var serviceResponse = service.QueueSMS("SSK", mobileNumber, message, "?");
-
-                    if (serviceResponse != null)
-                    {
-                        Logs.WriteLogEntry("info", KioskId, "SendOTP Response: " + serviceResponse, _MethodName);
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        bodyElement.Add(
-                          new XElement("OTP", otp));
-                    }
-                    else
-                    {
-                        Logs.WriteLogEntry("error", KioskId, "Failed to send OTP. Response: " + serviceResponse, _MethodName);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "OtpSendFailed"));
-                    }
+                    Logs.WriteLogEntry("error", KioskId, "Failed to send OTP. Response: " + serviceResponse, _MethodName);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "OtpSendFailed"));
                 }
+
             }
             catch (Exception ex)
             {
@@ -2435,7 +2412,7 @@ namespace AlliedAdapter
                     hardwareResponse = deviceOperations.StartCardPersonalization(ComputerName, CardName, personalizationRequest);
 
 
-                    Logs.WriteLogEntry("info", KioskId, $"{hardwareResponse?.data?.ToString() + "|" + hardwareResponse?.code  + "|" + hardwareResponse?.description?.ToString()}" + "", _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, $"{hardwareResponse?.data?.ToString() + "|" + hardwareResponse?.code + "|" + hardwareResponse?.description?.ToString()}" + "", _MethodName);
 
                     if (hardwareResponse.code == 0 || hardwareResponse.data != null)
                     {
@@ -2482,61 +2459,61 @@ namespace AlliedAdapter
                 string RequestId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("RequestId")?.Value ?? string.Empty;
 
 
-                    Logs.WriteLogEntry("info", KioskId, KioskId, _MethodName);
+                Logs.WriteLogEntry("info", KioskId, KioskId, _MethodName);
 
-                    if (RequestId != null)
+                if (RequestId != null)
+                {
+                    Logs.WriteLogEntry("info", KioskId, "Going to check Card Status" + "", _MethodName);
+
+                    HardwareResponse hardwareResponse = deviceOperations.GetPersonalizationRequestStatus(RequestId, 3, 15);
+                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    Logs.WriteLogEntry("info", KioskId, "data" + hardwareResponse.data.ToString(), _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "code" + hardwareResponse.code, _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "description" + hardwareResponse.description, _MethodName);
+
+                    switch (hardwareResponse.data.ToString())
                     {
-                        Logs.WriteLogEntry("info", KioskId, "Going to check Card Status" + "", _MethodName);
+                        case "Success":
 
-                        HardwareResponse hardwareResponse = deviceOperations.GetPersonalizationRequestStatus(RequestId, 3, 15);
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        Logs.WriteLogEntry("info", KioskId, "data" + hardwareResponse.data.ToString(), _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "code" + hardwareResponse.code, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "description" + hardwareResponse.description, _MethodName);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                            bodyElement.Add(
+                             new XElement("RespMessage", APIResultCodes.Success)
+                            );
+                            break;
+                        case "Failed":
 
-                        switch (hardwareResponse.data.ToString())
-                        {
-                            case "Success":
-
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                                bodyElement.Add(
-                                 new XElement("RespMessage", APIResultCodes.Success)
-                                );
-                                break;
-                            case "Failed":
-
-                                Logs.WriteLogEntry("error", KioskId, "Response: Failed to Get Card Status!", _MethodName);
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
-                                break;
-                            case "AtExit":
-                                Logs.WriteLogEntry("error", KioskId, "Response: AtExit to Get Card Status!", _MethodName);
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
-                                break;
-                            case "Processing":
-                                Logs.WriteLogEntry("Processing", KioskId, "Response: Processing!", _MethodName);
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Processing"));
-                                break;
-                            default:
-                                break;
-                        }
+                            Logs.WriteLogEntry("error", KioskId, "Response: Failed to Get Card Status!", _MethodName);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
+                            break;
+                        case "AtExit":
+                            Logs.WriteLogEntry("error", KioskId, "Response: AtExit to Get Card Status!", _MethodName);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
+                            break;
+                        case "Processing":
+                            Logs.WriteLogEntry("Processing", KioskId, "Response: Processing!", _MethodName);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Processing"));
+                            break;
+                        default:
+                            break;
                     }
-                    else
-                    {
+                }
+                else
+                {
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
-                    }
-                
+                }
+
             }
             catch (Exception ex)
             {
@@ -2571,7 +2548,7 @@ namespace AlliedAdapter
                 cnicNumber = cnicNumber.Replace("-", "");
                 Logs.WriteLogEntry("info", KioskId, "Request : " + request.ToString(), _MethodName);
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["SendOtpPda"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["SendOtpPda"].ToString();
 
 
 
@@ -2641,7 +2618,7 @@ namespace AlliedAdapter
             try
             {
                 string nadraResponse = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("nadraResponse")?.Value ?? string.Empty;
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["UpdateApplication"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["UpdateApplication"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 Logs.WriteLogEntry("info", KioskId, "Request url: " + url, _MethodName);
@@ -2723,7 +2700,7 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("info", KioskId, "Request: " + request.ToString(), _MethodName);
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["VerifyOtp"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["VerifyOtp"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 string OTP = EncryptUsingAES256(otp);
@@ -2766,7 +2743,7 @@ namespace AlliedAdapter
 
                         if (appListToken.Type == JTokenType.Array)
                         {
-                           
+
                             foreach (var item in appListToken)
                             {
 
@@ -2818,7 +2795,7 @@ namespace AlliedAdapter
                             new XElement("CustomerProfileIds", profileIdsCsv),
                             new XElement("CustomerAccInfoIds", accInfoIdsCsv));
                         }
-                      
+
                     }
 
 
@@ -2877,7 +2854,7 @@ namespace AlliedAdapter
             string methodName = "SendDeleteRequestAsync";
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["UpdateApplication"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["UpdateApplication"].ToString();
                 Logs.WriteLogEntry("Info", kioskId, $"{methodName} [URL]:  {url}", methodName);
 
                 var deleteRequest = new JObject
@@ -3051,7 +3028,7 @@ namespace AlliedAdapter
 
                 #endregion
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["GetCustomerFromNadra"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["GetCustomerFromNadra"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
 
@@ -3077,6 +3054,7 @@ namespace AlliedAdapter
                         longitude = 74.3276544,
                         noOfJointApplicatns = 0,
                         channelId = 114604,
+                        bioMetricVerificationNadra = 1
                     }
                 };
 
@@ -3212,9 +3190,9 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "{PersonalInfo} Step 1: Going to send request basic info personal Data", _MethodName);
                 Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
 
-                string CustomerBasicInfoUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
+                string CustomerBasicInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
-                string CustomerAccountInfoUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
+                string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -3395,7 +3373,7 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["CurrentAddress"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["CurrentAddress"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -3532,10 +3510,10 @@ namespace AlliedAdapter
                         professionId = matchingProfession["id"]?.ToString();
                     }
                 }
-                string CustomerBasicInfoUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
+                string CustomerBasicInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
 
-                string SaveKycUrl = MyPdaUrl+ConfigurationManager.AppSettings["SaveKyc"].ToString();
+                string SaveKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["SaveKyc"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [SaveKycUrl URL]:  {SaveKycUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -3681,7 +3659,7 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
 
-                string CustomerAccountInfoUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
+                string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -3798,7 +3776,7 @@ namespace AlliedAdapter
                     accountstate = 1;
                 }
 
-                string CustomerAccountInfoUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
+                string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -3919,16 +3897,16 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
 
-                string UpdateKycUrl = MyPdaUrl+ConfigurationManager.AppSettings["UpdateKyc"].ToString();
+                string UpdateKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["UpdateKyc"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [UpdateKyc URL]:  {UpdateKycUrl}", _MethodName);
 
-                string AuthorizerKycUrl = MyPdaUrl+ConfigurationManager.AppSettings["AuthorizerKyc"].ToString();
+                string AuthorizerKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["AuthorizerKyc"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [AuthorizerKyc URL]:  {AuthorizerKycUrl}", _MethodName);
 
-                string CustomerProfileStatusUrl = MyPdaUrl+ConfigurationManager.AppSettings["CustomerProfileStatus"].ToString();
+                string CustomerProfileStatusUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerProfileStatus"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerProfileStatus URL]:  {CustomerProfileStatusUrl}", _MethodName);
 
-                string ScreeningUrl = MyPdaUrl+ConfigurationManager.AppSettings["Screening"].ToString();
+                string ScreeningUrl = MyPdaUrl + ConfigurationManager.AppSettings["Screening"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [ScreeningUrl URL]:  {ScreeningUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
@@ -4207,7 +4185,7 @@ namespace AlliedAdapter
 
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Customer Nadra Image]:  {DecryptPath}", _MethodName);
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["Liveliness"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["Liveliness"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 #region Selfie Image 
@@ -4315,7 +4293,7 @@ namespace AlliedAdapter
             try
             {
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
 
@@ -4373,7 +4351,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 var requestData = new { data = new { codeTypeId = 1016 } };
@@ -4432,7 +4410,7 @@ namespace AlliedAdapter
             try
             {
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["TownTehsilList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["TownTehsilList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 var requestData = new { data = new { codeTypeId = 1016 } };
@@ -4493,7 +4471,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["BranchList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["BranchList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
                 var requestData = new
                 {
@@ -4623,7 +4601,7 @@ namespace AlliedAdapter
             try
             {
 
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
 
@@ -4683,7 +4661,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 var requestData = new { data = new { codeTypeId = 1081 } };
@@ -4742,7 +4720,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 var requestData = new { data = new { codeTypeId = 1006, codeOrder = 2, codeDescription = "C" } };
@@ -4801,7 +4779,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
                 var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
 
@@ -4859,7 +4837,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
                 var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
 
@@ -4917,7 +4895,7 @@ namespace AlliedAdapter
 
             try
             {
-                string url = MyPdaUrl+ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
                 var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
 
@@ -4988,74 +4966,74 @@ namespace AlliedAdapter
                 string branchName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Branch")?.Value ?? string.Empty;
 
                 #region Find Company Code
-                    if (string.IsNullOrEmpty(CompanyCode))
+                if (string.IsNullOrEmpty(CompanyCode))
+                {
+                    if (BankingModeId == "114202")
                     {
-                        if (BankingModeId == "114202")
+                        List<Dictionary<string, object>> islamicBranchList = await IslamicBranchList(KioskId);
+                        if (islamicBranchList.Count > 0)
                         {
-                            List<Dictionary<string, object>> islamicBranchList = await IslamicBranchList(KioskId);
-                            if (islamicBranchList.Count > 0)
+                            var matchedBranch = islamicBranchList
+                                .FirstOrDefault(b => b.ContainsKey("branchName") &&
+                                                     string.Equals(b["branchName"]?.ToString(), branchName, StringComparison.OrdinalIgnoreCase));
+
+                            CompanyCode = matchedBranch != null && matchedBranch.ContainsKey("tBranchCode")
+                                ? matchedBranch["tBranchCode"].ToString()
+                                : null;
+
+                            if (CompanyCode != null)
                             {
-                                var matchedBranch = islamicBranchList
-                                    .FirstOrDefault(b => b.ContainsKey("branchName") &&
-                                                         string.Equals(b["branchName"]?.ToString(), branchName, StringComparison.OrdinalIgnoreCase));
 
-                                CompanyCode = matchedBranch != null && matchedBranch.ContainsKey("tBranchCode")
-                                    ? matchedBranch["tBranchCode"].ToString()
-                                    : null;
-
-                                if (CompanyCode != null)
-                                {
-                              
-                                    Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
-                                }
-                                else
-                                {
-                     
-                                    Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Islamic branch list.", _MethodName);
-                                }
+                                Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
                             }
                             else
                             {
-                                Logs.WriteLogEntry("Info", KioskId, "Islamic Branch List Not Found!", _MethodName);
+
+                                Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Islamic branch list.", _MethodName);
                             }
                         }
                         else
                         {
-                            List<Dictionary<string, object>> conventionalBranchList = await ConventionalBranchList(KioskId);
-                            if (conventionalBranchList.Count > 0)
+                            Logs.WriteLogEntry("Info", KioskId, "Islamic Branch List Not Found!", _MethodName);
+                        }
+                    }
+                    else
+                    {
+                        List<Dictionary<string, object>> conventionalBranchList = await ConventionalBranchList(KioskId);
+                        if (conventionalBranchList.Count > 0)
+                        {
+
+                            var matchedBranch = conventionalBranchList
+                                .FirstOrDefault(b => b.ContainsKey("branchName") &&
+                                                     string.Equals(b["branchName"]?.ToString(), branchName, StringComparison.OrdinalIgnoreCase));
+
+                            CompanyCode = matchedBranch != null && matchedBranch.ContainsKey("tBranchCode")
+                                ? matchedBranch["tBranchCode"].ToString()
+                                : null;
+
+                            if (CompanyCode != null)
                             {
+                                Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
 
-                                var matchedBranch = conventionalBranchList
-                                    .FirstOrDefault(b => b.ContainsKey("branchName") &&
-                                                         string.Equals(b["branchName"]?.ToString(), branchName, StringComparison.OrdinalIgnoreCase));
-
-                                CompanyCode = matchedBranch != null && matchedBranch.ContainsKey("tBranchCode")
-                                    ? matchedBranch["tBranchCode"].ToString()
-                                    : null;
-
-                                if (CompanyCode != null)
-                                {
-                                    Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
-                                  
-                                }
-                                else
-                                {
-                                    Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Conventional branch list.", _MethodName);
-                                }
                             }
                             else
                             {
-                                Logs.WriteLogEntry("Info", KioskId, "Conventional Branch List Not Found!", _MethodName);
+                                Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Conventional branch list.", _MethodName);
                             }
                         }
+                        else
+                        {
+                            Logs.WriteLogEntry("Info", KioskId, "Conventional Branch List Not Found!", _MethodName);
+                        }
                     }
-                    #endregion
-               
+                }
+                #endregion
+
                 string TransactionId = GenerateTransactionId();
                 DateTime dateTime = DateTime.Now;
                 string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
 
-                string url = ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
+                string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 string FinalAddressType = "NO";
@@ -5201,7 +5179,6 @@ namespace AlliedAdapter
 
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
@@ -5321,7 +5298,7 @@ namespace AlliedAdapter
 
 
 
-                    string URL = ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
+                    string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
                     InstantCard webService = new InstantCard();
                     webService.Url = URL;
