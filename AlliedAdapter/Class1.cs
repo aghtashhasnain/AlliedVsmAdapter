@@ -1773,62 +1773,106 @@ namespace AlliedAdapter
                         bool CardFoundButFreshCard = false;
                         bool BlockedCardFound = false;
                         bool Flag = false;
+                        // Filter out blocked cards
+                        var matchedCards = responseObject.Output.Cards
+                            .Where(card => card.CARDSTATUS != "02")
+                            .ToList();
 
-                        foreach (var card in responseObject.Output.Cards)
+                        Logs.WriteLogEntry("info", KioskId, $"Total non-blocked cards found: {matchedCards.Count}", _MethodName);
+
+                        if (matchedCards.Any())
                         {
-                            if (finalAccountNumber == card.ACCOUNTID)
+                            // Check if fresh card exists
+                            var freshCards = matchedCards
+                                .Where(card => card.ACCOUNTID == finalAccountNumber && card.CARDSTATUS == "03")
+                                .ToList();
+
+                            if (freshCards.Any())
                             {
-                                UpdateType = "1";
+                                CardFoundButFreshCard = true;
+                                Logs.WriteLogEntry("info", KioskId, $"Fresh/Not Active Card Found for Product Code: {ProductCode}", _MethodName);
                             }
-
-                            if (ProductCode == card.PRODUCTCODE && finalAccountNumber == card.ACCOUNTID)
+                            else
                             {
+                                // Try to find active or warm cards
+                                var relevantCards = matchedCards
+                                    .Where(card => card.PRODUCTCODE == ProductCode && card.ACCOUNTID == finalAccountNumber)
+                                    .ToList();
 
-
-
-                                CardStatus = card.CARDSTATUS;
-                                Logs.WriteLogEntry("info", KioskId, $"IRIS Received Card Product Code: {card.PRODUCTCODE}", _MethodName);
-                                Logs.WriteLogEntry("info", KioskId, $"Selected Card Product Code: {ProductCode}", _MethodName);
-                                Logs.WriteLogEntry("info", KioskId, $"Card Status: {CardStatus}", _MethodName);
-
-                                if (card.CARDSTATUS == "03")
+                                if (relevantCards.Any())
                                 {
-                                    CardFoundButFreshCard = true;
+                                    UpdateType = "1";
+                                    bool activeOrWarmCardFound = false;
 
-                                    Logs.WriteLogEntry("info", KioskId, $"Fresh/Not Active Card Found: {ProductCode}", _MethodName);
-                                    break;
-                                }
-                                else if (card.CARDSTATUS == "02")
-                                {
+                                    foreach (var card in relevantCards)
+                                    {
+                                        CardStatus = card.CARDSTATUS;
+                                        Logs.WriteLogEntry("info", KioskId, $"Processing card - ProductCode: {card.PRODUCTCODE}, Status: {CardStatus}", _MethodName);
 
-                                    BlockedCardFound = true;
-                                    Logs.WriteLogEntry("info", KioskId, $"Blocked/Hot Card Found: {ProductCode}", _MethodName);
-                                    break;
+                                        if (CardStatus == "00" || CardStatus == "01")
+                                        {
+                                            CardGenerationType = "Replace";
+                                            CardNumber = card.CARDNUMBER;
+                                            CardExpiryDate = card.CARDEXPIRYDATE;
+                                            AccountId = card.ACCOUNTID;
+                                            CardName = card.CARDNAME;
+                                            ProductDescription = card.PRODUCTDESCRIPTION;
+                                            CardFoundForReplace = true;
+                                            activeOrWarmCardFound = true;
+
+                                            Logs.WriteLogEntry("info", KioskId,
+                                                $"Card marked for Replace - CardNumber: {CardNumber}, Status: {CardStatus}, CardName: {CardName}",
+                                                _MethodName);
+                                            break;
+                                        }
+                                    }
+
+                                    if (!activeOrWarmCardFound)
+                                    {
+                                        CardGenerationType = "Fresh";
+                                        Logs.WriteLogEntry("info", KioskId, $"No Active/Warm card found, defaulting to Fresh card for Product Code: {ProductCode}", _MethodName);
+                                    }
                                 }
                                 else
                                 {
-                                    CardGenerationType = "Replace";
-                                    CardNumber = card.CARDNUMBER;
-                                    CardExpiryDate = card.CARDEXPIRYDATE;
-                                    AccountId = card.ACCOUNTID;
-                                    CardName = card.CARDNAME;
-                                    ProductDescription = card.PRODUCTDESCRIPTION;
+                                    // No exact match but old card exists
+                                    var oldCards = matchedCards
+                                        .Where(card => (card.CARDSTATUS == "00" || card.CARDSTATUS == "03") && card.ACCOUNTID == finalAccountNumber)
+                                        .ToList();
 
-                                    CardFoundForReplace = true;
+                                    foreach (var card in oldCards)
+                                    {
+                                        CardStatus = card.CARDSTATUS;
 
-                                    Logs.WriteLogEntry("info", KioskId, $"Card Found For Replace: Card Number: {CardNumber}, Status: {card.CARDSTATUS}, CardName: {CardName}", _MethodName);
-                                    break;
+                                        if (CardStatus == "00")
+                                        {
+                                            CardName = card.CARDNAME;
+                                        }
+                                        else if (CardStatus == "01")
+                                        {
+                                            CardNumber = card.CARDNUMBER;
+                                        }
+
+                                        Logs.WriteLogEntry("info", KioskId,
+                                            $"Old card found - CardNumber: {CardNumber}, Status: {CardStatus}, CardName: {CardName}",
+                                            _MethodName);
+                                    }
+
+                                    CardGenerationType = "Upgrade";
+                                    Logs.WriteLogEntry("info", KioskId, $"No exact match found. This is an Upgrade card for Product Code: {ProductCode}", _MethodName);
                                 }
                             }
-
                         }
-
-                        if (!CardFoundForReplace && !CardFoundButFreshCard && !BlockedCardFound)
+                        else
                         {
-                            CardGenerationType = "Upgrade";
-                            Logs.WriteLogEntry("info", KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
+                            // No cards found at all
+                            CardGenerationType = "Fresh";
+                            Logs.WriteLogEntry("info", KioskId, $"No matching cards found. This is a Fresh card for Product Code: {ProductCode}", _MethodName);
                         }
-                        else if (CardFoundButFreshCard && !CardFoundForReplace)
+
+
+
+                        if (CardFoundButFreshCard && !CardFoundForReplace)
                         {
                             Logs.WriteLogEntry("info", KioskId, $"Card Found But Not For Replace: Card Number: {CardNumber}, Status: {CardStatus}, CardName: {CardName}", _MethodName);
                             Flag = true;
@@ -1838,9 +1882,9 @@ namespace AlliedAdapter
                                 new XElement("MessageHead", "Card Replace Failed !"),
                                 new XElement("Message", "FreshCardNotAllowed"));
                         }
-                        else if (BlockedCardFound && !CardFoundForReplace)
+                        else if (!CardFoundForReplace && !CardFoundButFreshCard)
                         {
-                            CardGenerationType = "Fresh";
+                            CardGenerationType = "Upgrade";
                             Logs.WriteLogEntry("info", KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
                         }
                         if (!Flag)
@@ -1856,18 +1900,15 @@ namespace AlliedAdapter
                             new XElement("CardName", CardName),
                             new XElement("ProductDescription", ProductDescription),
                             new XElement("CardProductCode", ProductCode));
-
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
-
                         }
                     }
                     else if (responseObject.WebMethodResponse.ResponseDescription == "Invalid CNIC")
                     {
                         CardGenerationType = "Fresh";
                         Logs.WriteLogEntry("info", KioskId, $"This is a {CardGenerationType} Card: {ProductCode}", _MethodName);
-
                         bodyElement.Add(
                             new XElement("RespMessage", APIResultCodes.Success),
                             new XElement("CardGenerationType", CardGenerationType),
@@ -1887,10 +1928,8 @@ namespace AlliedAdapter
                     else
                     {
                         Logs.WriteLogEntry("Error", KioskId, "Failed to get IRIS card list", _MethodName);
-
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
@@ -1988,79 +2027,80 @@ namespace AlliedAdapter
 
                 CNIC = CNIC.Replace("-", "");
 
-             
-                    string lastFourDigits = BranceCode.Substring(BranceCode.Length - 4);
-                    string finalAccountNumber = lastFourDigits + AccountNumber;
 
-                    int AccountCategoryCode = int.Parse(AccountCategory);
-                    int from = 1000;
-                    int to = 3015;
-                    string AccountType = "";
-                    if (AccountCategoryCode >= from && AccountCategoryCode <= to)
-                    {
-                        AccountType = "20";
-                    }
-                    else
-                    {
-                        AccountType = "10";
-                    }
+                string lastFourDigits = BranceCode.Substring(BranceCode.Length - 4);
+                string finalAccountNumber = lastFourDigits + AccountNumber;
 
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance AccountType : " + AccountType, _MethodName);
+                int AccountCategoryCode = int.Parse(AccountCategory);
+                int from = 1000;
+                int to = 3015;
+                string AccountType = "";
+                if (AccountCategoryCode >= from && AccountCategoryCode <= to)
+                {
+                    AccountType = "20";
+                }
+                else
+                {
+                    AccountType = "10";
+                }
 
-                    string BankIMD = "";
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance AccountType : " + AccountType, _MethodName);
 
-                    switch (ProductCode)
-                    {
-                        case "0092":
-                            BankIMD = "428638";
-                            break;
-                        case "0071":
-                            BankIMD = "407572";
-                            break;
-                        case "0070":
-                            BankIMD = "476215";
-                            break;
-                        case "0075":
-                            BankIMD = "476215";
-                            break;
-                        case "0080":
-                            BankIMD = "629240";
-                            break;
-                    }
+                string BankIMD = "";
 
-                    string TrakingId = GenerateTransactionId();
-                    int? isoCode = GetIsoCode(CurrencyCode);
-                    Logs.WriteLogEntry("info", KioskId, "ISO Code Found Against Currency Code: " + isoCode, _MethodName);
-                    string finaCurrenctCode = Convert.ToString(isoCode).ToString();
+                switch (ProductCode)
+                {
+                    case "0092":
+                        BankIMD = "428638";
+                        break;
+                    case "0071":
+                        BankIMD = "407572";
+                        break;
+                    case "0070":
+                        BankIMD = "476215";
+                        break;
+                    case "0075":
+                        BankIMD = "476215";
+                        break;
+                    case "0080":
+                        BankIMD = "629240";
+                        break;
+                }
 
-
-                    string ActivationDate = DateTime.Now.ToString("yyyyMMdd");
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance ActivationDate : " + ActivationDate, _MethodName);
-
-                    string ActionCode = "";
-                    string FinalCardNumber = "";
-
-                    if (CardGenerationType == "Upgrade")
-                    {
-                        ActionCode = "A";
-                    }
-                    else if (CardGenerationType == "Replace")
-                    {
-                        ActionCode = "R";
-                        FinalCardNumber = IrisCardNumber;
-                    }
-                    else if (CardGenerationType == "Fresh")
-                    {
-                        ActionCode = "A";
-                    }
-
-                    string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
-                    InstantCard webService = new InstantCard();
-                    webService.Url = URL;
+                string TrakingId = GenerateTransactionId();
+                int? isoCode = GetIsoCode(CurrencyCode);
+                Logs.WriteLogEntry("info", KioskId, "ISO Code Found Against Currency Code: " + isoCode, _MethodName);
+                string finaCurrenctCode = Convert.ToString(isoCode).ToString();
 
 
-                    string requestLog = $@"
+                string ActivationDate = DateTime.Now.ToString("yyyyMMdd");
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance ActivationDate : " + ActivationDate, _MethodName);
+
+                string ActionCode = "";
+                string FinalCardNumber = "";
+
+                if (CardGenerationType == "Upgrade")
+                {
+                    ActionCode = "A";
+                   
+                }
+                else if (CardGenerationType == "Replace")
+                {
+                    ActionCode = "R";
+                    FinalCardNumber = IrisCardNumber;
+                }
+                else if (CardGenerationType == "Fresh")
+                {
+                    ActionCode = "A";
+                }
+
+                string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
+                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
+                InstantCard webService = new InstantCard();
+                webService.Url = URL;
+
+
+                string requestLog = $@"
                     <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
                         <soapenv:Header/>
                         <soapenv:Body>
@@ -2108,124 +2148,133 @@ namespace AlliedAdapter
                         </soapenv:Body>
                      </soapenv:Envelope>";
 
-                    Logs.WriteLogEntry("info", KioskId, requestLog, _MethodName);
+                Logs.WriteLogEntry("info", KioskId, requestLog, _MethodName);
 
 
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance URL : " + webService.Url, _MethodName);
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance URL : " + webService.Url, _MethodName);
 
-                    string result = webService.ImportCustomer(
-                         ActionCode: ActionCode,
-                         CNIC: CNIC,
-                         TrackingID: TrakingId,
-                         FullName: FullName,
-                         DateOfBirth: DOB,
-                         MothersName: MotherName,
-                         BillingFlag: "H",
-                         MobileNumber: MobileNumber,
-                         ActivationDate: ActivationDate,
-                         FathersName: "Test",
-                         CardName: CardName,
-                         CustomerType: "1",
-                         ProductCode: ProductCode,
-                         AccountNo: finalAccountNumber,
-                         AccountType: AccountType,
-                         AccountCurrency: finaCurrenctCode,
-                         AccountStatus: "00",
-                         AccountTitle: AccountTitle,
-                         BankIMD: BankIMD,
-                         Branchcode: BranchCode,
-                         DefaultAccount: "1",
-                         Title: "",
-                         Prefered_Address_FLag: "",
-                         HomeAddress1: "",
-                         HomeAddress2: "",
-                         HomeAddress3: "",
-                         HomeAddress4: "",
-                         HomePostalCode: "",
-                         HomePhone: "",
-                         Email: Email,
-                         Company: "Allied Bank Ltd",
-                         OfficeAddress1: "",
-                         OfficeAddress2: "",
-                         OfficeAddress3: "",
-                         OfficeAddress4: "",
-                         OfficeAddress5: "",
-                         OfficePostalCode: "",
-                         OfficePhone: "",
-                         PassportNo: "",
-                         Nationality: "",
-                         OldCardNumber: FinalCardNumber
-
-
-                    );
+                string result = webService.ImportCustomer(
+                     ActionCode: ActionCode,
+                     CNIC: CNIC,
+                     TrackingID: TrakingId,
+                     FullName: FullName,
+                     DateOfBirth: DOB,
+                     MothersName: MotherName,
+                     BillingFlag: "H",
+                     MobileNumber: MobileNumber,
+                     ActivationDate: ActivationDate,
+                     FathersName: "Test",
+                     CardName: CardName,
+                     CustomerType: "1",
+                     ProductCode: ProductCode,
+                     AccountNo: finalAccountNumber,
+                     AccountType: AccountType,
+                     AccountCurrency: finaCurrenctCode,
+                     AccountStatus: "00",
+                     AccountTitle: AccountTitle,
+                     BankIMD: BankIMD,
+                     Branchcode: BranchCode,
+                     DefaultAccount: "1",
+                     Title: "",
+                     Prefered_Address_FLag: "",
+                     HomeAddress1: "",
+                     HomeAddress2: "",
+                     HomeAddress3: "",
+                     HomeAddress4: "",
+                     HomePostalCode: "",
+                     HomePhone: "",
+                     Email: Email,
+                     Company: "Allied Bank Ltd",
+                     OfficeAddress1: "",
+                     OfficeAddress2: "",
+                     OfficeAddress3: "",
+                     OfficeAddress4: "",
+                     OfficeAddress5: "",
+                     OfficePostalCode: "",
+                     OfficePhone: "",
+                     PassportNo: "",
+                     Nationality: "",
+                     OldCardNumber: FinalCardNumber
 
 
-                    XDocument doc = XDocument.Parse(result);
-                    string trackingID = doc.Root.Element("WebMethodResponse").Element("TrackingID")?.Value;
-                    string responseCode = doc.Root.Element("WebMethodResponse").Element("ResponseCode")?.Value;
-                    string responseDescription = doc.Root.Element("WebMethodResponse").Element("ResponseDescription")?.Value;
-
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
+                );
 
 
+                XDocument doc = XDocument.Parse(result);
+                string trackingID = doc.Root.Element("WebMethodResponse").Element("TrackingID")?.Value;
+                string responseCode = doc.Root.Element("WebMethodResponse").Element("ResponseCode")?.Value;
+                string responseDescription = doc.Root.Element("WebMethodResponse").Element("ResponseDescription")?.Value;
 
-                    if (responseDescription == "Success" && responseCode == "00")
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
+                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
+
+
+
+                if (responseDescription == "Success" && responseCode == "00")
+                {
+                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
+
+                    CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
+
+                    if (cardInfo != null)
                     {
-                        Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
-
-                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
                         Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
 
-                        if (cardInfo != null)
+                        string Description = "";
+                        HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
+                        if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
                         {
+                            Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
+                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                            bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
+                                new XElement("RequestId", hardwareResponse.data));
 
-                            string Description = "";
-                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
-                            if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
-                            {
-                                Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
-                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
-                                    new XElement("RequestId", hardwareResponse.data));
-
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                            }
-                            else
-                            {
-                                Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
-                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
-                            }
-
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
                         }
-
-                        //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
+                        else
+                        {
+                            Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
+                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                            //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
+                        }
 
                     }
                     else
                     {
+                        Logs.WriteLogEntry("Error", KioskId, "cardInfo", _MethodName);
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
+                    //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
+                    //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
+                    //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-                
+
+                }
+                else
+                {
+                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                }
+
+
+
             }
             catch (ArgumentNullException argEx)
             {
@@ -5682,16 +5731,24 @@ namespace AlliedAdapter
         {
             CardInfo cardList = new CardInfo();
             string VSMCardBaesUrl = ConfigurationManager.AppSettings["VSMCardBaesUrl"].ToString();
+            string DraftedCardFiles = ConfigurationManager.AppSettings["DraftedCardFiles"].ToString();
             try
             {
                 string passphrase = ConfigurationManager.AppSettings["passphrase"].ToString();
                 string privateKey = ConfigurationManager.AppSettings["privateKey"].ToString();
                 string DecryptedFilePath = ConfigurationManager.AppSettings["DecryptedFilePath"].ToString();
 
+                if (!Directory.Exists(DraftedCardFiles))
+                {
+                    Directory.CreateDirectory(DraftedCardFiles);
+                }
+
+
                 Logs.WriteLogEntry("Info", KioskId, "Passphrase Key!: " + passphrase, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Info", KioskId, "Decrypted File Path!: " + DecryptedFilePath, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Info", KioskId, "Private Key!: " + privateKey, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Info", KioskId, "VSMCard Baes Url!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
+                Logs.WriteLogEntry("Info", KioskId, "Drafted Card Files!: " + DraftedCardFiles, "DecryptEmbossingFile");
                 DateTime startTime = DateTime.Now;
 
                 bool fileFound = false;
@@ -5738,69 +5795,93 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("Info", KioskId, VSMCardBaesUrl + " Directory Not Found!: ", "DecryptEmbossingFile");
                 }
 
-
-                string outputFile = DecryptedFilePath + BranchCode + ProductCode + DateTime.Now.ToString("ddMMyyyyHHmmss");
-
-                PGPDecryptor.DecryptFile(VSMCardBaesUrl, outputFile, privateKey, passphrase);
-
-                string filePath = outputFile;
-                string fileContent = System.IO.File.ReadAllText(filePath);
-                string namePattern = @"!\s""([^""]+)";
-                string cardPattern = @"=(\d{6})(\d{16})=(\d{4})";
-                string cvv1Pattern = @";\d{6}(\d{10,13})=(\d{4}\d{8})(\d{3})";
-                string cvv2Pattern = @"@@(\d{2}/\d{2})(\d{3})";
-                string iCvvPattern = @"@(\d{3})@@";
-                string memberSincePattern = @"""(\d{4})";
-                string track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
-                string track2Pattern = @";(\d{16})=(\d{7})";
-                // string validThruPattern = @"\b(\d{2}/\d{2})\b";
-
-                MatchCollection nameMatches = Regex.Matches(fileContent, namePattern);
-                MatchCollection cardMatches = Regex.Matches(fileContent, cardPattern);
-                MatchCollection cvv1Matches = Regex.Matches(fileContent, cvv1Pattern);
-                MatchCollection cvv2Matches = Regex.Matches(fileContent, cvv2Pattern);
-                MatchCollection iCVVMatches = Regex.Matches(fileContent, iCvvPattern);
-                MatchCollection memberSinceMatches = Regex.Matches(fileContent, memberSincePattern);
-                MatchCollection track1Matches = Regex.Matches(fileContent, track1Pattern);
-                MatchCollection track2Matches = Regex.Matches(fileContent, track2Pattern);
-
-                int recordCount = Math.Min(nameMatches.Count, Math.Min(cardMatches.Count, Math.Min(cvv2Matches.Count,
-                                  Math.Min(memberSinceMatches.Count, Math.Min(iCVVMatches.Count, Math.Min(track1Matches.Count,
-                                  Math.Min(track2Matches.Count, cvv1Matches.Count)))))));
-                for (int i = 0; i < recordCount; i++)
+                if (fileFound)
                 {
-                    string name = nameMatches[i].Groups[1].Value.Trim();
-                    // string name = "FAISAL ASIF";
-                    string validFromRaw = cardMatches[i].Groups[1].Value;
-                    string cardNumber = cardMatches[i].Groups[2].Value;
-                    string validThruRaw = cardMatches[i].Groups[3].Value;
-                    string cvv1 = cvv1Matches[i].Groups[3].Value;
-                    string cvv2 = cvv2Matches[i].Groups[2].Value;
-                    string icvv = iCVVMatches[i].Groups[1].Value;
-                    string membersince = memberSinceMatches[i].Groups[1].Value;
-                    string track1 = track1Matches[i].Groups[0].Value;
-                    string track2 = track2Matches[i].Groups[0].Value;
-                    string validFrom = $"{validFromRaw.Substring(2, 2)}/{validFromRaw.Substring(0, 2)}";
-                    string validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
-                    string pan = Regex.Replace(cardNumber, ".{4}", "$0 ");
-                    cardList = new CardInfo
+                    string outputFile = $"{DecryptedFilePath}{BranchCode}{ProductCode}{DateTime.Now.ToString("ddMMyyyyHHmmss")}.txt";
+                    Logs.WriteLogEntry("Info", KioskId, outputFile + "Decrypt File Path", "DecryptEmbossingFile");
+
+                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 1", "DecryptEmbossingFile");
+                    PGPDecryptor.DecryptFile(VSMCardBaesUrl, outputFile, privateKey, passphrase);
+                    string filePath = outputFile;
+                    string fileContent = System.IO.File.ReadAllText(filePath);
+                    string namePattern = @"!\s""([^""]+)";
+                    string cardPattern = @"=(\d{6})(\d{16})=(\d{4})";
+                    string cvv1Pattern = @";\d{6}(\d{10,13})=(\d{4}\d{8})(\d{3})";
+                    string cvv2Pattern = @"@@(\d{2}/\d{2})(\d{3})";
+                    string iCvvPattern = @"@(\d{3})@@";
+                    string memberSincePattern = @"""(\d{4})";
+                    string track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
+                    string track2Pattern = @";(\d{16})=(\d{7})";
+                    // string validThruPattern = @"\b(\d{2}/\d{2})\b";
+                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 2", "DecryptEmbossingFile");
+
+                    MatchCollection nameMatches = Regex.Matches(fileContent, namePattern);
+                    MatchCollection cardMatches = Regex.Matches(fileContent, cardPattern);
+                    MatchCollection cvv1Matches = Regex.Matches(fileContent, cvv1Pattern);
+                    MatchCollection cvv2Matches = Regex.Matches(fileContent, cvv2Pattern);
+                    MatchCollection iCVVMatches = Regex.Matches(fileContent, iCvvPattern);
+                    MatchCollection memberSinceMatches = Regex.Matches(fileContent, memberSincePattern);
+                    MatchCollection track1Matches = Regex.Matches(fileContent, track1Pattern);
+                    MatchCollection track2Matches = Regex.Matches(fileContent, track2Pattern);
+                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 3", "DecryptEmbossingFile");
+                    int recordCount = Math.Min(nameMatches.Count, Math.Min(cardMatches.Count, Math.Min(cvv2Matches.Count,
+                                      Math.Min(memberSinceMatches.Count, Math.Min(iCVVMatches.Count, Math.Min(track1Matches.Count,
+                                      Math.Min(track2Matches.Count, cvv1Matches.Count)))))));
+                    for (int i = 0; i < recordCount; i++)
                     {
-                        PAN = pan,
-                        CardHolderName = name,
-                        MemberSince = validFrom,
-                        Expiry = validThru,
-                        Track1 = track1,
-                        Track2 = track2,
-                        CVV1 = cvv1,
-                        CVV2 = cvv2,
-                        ICVV = icvv,
-                    };
+                        string name = nameMatches[i].Groups[1].Value.Trim();
+                        // string name = "FAISAL ASIF";
+                        string validFromRaw = cardMatches[i].Groups[1].Value;
+                        string cardNumber = cardMatches[i].Groups[2].Value;
+                        string validThruRaw = cardMatches[i].Groups[3].Value;
+                        string cvv1 = cvv1Matches[i].Groups[3].Value;
+                        string cvv2 = cvv2Matches[i].Groups[2].Value;
+                        string icvv = iCVVMatches[i].Groups[1].Value;
+                        string membersince = memberSinceMatches[i].Groups[1].Value;
+                        string track1 = track1Matches[i].Groups[0].Value;
+                        string track2 = track2Matches[i].Groups[0].Value;
+                        string validFrom = $"{validFromRaw.Substring(2, 2)}/{validFromRaw.Substring(0, 2)}";
+                        string validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
+                        string pan = Regex.Replace(cardNumber, ".{4}", "$0 ");
+                        cardList = new CardInfo
+                        {
+                            PAN = pan,
+                            CardHolderName = name,
+                            MemberSince = validFrom,
+                            Expiry = validThru,
+                            Track1 = track1,
+                            Track2 = track2,
+                            CVV1 = cvv1,
+                            CVV2 = cvv2,
+                            ICVV = icvv,
+
+                        };
+                    }
+                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 4", "DecryptEmbossingFile");
+                    if (System.IO.File.Exists(VSMCardBaesUrl))
+                    {
+                        string fileName = Path.GetFileName(VSMCardBaesUrl);
+                        string destinationPath = Path.Combine(DraftedCardFiles, fileName);
+                        Logs.WriteLogEntry("Info", KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
+                        System.IO.File.Move(VSMCardBaesUrl, destinationPath);
+                        Logs.WriteLogEntry("Info", KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
+
+                    }
+
                 }
-                System.IO.File.Delete(VSMCardBaesUrl);
+
             }
             catch (Exception ex)
             {
-                // System.IO.File.Delete(VSMCardBaesUrl);
+                if (System.IO.File.Exists(VSMCardBaesUrl))
+                {
+                    string fileName = Path.GetFileName(VSMCardBaesUrl);
+                    string destinationPath = Path.Combine(DraftedCardFiles, fileName);
+                    Logs.WriteLogEntry("Error", KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
+                    System.IO.File.Move(VSMCardBaesUrl, destinationPath);
+                    Logs.WriteLogEntry("Error", KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
+
+                }
                 Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!: " + ex.Message, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!, Inner Exception: " + ex.InnerException, "DecryptEmbossingFile");
             }
