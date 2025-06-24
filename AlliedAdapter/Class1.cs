@@ -335,6 +335,9 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Validation successful";
 
+                            string MobileNumber = ExtractDigitsOnly(hostData.PhoneNumber);
+                            Logs.WriteLogEntry("Info", KioskId, $"Formated mobile number :{MobileNumber}", _MethodName);
+
                             bodyElement.Add(
                                 new XElement("RespMessage", APIResultCodes.Success),
                                 new XElement("Name", hostData.Name),
@@ -1346,6 +1349,7 @@ namespace AlliedAdapter
         }
         #endregion
 
+        
         #region ABL Debit Card Issuance
         public async Task<string> ABLDebitCardIssuance(XDocument request, string RefrenceNumber)
         {
@@ -1386,256 +1390,115 @@ namespace AlliedAdapter
                 string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
+                bool flag = await AtmMarkYesForExistingCustomer(AccountNumber, CompanyCode, formattedDate, KioskId);
 
-                var requestPayload = new
+                if (flag)
                 {
-                    ABLDebitCardIssuanceReq = new
+                    var requestPayload = new
                     {
-                        UserID = "XXXXX",
-                        Password = "XXXXX",
-                        ChannelType = "WEB",
-                        ChannelSubType = "SSK",
-                        TransactionType = "000",
-                        TransactionSubType = "000",
-                        TranDateAndTime = formattedDate,
-                        Function = "DebitCardIssuance",
-                        HostData = new
+                        ABLDebitCardIssuanceReq = new
                         {
-                            TransReferenceNo = TransactionId,
-                            Company = CompanyCode,
-                            TransactionId = AccountNumber,
-                            Status = "20",
-                            PackageType = ProdCode,
-                            AtmReqType = AtmReqType,
-                            DPS_Scheme = DpsScheme,
-                            CustomerNature = "ETB",
-                            AddressFlag = "NO",
-                            DaoAtmAddr1 = "",
-                            DaoAtmAddr2 = "",
-                            DaoAtmAddr3 = "",
-                            DaoAtmAddr4 = "",
-                            DaoAtmAddr5 = ""
-                        }
-                    }
-                };
-
-                Logs.WriteLogEntry("info", KioskId, "Request Payload 1: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
-
-                APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
-                //string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
-                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-
-
-                    var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
-                    var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
-                    Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
-
-                    string hostCode = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostCode;
-                    var hostDesc = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostDesc;
-
-                    if (hostCode == "00")
-                    {
-
-                        Logs.WriteLogEntry("info", KioskId, "Host Code: " + debitCardResponse.HostData, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Host Description: " + debitCardResponse.StatusDesc, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.TransReferenceNo, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostCode, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostDesc, _MethodName);
-
-
-                        // Declare variables outside the loop
-                        string MotherName = "";
-                        string FatherName = "";
-                        string CustomerType = "";
-                        string AccountType = "";
-                        string CurrencyCode = "";
-                        string BranchCode = "";
-                        string DefaultAccount = "";
-                        string AccountStatus = "";
-                        string BankIMD = "";
-                        string Email = "";
-                        string Nationality = "";
-
-                        foreach (var item in debitCardResponse.HostData.field)
-                        {
-                            Logs.WriteLogEntry("info", KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
-
-                            // Assign values based on item name
-                            if (item.name == "MOTHER.NAME") MotherName = item.content;
-                            if (item.name == "HUSBAND.NAME") FatherName = item.content;
-                            if (item.name == "CUSTOMER.NATURE") CustomerType = item.content;
-                            if (item.name == "ACCOUNT.NATURE") AccountType = item.content;
-                            if (item.name == "CURR.NO") CurrencyCode = item.content;
-                            if (item.name == "CO.CODE") BranchCode = item.content;
-                            if (item.name == "DEFAULT.ACCOUNT") DefaultAccount = item.content;
-                            if (item.name == "STATUS") AccountStatus = item.content;
-                            if (item.name == "BANK.IMD") BankIMD = item.content;
-                            if (item.name == "CUST.EMAIL") Email = item.content;
-                            if (item.name == "NATIONALITY") Nationality = item.content;
-                        }
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        bodyElement.Add(
-                            new XElement("RespMessage", APIResultCodes.Success),
-                            new XElement("MotherName", MotherName),
-                            new XElement("FatherName", FatherName),
-                            new XElement("CustomerType", CustomerType),
-                            new XElement("AccountType", AccountType),
-                            new XElement("CurrencyCode", CurrencyCode),
-                            new XElement("BranchCode", BranchCode),
-                            new XElement("DefaultAccount", DefaultAccount),
-                            new XElement("AccountStatus", AccountStatus),
-                            new XElement("BankIMD", BankIMD),
-                            new XElement("Email", Email),
-                            new XElement("Nationality", Nationality)
-                        );
-
-                    }
-                    else
-                    {
-
-                        string errorMessage = ExtractErrorMessage(responseData, KioskId);
-                        if (errorMessage == "ATM required is not marked YES.")
-                        {
-
-                            bool flag = await AtmMarkYesForExistingCustomer(AccountNumber, CompanyCode, TransactionId, formattedDate, KioskId);
-
-                            if (flag)
+                            UserID = "XXXXX",
+                            Password = "XXXXX",
+                            ChannelType = "WEB",
+                            ChannelSubType = "SSK",
+                            TransactionType = "000",
+                            TransactionSubType = "000",
+                            TranDateAndTime = formattedDate,
+                            Function = "DebitCardIssuance",
+                            HostData = new
                             {
-
-
-                                string TransactionId1 = GenerateTransactionId();
-                                var requestPayload2 = new
-                                {
-                                    ABLDebitCardIssuanceReq = new
-                                    {
-                                        UserID = "XXXXX",
-                                        Password = "XXXXX",
-                                        ChannelType = "WEB",
-                                        ChannelSubType = "SSK",
-                                        TransactionType = "000",
-                                        TransactionSubType = "000",
-                                        TranDateAndTime = formattedDate,
-                                        Function = "DebitCardIssuance",
-                                        HostData = new
-                                        {
-                                            TransReferenceNo = TransactionId1,
-                                            Company = CompanyCode,
-                                            TransactionId = AccountNumber,
-                                            Status = "20",
-                                            PackageType = ProdCode,
-                                            AtmReqType = AtmReqType,
-                                            DPS_Scheme = DpsScheme,
-                                            CustomerNature = "ETB",
-                                            AddressFlag = "NO",
-                                            DaoAtmAddr1 = "",
-                                            DaoAtmAddr2 = "",
-                                            DaoAtmAddr3 = "",
-                                            DaoAtmAddr4 = "",
-                                            DaoAtmAddr5 = ""
-                                        }
-                                    }
-                                };
-
-                                Logs.WriteLogEntry("info", KioskId, "Request Payload 2: " + JsonConvert.SerializeObject(requestPayload2), _MethodName);
-                                APIResponse aPIResponse1 = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload2, KioskId, "");
-                                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                                {
-
-
-                                    var responseData1 = JsonConvert.DeserializeObject<dynamic>(aPIResponse1.ResponseContent);
-                                    var debitCardResponse1 = responseData1?.ABLDebitCardIssuanceRsp;
-                                    Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData1, _MethodName);
-                                    string hostCode1 = responseData1?.ABLDebitCardIssuanceRsp?.HostData?.HostCode;
-                                    var hostDesc1 = responseData1?.ABLDebitCardIssuanceRsp?.HostData?.HostDesc;
-
-                                    //if (hostCode == "00")
-                                    //{
-
-                                    Logs.WriteLogEntry("info", KioskId, "Host Code: " + debitCardResponse1.HostData, _MethodName);
-                                    Logs.WriteLogEntry("info", KioskId, "Host Description: " + debitCardResponse1.StatusDesc, _MethodName);
-                                    Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse1.HostData.TransReferenceNo, _MethodName);
-                                    Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse1.HostData.HostCode, _MethodName);
-                                    Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse1.HostData.HostDesc, _MethodName);
-
-                                    // Declare variables outside the loop
-
-                                    string MotherName = "";
-                                    string FatherName = "";
-                                    string CustomerType = "";
-                                    string AccountType = "";
-                                    string CurrencyCode = "";
-                                    string BranchCode = "";
-                                    string DefaultAccount = "";
-                                    string AccountStatus = "";
-                                    string BankIMD = "";
-                                    string Email = "";
-                                    string Nationality = "";
-
-                                    foreach (var item in debitCardResponse1.HostData.field)
-                                    {
-                                        Logs.WriteLogEntry("info", KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
-
-                                        // Assign values based on item name
-                                        if (item.name == "MOTHER.NAME") MotherName = item.content;
-                                        if (item.name == "HUSBAND.NAME") FatherName = item.content;
-                                        if (item.name == "CUSTOMER.NATURE") CustomerType = item.content;
-                                        if (item.name == "ACCOUNT.NATURE") AccountType = item.content;
-                                        if (item.name == "CURR.NO") CurrencyCode = item.content;
-                                        if (item.name == "CO.CODE") BranchCode = item.content;
-                                        if (item.name == "DEFAULT.ACCOUNT") DefaultAccount = item.content;
-                                        if (item.name == "STATUS") AccountStatus = item.content;
-                                        if (item.name == "BANK.IMD") BankIMD = item.content;
-                                        if (item.name == "CUST.EMAIL") Email = item.content;
-                                        if (item.name == "NATIONALITY") Nationality = item.content;
-                                    }
-
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-
-                                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                    bodyElement.Add(
-                                        new XElement("RespMessage", APIResultCodes.Success),
-                                        new XElement("MotherName", MotherName),
-                                        new XElement("FatherName", FatherName),
-                                        new XElement("CustomerType", CustomerType),
-                                        new XElement("AccountType", AccountType),
-                                        new XElement("CurrencyCode", CurrencyCode),
-                                        new XElement("BranchCode", BranchCode),
-                                        new XElement("DefaultAccount", DefaultAccount),
-                                        new XElement("AccountStatus", AccountStatus),
-                                        new XElement("BankIMD", BankIMD),
-                                        new XElement("Email", Email),
-                                        new XElement("Nationality", Nationality)
-                                    );
-
-                                    // }
-                                }
-                                else
-                                {
-                                    string errorMessage1 = ExtractErrorMessage(responseData, KioskId);
-                                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", ""));
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", errorMessage1));
-                                }
+                                TransReferenceNo = TransactionId,
+                                Company = CompanyCode,
+                                TransactionId = AccountNumber,
+                                Status = "20",
+                                PackageType = ProdCode,
+                                AtmReqType = AtmReqType,
+                                DPS_Scheme = DpsScheme,
+                                CustomerNature = "ETB",
+                                AddressFlag = "NO",
+                                DaoAtmAddr1 = "",
+                                DaoAtmAddr2 = "",
+                                DaoAtmAddr3 = "",
+                                DaoAtmAddr4 = "",
+                                DaoAtmAddr5 = ""
                             }
-                            else
+                        }
+                    };
+
+                    Logs.WriteLogEntry("info", KioskId, "Request Payload 1: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
+
+                    APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
+                    // string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
+                    if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
+                        var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
+                        Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
+
+                        string hostCode = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostCode;
+                        var hostDesc = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostDesc;
+
+                        if (hostCode == "00")
+                        {
+                            Logs.WriteLogEntry("info", KioskId, "Host Code: " + debitCardResponse.HostData, _MethodName);
+                            Logs.WriteLogEntry("info", KioskId, "Host Description: " + debitCardResponse.StatusDesc, _MethodName);
+                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.TransReferenceNo, _MethodName);
+                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostCode, _MethodName);
+                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostDesc, _MethodName);
+
+                            // Declare variables outside the loop
+                            string MotherName = "";
+                            string FatherName = "";
+                            string CustomerType = "";
+                            string AccountType = "";
+                            string CurrencyCode = "";
+                            string BranchCode = "";
+                            string DefaultAccount = "";
+                            string AccountStatus = "";
+                            string BankIMD = "";
+                            string Email = "";
+                            string Nationality = "";
+
+                            foreach (var item in debitCardResponse.HostData.field)
                             {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                                Logs.WriteLogEntry("info", KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
+
+                                // Assign values based on item name
+                                if (item.name == "MOTHER.NAME") MotherName = item.content;
+                                if (item.name == "HUSBAND.NAME") FatherName = item.content;
+                                if (item.name == "CUSTOMER.NATURE") CustomerType = item.content;
+                                if (item.name == "ACCOUNT.NATURE") AccountType = item.content;
+                                if (item.name == "CURR.NO") CurrencyCode = item.content;
+                                if (item.name == "CO.CODE") BranchCode = item.content;
+                                if (item.name == "DEFAULT.ACCOUNT") DefaultAccount = item.content;
+                                if (item.name == "STATUS") AccountStatus = item.content;
+                                if (item.name == "BANK.IMD") BankIMD = item.content;
+                                if (item.name == "CUST.EMAIL") Email = item.conte41nt;
+                                if (item.name == "NATIONALITY") Nationality = item.content;
                             }
 
-
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                            bodyElement.Add(
+                                new XElement("RespMessage", APIResultCodes.Success),
+                                new XElement("MotherName", MotherName),
+                                new XElement("FatherName", FatherName),
+                                new XElement("CustomerType", CustomerType),
+                                new XElement("AccountType", AccountType),
+                                new XElement("CurrencyCode", CurrencyCode),
+                                new XElement("BranchCode", BranchCode),
+                                new XElement("DefaultAccount", DefaultAccount),
+                                new XElement("AccountStatus", AccountStatus),
+                                new XElement("BankIMD", BankIMD),
+                                new XElement("Email", Email),
+                                new XElement("Nationality", Nationality)
+                            );
                         }
                         else
                         {
+                            string errorMessage = ExtractErrorMessage(responseData, KioskId);
                             var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
@@ -1650,6 +1513,18 @@ namespace AlliedAdapter
                             }
                         }
                     }
+                    else
+                    {
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    }
+                }
+                else
+                {
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
             }
             catch (Exception ex)
@@ -1663,16 +1538,18 @@ namespace AlliedAdapter
         }
 
         #endregion
+      
 
         #region AtmMarkYesForExistingCustomer
 
-        public async Task<bool> AtmMarkYesForExistingCustomer(string accountNumber, string BranchCode, string TransactionId, string formattedDate, string kioskId)
+        public async Task<bool> AtmMarkYesForExistingCustomer(string accountNumber, string BranchCode, string formattedDate, string kioskId)
         {
             APIHelper apiService = new APIHelper();
             string methodName = "AtmMarkYesForExistingCustomer";
             bool flag = false;
             try
             {
+                string TransactionId = GenerateTransactionId();
                 string url = T24Url + ConfigurationManager.AppSettings["ABLAtmFlagUpdate"].ToString();
                 Logs.WriteLogEntry("Info", kioskId, $"{methodName} [URL]:  {url}", methodName);
 
@@ -1726,246 +1603,198 @@ namespace AlliedAdapter
         #region IRIS Existing Card List 
         public async Task<string> IRISExistingCardList(XDocument request, string RefrenceNumber)
         {
-            string _MethodName = "IRISExistingCardList";
+            const string _MethodName = "IRISExistingCardList";
             XDocument response = request.GetBasicResponseFromRequest();
             string KioskId = request.Element(TransactionTags.Request)?.Element(TransactionTags.Header)?.Element(TransactionTags.KioskIdentity)?.Value;
 
             try
             {
-                string CnicNumber = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("cnic")?.Value ?? string.Empty;
+                string CnicNumber = (request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("cnic")?.Value ?? "").Replace("-", "");
                 string ProductCode = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("ProductCode")?.Value ?? string.Empty;
                 string accountNumber = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("accountNumber")?.Value ?? string.Empty;
                 string branchCode = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("branchCode")?.Value ?? string.Empty;
-                CnicNumber = CnicNumber.Replace("-", "");
-                string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "IRISExistingCardList Step 1: " + request.ToString(), _MethodName);
 
-                string lastFourDigits = branchCode.Substring(branchCode.Length - 4);
-                string finalAccountNumber = lastFourDigits + accountNumber;
+                string finalAccountNumber = branchCode.Length >= 4 ? branchCode.Substring(branchCode.Length - 4) + accountNumber : accountNumber;
+                string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"];
 
-                wsABLCARDSTATUSCHANGE webService = new wsABLCARDSTATUSCHANGE();
-                webService.Url = url;
+                Logs.WriteLogEntry("Info", KioskId, $"Request URL: {url}", _MethodName);
+                Logs.WriteLogEntry("Info", KioskId, $"Request XML: {request}", _MethodName);
+
+                wsABLCARDSTATUSCHANGE webService = new wsABLCARDSTATUSCHANGE { Url = url };
                 var result = webService.CardListing(CnicNumber);
                 string innerXml = XMLHelper.ExtractInnerXml(result);
                 string cleanedXml = XMLHelper.FixNestedCardInfo(innerXml);
 
-                Logs.WriteLogEntry("info", KioskId, "CleanedXml: " + cleanedXml, _MethodName);
+                Logs.WriteLogEntry("Info", KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
 
-                Root responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
-
+                var responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
+                var bodyElement = response.Element(TransactionTags.Response)?.Element(TransactionTags.Body);
+                string CardGenerationType = "", CardNumber = "", CardExpiryDate = "", AccountId = "", CardName = "", ProductDescription = "", CardStatus = "";
                 string UpdateType = "0";
-                string CardGenerationType = "";
-                string CardNumber = "";
-                string CardExpiryDate = "";
-                string AccountId = "";
-                string CardName = "";
-                string ProductDescription = "";
-                string CardStatus = "";
+                bool CardFoundForReplace = false, CardFoundButFreshCard = false, Flag = false;
 
-                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-                if (responseObject != null)
+                if (responseObject?.Output?.Cards != null && responseObject.WebMethodResponse?.ResponseDescription == "Approved")
                 {
-                    if (responseObject.Output != null && responseObject.WebMethodResponse.ResponseDescription == "Approved")
+                    var allCards = responseObject.Output.Cards;
+                    var matchedCards = allCards.Where(c => c.CARDSTATUS != "02" && c.PRODUCTCODE != "0098").ToList();
+
+                    Logs.WriteLogEntry("Info", KioskId, $"Total non-blocked cards found: {matchedCards.Count}", _MethodName);
+
+                    if (matchedCards.Any())
                     {
-                        bool CardFoundForReplace = false;
-                        bool CardFoundButFreshCard = false;
-                        bool BlockedCardFound = false;
-                        bool Flag = false;
-                        // Filter out blocked cards
-                        var matchedCards = responseObject.Output.Cards
-                            .Where(card => card.CARDSTATUS != "02")
-                            .ToList();
-
-                        Logs.WriteLogEntry("info", KioskId, $"Total non-blocked cards found: {matchedCards.Count}", _MethodName);
-
-                        if (matchedCards.Any())
+                        Card FreshCardList = await FreshCardListing(CnicNumber, finalAccountNumber, KioskId);
+                        //   var freshCards = matchedCards.Where(c => c.ACCOUNTID == finalAccountNumber && c.CARDSTATUS == "03").ToList();
+                        if (FreshCardList != null)
                         {
-                            // Check if fresh card exists
-                            var freshCards = matchedCards
-                                .Where(card => card.ACCOUNTID == finalAccountNumber && card.CARDSTATUS == "03")
-                                .ToList();
-
-                            if (freshCards.Any())
+                            CardFoundButFreshCard = true;
+                            Logs.WriteLogEntry("Info", KioskId, $"Fresh card found for ProductCode: {FreshCardList.PRODUCTCODE} and Account Number : {FreshCardList.ACCOUNTID}  ", _MethodName);
+                        }
+                        else
+                        {
+                            if (matchedCards.Any(c => c.ACCOUNTID == finalAccountNumber)) UpdateType = "1";
+                            var relevantCards = matchedCards.Where(c => c.PRODUCTCODE == ProductCode && c.ACCOUNTID == finalAccountNumber).ToList();
+                            if (relevantCards.Any())
                             {
-                                CardFoundButFreshCard = true;
-                                Logs.WriteLogEntry("info", KioskId, $"Fresh/Not Active Card Found for Product Code: {ProductCode}", _MethodName);
+                                foreach (var card in relevantCards)
+                                {
+                                    Logs.WriteLogEntry("Info", KioskId, $"Card check - Status: {card.CARDSTATUS}, ProductCode: {card.PRODUCTCODE}", _MethodName);
+                                    if (card.CARDSTATUS == "00" || card.CARDSTATUS == "01")
+                                    {
+                                        CardGenerationType = "Replace";
+                                        CardNumber = card.CARDNUMBER;
+                                        CardExpiryDate = card.CARDEXPIRYDATE;
+                                        AccountId = card.ACCOUNTID;
+                                        CardName = card.CARDNAME;
+                                        ProductDescription = card.PRODUCTDESCRIPTION;
+                                        CardStatus = card.CARDSTATUS;
+                                        CardFoundForReplace = true;
+
+                                        Logs.WriteLogEntry("Info", KioskId, $"Replace card found: {CardNumber}", _MethodName);
+                                        break;
+                                    }
+                                }
+                                if (!CardFoundForReplace)
+                                {
+                                    CardGenerationType = "Fresh";
+                                    Logs.WriteLogEntry("Info", KioskId, $"No active card found, marked as Fresh", _MethodName);
+                                }
                             }
                             else
                             {
-                                // Try to find active or warm cards
-                                var relevantCards = matchedCards
-                                    .Where(card => card.PRODUCTCODE == ProductCode && card.ACCOUNTID == finalAccountNumber)
-                                    .ToList();
+                                CardGenerationType = "Upgrade";
+                                Logs.WriteLogEntry("Info", KioskId, $"No matching product code card found, marked as Upgrade", _MethodName);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (allCards.Any(c => c.ACCOUNTID == finalAccountNumber)) UpdateType = "1";
 
-                                if (relevantCards.Any())
-                                {
-                                    UpdateType = "1";
-                                    bool activeOrWarmCardFound = false;
+                        var blockCards = allCards
+                        .Where(c => c.CARDSTATUS == "02" && c.PRODUCTCODE != "0098").ToList();
 
-                                    foreach (var card in relevantCards)
-                                    {
-                                        CardStatus = card.CARDSTATUS;
-                                        Logs.WriteLogEntry("info", KioskId, $"Processing card - ProductCode: {card.PRODUCTCODE}, Status: {CardStatus}", _MethodName);
+                        Logs.WriteLogEntry("Info", KioskId, $"Total blocked cards found : {blockCards.Count}", _MethodName);
 
-                                        if (CardStatus == "00" || CardStatus == "01")
-                                        {
-                                            CardGenerationType = "Replace";
-                                            CardNumber = card.CARDNUMBER;
-                                            CardExpiryDate = card.CARDEXPIRYDATE;
-                                            AccountId = card.ACCOUNTID;
-                                            CardName = card.CARDNAME;
-                                            ProductDescription = card.PRODUCTDESCRIPTION;
-                                            CardFoundForReplace = true;
-                                            activeOrWarmCardFound = true;
+                        if (blockCards.Any())
+                        {
+                            var maxExpiry = blockCards.Max(c => c.CARDEXPIRYDATE);
+                            Logs.WriteLogEntry("Info", KioskId, $"Max expiry date among blocked cards: {maxExpiry}", _MethodName);
 
-                                            Logs.WriteLogEntry("info", KioskId,
-                                                $"Card marked for Replace - CardNumber: {CardNumber}, Status: {CardStatus}, CardName: {CardName}",
-                                                _MethodName);
-                                            break;
-                                        }
-                                    }
+                            var expiryCard = blockCards.FirstOrDefault(c => c.CARDEXPIRYDATE == maxExpiry);
+                            if (expiryCard != null)
+                            {
+                                Logs.WriteLogEntry("Info", KioskId, $"Blocked card found with max expiry: {expiryCard.CARDNUMBER}", _MethodName);
 
-                                    if (!activeOrWarmCardFound)
-                                    {
-                                        CardGenerationType = "Fresh";
-                                        Logs.WriteLogEntry("info", KioskId, $"No Active/Warm card found, defaulting to Fresh card for Product Code: {ProductCode}", _MethodName);
-                                    }
-                                }
-                                else
-                                {
-                                    // No exact match but old card exists
-                                    var oldCards = matchedCards
-                                        .Where(card => (card.CARDSTATUS == "00" || card.CARDSTATUS == "03") && card.ACCOUNTID == finalAccountNumber)
-                                        .ToList();
+                                CardNumber = expiryCard.CARDNUMBER;
+                                CardExpiryDate = expiryCard.CARDEXPIRYDATE;
+                                AccountId = expiryCard.ACCOUNTID;
+                                CardName = expiryCard.CARDNAME;
+                                ProductDescription = expiryCard.PRODUCTDESCRIPTION;
+                                CardGenerationType = expiryCard.PRODUCTCODE == ProductCode ? "Replace" : "Upgrade";
 
-                                    foreach (var card in oldCards)
-                                    {
-                                        CardStatus = card.CARDSTATUS;
-
-                                        if (CardStatus == "00")
-                                        {
-                                            CardName = card.CARDNAME;
-                                        }
-                                        else if (CardStatus == "01")
-                                        {
-                                            CardNumber = card.CARDNUMBER;
-                                        }
-
-                                        Logs.WriteLogEntry("info", KioskId,
-                                            $"Old card found - CardNumber: {CardNumber}, Status: {CardStatus}, CardName: {CardName}",
-                                            _MethodName);
-                                    }
-
-                                    CardGenerationType = "Upgrade";
-                                    Logs.WriteLogEntry("info", KioskId, $"No exact match found. This is an Upgrade card for Product Code: {ProductCode}", _MethodName);
-                                }
+                            }
+                            else
+                            {
+                                Logs.WriteLogEntry("Warning", KioskId, $"No card found with the max expiry date", _MethodName);
                             }
                         }
                         else
                         {
-                            // No cards found at all
-                            CardGenerationType = "Fresh";
-                            Logs.WriteLogEntry("info", KioskId, $"No matching cards found. This is a Fresh card for Product Code: {ProductCode}", _MethodName);
+                            Logs.WriteLogEntry("Info", KioskId, $"No blocked cards found", _MethodName);
                         }
 
 
 
-                        if (CardFoundButFreshCard && !CardFoundForReplace)
-                        {
-                            Logs.WriteLogEntry("info", KioskId, $"Card Found But Not For Replace: Card Number: {CardNumber}, Status: {CardStatus}, CardName: {CardName}", _MethodName);
-                            Flag = true;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            bodyElement.Add(
-                                new XElement("MessageHead", "Card Replace Failed !"),
-                                new XElement("Message", "FreshCardNotAllowed"));
-                        }
-                        else if (!CardFoundForReplace && !CardFoundButFreshCard)
-                        {
-                            CardGenerationType = "Upgrade";
-                            Logs.WriteLogEntry("info", KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
-                        }
-                        if (!Flag)
-                        {
-                            bodyElement.Add(
-                            new XElement("RespMessage", APIResultCodes.Success),
-                            new XElement("CardGenerationType", CardGenerationType),
-                            new XElement("UpdateType", UpdateType),
-                            new XElement("CardNumber", CardNumber),
-                            new XElement("CardExpiryDate", CardExpiryDate),
-                            new XElement("AccountId", AccountId),
-                            new XElement("DefaultAccount", AccountId),
-                            new XElement("CardName", CardName),
-                            new XElement("ProductDescription", ProductDescription),
-                            new XElement("CardProductCode", ProductCode));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
-                        }
                     }
-                    else if (responseObject.WebMethodResponse.ResponseDescription == "Invalid CNIC")
+                    if (CardFoundButFreshCard && !CardFoundForReplace)
                     {
-                        CardGenerationType = "Fresh";
-                        Logs.WriteLogEntry("info", KioskId, $"This is a {CardGenerationType} Card: {ProductCode}", _MethodName);
+                        Logs.WriteLogEntry("info", KioskId, $"Card Found But Not For Replace: Card Number: {CardNumber}, Status: {CardStatus}, AccountNumber: {AccountId}", _MethodName);
+                        Flag = true;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                         bodyElement.Add(
-                            new XElement("RespMessage", APIResultCodes.Success),
-                            new XElement("CardGenerationType", CardGenerationType),
-                            new XElement("UpdateType", UpdateType),
-                            new XElement("CardNumber", CardNumber),
-                            new XElement("CardExpiryDate", CardExpiryDate),
-                            new XElement("AccountId", AccountId),
-                            new XElement("DefaultAccount", AccountId),
-                            new XElement("CardName", CardName),
-                            new XElement("ProductDescription", ProductDescription),
-                            new XElement("CardProductCode", ProductCode));
+                            new XElement("MessageHead", "Card Replace Failed !"),
+                            new XElement("Message", "FreshCardNotAllowed"));
+                    }
+                    else if (!CardFoundForReplace && !CardFoundButFreshCard)
+                    {
+                        CardGenerationType = "Upgrade";
+                        Logs.WriteLogEntry("info", KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
+                    }
+                    if (!Flag)
+                    {
+                        bodyElement.Add(
+                        new XElement("RespMessage", APIResultCodes.Success),
+                        new XElement("CardGenerationType", CardGenerationType),
+                        new XElement("UpdateType", UpdateType),
+                        new XElement("CardNumber", CardNumber),
+                        new XElement("CardExpiryDate", CardExpiryDate),
+                        new XElement("AccountId", AccountId),
+                        new XElement("DefaultAccount", AccountId),
+                        new XElement("CardName", CardName),
+                        new XElement("ProductDescription", ProductDescription),
+                        new XElement("CardProductCode", ProductCode));
 
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
                     }
-                    else
-                    {
-                        Logs.WriteLogEntry("Error", KioskId, "Failed to get IRIS card list", _MethodName);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                    }
+                }
+                else if (responseObject?.WebMethodResponse?.ResponseDescription == "Invalid CNIC")
+                {
+                    CardGenerationType = "Fresh";
+                    Logs.WriteLogEntry("Info", KioskId, $"Invalid CNIC — defaulting to Fresh card", _MethodName);
+
+                    bodyElement.Add(
+                        new XElement("RespMessage", APIResultCodes.Success),
+                        new XElement("CardGenerationType", CardGenerationType),
+                        new XElement("UpdateType", UpdateType),
+                        new XElement("CardNumber", CardNumber),
+                        new XElement("CardExpiryDate", CardExpiryDate),
+                        new XElement("AccountId", AccountId),
+                        new XElement("DefaultAccount", AccountId),
+                        new XElement("CardName", CardName),
+                        new XElement("ProductDescription", ProductDescription),
+                        new XElement("CardProductCode", ProductCode));
+
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, "Null response from IRIS card listing service", _MethodName);
-
+                    Logs.WriteLogEntry("Error", KioskId, "IRIS card list fetch failed", _MethodName);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    bodyElement.Add(new XElement("Message", "UnableToProcessRequest"));
                 }
-            }
-            catch (ArgumentNullException argEx)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "ArgumentNullException in IRISExistingCardList: " + argEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-            }
-            catch (InvalidOperationException invOpEx)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "InvalidOperationException in IRISExistingCardList: " + invOpEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                    new XElement("Message", "UnableToProcessRequest"));
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Exception in IRISExistingCardList: " + ex, _MethodName);
+                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} Exception: {ex}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                    new XElement("Message", "UnableToProcessRequest"));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -2081,8 +1910,8 @@ namespace AlliedAdapter
 
                 if (CardGenerationType == "Upgrade")
                 {
-                    ActionCode = "A";
-                   
+                    ActionCode = "R";
+                    FinalCardNumber = IrisCardNumber;
                 }
                 else if (CardGenerationType == "Replace")
                 {
@@ -6159,6 +5988,70 @@ namespace AlliedAdapter
             return age;
         }
 
+        public async Task<Card> FreshCardListing(string CnicNumber, string AccountNumber, string KioskId)
+        {
+            string _MethodName = "FreshCardListing";
+            Card freshCardList = null;
+
+            try
+            {
+                string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"];
+                Logs.WriteLogEntry("Info", KioskId, $"Request URL: {url}", _MethodName);
+
+                wsABLCARDSTATUSCHANGE webService = new wsABLCARDSTATUSCHANGE { Url = url };
+                var result = webService.FreshCardListing(CnicNumber);
+                string innerXml = XMLHelper.ExtractInnerXml(result);
+                string cleanedXml = XMLHelper.FixNestedCardInfo(innerXml);
+
+                Logs.WriteLogEntry("Info", KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
+
+                var responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
+
+                if ((responseObject?.Output?.Cards != null && responseObject.WebMethodResponse?.ResponseDescription == "Approved") || responseObject?.WebMethodResponse?.ResponseDescription?.ToLower() == "invalid cnic")
+                {
+                    var freshCards = responseObject.Output.Cards.Where(c => c.ACCOUNTID == AccountNumber).ToList();
+
+                    if (freshCards.Any())
+                    {
+                        foreach (var card in freshCards)
+                        {
+                            freshCardList = new Card()
+                            {
+                                CARDEXPIRYDATE = card.CARDEXPIRYDATE,
+                                ACCOUNTID = card.ACCOUNTID,
+                                CARDNAME = card.CARDNAME,
+                                PRODUCTCODE = card.PRODUCTCODE,
+                                CARDNUMBER = card.CARDNUMBER,
+                                CARDSTATUS = card.CARDSTATUS
+
+                            };
+                            Logs.WriteLogEntry("Info", KioskId, $"Fresh card found — ProductCode: {freshCardList.PRODUCTCODE}, AccountID: {freshCardList.ACCOUNTID}, CardStatus: {freshCardList.CARDSTATUS}, Expiry: {freshCardList.CARDEXPIRYDATE}", _MethodName);
+                        }
+                    }
+                    else
+                    {
+                        Logs.WriteLogEntry("Info", KioskId, $"No fresh cards found Againts {AccountNumber} Account Number ", _MethodName);
+                    }
+
+                }
+                else
+                {
+                    Logs.WriteLogEntry("Info", KioskId, $"No fresh cards found or response not approved for CNIC: {CnicNumber}", _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry("Error", KioskId, $"Exception in FreshCardListing: {ex}", _MethodName);
+            }
+
+            return freshCardList;
+        }
+
+        public static string ExtractDigitsOnly(string input)
+        {
+            return new string(input.Where(char.IsDigit).ToArray());
+        }
+
         //private VariantInfo GetDefaultAsaanAccountVariantID(int bankingModeId, int customerAccountTypeId, int purposeOfAccountId, List<AccountVariant> accountsSelectionList, string KioskId)
         //{
         //    VariantInfo variantInfo = new VariantInfo();
@@ -6566,6 +6459,15 @@ public class ImpersonationHelper
 
 
 
+}
+public class Card
+{
+    public string CARDNUMBER { get; set; }
+    public string ACCOUNTID { get; set; }
+    public string CARDNAME { get; set; }
+    public string CARDSTATUS { get; set; }
+    public string PRODUCTCODE { get; set; }
+    public string CARDEXPIRYDATE { get; set; }
 }
 
 public class ApplicantData
