@@ -168,7 +168,7 @@ namespace AlliedAdapter
                         response = Task.Run(() => SendOTP(request, referenceNumber)).Result;
                         break;
                     case "checkaccountbalance":
-                        response = Task.Run(() => CheckAccountBalance(request, referenceNumber)).Result;
+                        response = Task.Run(() => CheckAccountBalance(request, referenceNumber)).Result; 
                         break;
                     case "iriscardissuance":
                         response = Task.Run(() => CardIssuance(request, referenceNumber)).Result;
@@ -198,7 +198,6 @@ namespace AlliedAdapter
                     case "getpersonalinformation":
                         response = Task.Run(() => PersonalInformation(request, referenceNumber)).Result;
                         break;
-
                     case "getcurrentaddress":
                         response = Task.Run(() => CurrentAddress(request, referenceNumber)).Result;
                         break;
@@ -212,7 +211,7 @@ namespace AlliedAdapter
                         response = Task.Run(() => AccountsDetails(request, referenceNumber)).Result;
                         break;
                     case "revieweddetails":
-                        response = Task.Run(() => ReviewedDetails(request, referenceNumber)).Result;
+                        response = Task.Run(() => ReviewedDetails(request, referenceNumber)).Result;  
                         break;
                     case "aoablcardlist":
                         //  response = Task.Run(() => AOABLCardList(request, referenceNumber)).Result;
@@ -1348,7 +1347,6 @@ namespace AlliedAdapter
             return response.ToString();
         }
         #endregion
-
         
         #region ABL Debit Card Issuance
         public async Task<string> ABLDebitCardIssuance(XDocument request, string RefrenceNumber)
@@ -1539,7 +1537,6 @@ namespace AlliedAdapter
 
         #endregion
       
-
         #region AtmMarkYesForExistingCustomer
 
         public async Task<bool> AtmMarkYesForExistingCustomer(string accountNumber, string BranchCode, string formattedDate, string kioskId)
@@ -1910,8 +1907,7 @@ namespace AlliedAdapter
 
                 if (CardGenerationType == "Upgrade")
                 {
-                    ActionCode = "R";
-                    FinalCardNumber = IrisCardNumber;
+                    ActionCode = "A";
                 }
                 else if (CardGenerationType == "Replace")
                 {
@@ -1927,7 +1923,6 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
                 InstantCard webService = new InstantCard();
                 webService.Url = URL;
-
 
                 string requestLog = $@"
                     <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
@@ -2037,8 +2032,6 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
                 Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
                 Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
-
-
 
                 if (responseDescription == "Success" && responseCode == "00")
                 {
@@ -2335,8 +2328,6 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "PC NAME: " + PcName, _MethodName);
 
                 string RequestId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("RequestId")?.Value ?? string.Empty;
-
-
                 Logs.WriteLogEntry("info", KioskId, KioskId, _MethodName);
 
                 if (RequestId != null)
@@ -2345,9 +2336,10 @@ namespace AlliedAdapter
 
                     HardwareResponse hardwareResponse = deviceOperations.GetPersonalizationRequestStatus(RequestId, 3, 15);
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    Logs.WriteLogEntry("info", KioskId, "data" + hardwareResponse.data.ToString(), _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "code" + hardwareResponse.code, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "description" + hardwareResponse.description, _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "data " + hardwareResponse.data.ToString(), _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "code " + hardwareResponse.code, _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "description " + hardwareResponse.description, _MethodName);
+                    Logs.WriteLogEntry("info", KioskId, "description " + hardwareResponse, _MethodName);
 
                     switch (hardwareResponse.data.ToString())
                     {
@@ -2356,7 +2348,7 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                             bodyElement.Add(
-                             new XElement("RespMessage", APIResultCodes.Success)
+                                 new XElement("RespMessage", APIResultCodes.Success)
                             );
                             break;
                         case "Failed":
@@ -2366,6 +2358,7 @@ namespace AlliedAdapter
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
                             break;
+
                         case "AtExit":
                             Logs.WriteLogEntry("error", KioskId, "Response: AtExit to Get Card Status!", _MethodName);
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
@@ -5572,7 +5565,6 @@ namespace AlliedAdapter
                     Directory.CreateDirectory(DraftedCardFiles);
                 }
 
-
                 Logs.WriteLogEntry("Info", KioskId, "Passphrase Key!: " + passphrase, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Info", KioskId, "Decrypted File Path!: " + DecryptedFilePath, "DecryptEmbossingFile");
                 Logs.WriteLogEntry("Info", KioskId, "Private Key!: " + privateKey, "DecryptEmbossingFile");
@@ -5633,17 +5625,38 @@ namespace AlliedAdapter
                     PGPDecryptor.DecryptFile(VSMCardBaesUrl, outputFile, privateKey, passphrase);
                     string filePath = outputFile;
                     string fileContent = System.IO.File.ReadAllText(filePath);
-                    string namePattern = @"!\s""([^""]+)";
-                    string cardPattern = @"=(\d{6})(\d{16})=(\d{4})";
-                    string cvv1Pattern = @";\d{6}(\d{10,13})=(\d{4}\d{8})(\d{3})";
-                    string cvv2Pattern = @"@@(\d{2}/\d{2})(\d{3})";
-                    string iCvvPattern = @"@(\d{3})@@";
-                    string memberSincePattern = @"""(\d{4})";
-                    string track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
-                    string track2Pattern = @";(\d{16})=(\d{7})";
-                    // string validThruPattern = @"\b(\d{2}/\d{2})\b";
-                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 2", "DecryptEmbossingFile");
+                    string namePattern = "";
+                    string cardPattern = "";
+                    string cvv1Pattern = "";
+                    string cvv2Pattern = "";
+                    string iCvvPattern = "";
+                    string memberSincePattern = "";
+                    string track1Pattern = "";
+                    string track2Pattern = "";
 
+                    if (ProductCode == "0080")
+                    {
+                        namePattern = @"!\s""([^""]+)";
+                        cardPattern = @"=(\d{6})(\d{16})=(\d{4})";
+                        cvv1Pattern = @";\d{6}(\d{10,13})=(\d{4}\d{8})(\d{3})";
+                        cvv2Pattern = @"@@(\d{2}/\d{2})(\d{3})";
+                        iCvvPattern = @"@(\d{3})@@";
+                        memberSincePattern = @"""(\d{4})";
+                        track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
+                        track2Pattern = @";(\d{16})=(\d{7})";
+                    }
+                    else
+                    {
+                        namePattern = @"!\s""([^""]+)";
+                        cardPattern = @";(\d{16})=(\d{7})(\d{3})";
+                        cvv1Pattern = @";\d{6}(\d{10,13})=(\d{4}\d{8})(\d{3})";
+                        cvv2Pattern = @"@@(\d{2}/\d{2})(\d{3})";
+                        iCvvPattern = @"@(\d{3})@@";
+                        memberSincePattern = @"""(\d{4})";
+                        track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
+                        track2Pattern = @";(\d{16})=(\d{7})";
+                    }
+                   
                     MatchCollection nameMatches = Regex.Matches(fileContent, namePattern);
                     MatchCollection cardMatches = Regex.Matches(fileContent, cardPattern);
                     MatchCollection cvv1Matches = Regex.Matches(fileContent, cvv1Pattern);
@@ -5652,26 +5665,84 @@ namespace AlliedAdapter
                     MatchCollection memberSinceMatches = Regex.Matches(fileContent, memberSincePattern);
                     MatchCollection track1Matches = Regex.Matches(fileContent, track1Pattern);
                     MatchCollection track2Matches = Regex.Matches(fileContent, track2Pattern);
-                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 3", "DecryptEmbossingFile");
-                    int recordCount = Math.Min(nameMatches.Count, Math.Min(cardMatches.Count, Math.Min(cvv2Matches.Count,
-                                      Math.Min(memberSinceMatches.Count, Math.Min(iCVVMatches.Count, Math.Min(track1Matches.Count,
-                                      Math.Min(track2Matches.Count, cvv1Matches.Count)))))));
+
+                    int recordCount;
+                    if (ProductCode == "0080")
+                    {
+                             recordCount = new[] {
+                             nameMatches.Count,
+                             cardMatches.Count,
+                             cvv1Matches.Count,
+                             cvv2Matches.Count,
+                             iCVVMatches.Count,
+                             memberSinceMatches.Count,
+                             track1Matches.Count,
+                             track2Matches.Count,
+                             }.Min();
+                    }
+                    else
+                    {
+                             recordCount = new[] {
+                             nameMatches.Count,
+                             cardMatches.Count,
+                             cvv2Matches.Count,
+                             iCVVMatches.Count,
+                             memberSinceMatches.Count,
+                             track1Matches.Count,
+                             track2Matches.Count
+                             }.Min();
+                    }
+                        string name = "";
+                        string cardNumber = "";
+                        string cvv1 = "";
+                        string cvv2 = "";
+                        string icvv = "";
+                        string membersince = "";
+                        string track1 = "";
+                        string track2 = "";
+                        string validFromRaw = "";
+                        string validThruRaw = "";
+                        string validFrom = "";
+                        string validThru = "";
+                        string pan = "";
+
                     for (int i = 0; i < recordCount; i++)
                     {
-                        string name = nameMatches[i].Groups[1].Value.Trim();
-                        // string name = "FAISAL ASIF";
-                        string validFromRaw = cardMatches[i].Groups[1].Value;
-                        string cardNumber = cardMatches[i].Groups[2].Value;
-                        string validThruRaw = cardMatches[i].Groups[3].Value;
-                        string cvv1 = cvv1Matches[i].Groups[3].Value;
-                        string cvv2 = cvv2Matches[i].Groups[2].Value;
-                        string icvv = iCVVMatches[i].Groups[1].Value;
-                        string membersince = memberSinceMatches[i].Groups[1].Value;
-                        string track1 = track1Matches[i].Groups[0].Value;
-                        string track2 = track2Matches[i].Groups[0].Value;
-                        string validFrom = $"{validFromRaw.Substring(2, 2)}/{validFromRaw.Substring(0, 2)}";
-                        string validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
-                        string pan = Regex.Replace(cardNumber, ".{4}", "$0 ");
+                        if (ProductCode == "0080")
+                        {
+                            Logs.WriteLogEntry("Info", KioskId, "Going to Get Co-Bage Card Data :" + ProductCode, "DecryptEmbossingFile");
+                            name = nameMatches[i].Groups[1].Value.Trim();
+                            cardNumber = cardMatches[i].Groups[2].Value;
+                            cvv1 = cvv1Matches[i].Groups[3].Value;
+                            cvv2 = cvv2Matches[i].Groups[2].Value;
+                            icvv = iCVVMatches[i].Groups[1].Value;
+                            membersince = memberSinceMatches[i].Groups[1].Value;
+                            track1 = track1Matches[i].Groups[0].Value;
+                            track2 = track2Matches[i].Groups[0].Value;
+                            validFromRaw = cardMatches[i].Groups[1].Value;
+                            validThruRaw = cardMatches[i].Groups[3].Value;
+                            validFrom = $"{validFromRaw.Substring(2, 2)}/{validFromRaw.Substring(0, 2)}";
+                            validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
+                            pan = Regex.Replace(cardNumber, ".{4}", "$0 ");
+                        }
+                        else
+                        {
+                            Logs.WriteLogEntry("Info", KioskId, "Going to Get VISA Card Data :" + ProductCode, "DecryptEmbossingFile");
+                            name = nameMatches[i].Groups[1].Value.Trim();
+                            cardNumber = cardMatches[i].Groups[1].Value;
+                            cvv1 = cardMatches[i].Groups[3].Value;
+                            cvv2 = cvv2Matches[i].Groups[2].Value;
+                            icvv = iCVVMatches[i].Groups[1].Value;
+                            membersince = memberSinceMatches[i].Groups[1].Value;
+                            track1 = track1Matches[i].Groups[0].Value;
+                            track2 = track2Matches[i].Groups[0].Value;
+                            validFromRaw = cvv2Matches[i].Groups[1].Value;
+                            validThruRaw = cardMatches[i].Groups[2].Value;
+                            validThru = $"{validThruRaw.Substring(2, 2)}/{validThruRaw.Substring(0, 2)}";
+                            var parts = validFromRaw.Split('/');
+                            validFrom = $"{parts[1]}/{parts[0]}";
+                            pan = Regex.Replace(cardNumber, ".{4}", "$0 ").Trim();
+                        }
                         cardList = new CardInfo
                         {
                             PAN = pan,
@@ -5683,8 +5754,33 @@ namespace AlliedAdapter
                             CVV1 = cvv1,
                             CVV2 = cvv2,
                             ICVV = icvv,
-
                         };
+                        cardList = new CardInfo
+                        {
+                            PAN = pan,
+                            CardHolderName = name,
+                            MemberSince = validFrom,
+                            Expiry = validThru,
+                            Track1 = track1,
+                            Track2 = track2,
+                            CVV1 = cvv1,
+                            CVV2 = cvv2,
+                            ICVV = icvv,
+                        };
+
+                        Logs.WriteLogEntry("Info", KioskId,
+                            $"Decrypted Card Info:" +
+                            $"\nCardHolderName: {cardList.CardHolderName}" +
+                            $"\nPAN: {cardList.PAN}" +
+                            $"\nMemberSince (ValidFrom): {cardList.MemberSince}" +
+                            $"\nExpiry (ValidThru): {cardList.Expiry}" +
+                            $"\nTrack1: {cardList.Track1}" +
+                            $"\nTrack2: {cardList.Track2}" +
+                            $"\nCVV1: {cardList.CVV1}" +
+                            $"\nCVV2: {cardList.CVV2}" +
+                            $"\nICVV: {cardList.ICVV}",
+                            "DecryptEmbossingFile");
+
                     }
                     Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 4", "DecryptEmbossingFile");
                     if (System.IO.File.Exists(VSMCardBaesUrl))
