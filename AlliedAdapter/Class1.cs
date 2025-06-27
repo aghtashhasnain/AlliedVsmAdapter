@@ -168,7 +168,7 @@ namespace AlliedAdapter
                         response = Task.Run(() => SendOTP(request, referenceNumber)).Result;
                         break;
                     case "checkaccountbalance":
-                        response = Task.Run(() => CheckAccountBalance(request, referenceNumber)).Result; 
+                        response = Task.Run(() => CheckAccountBalance(request, referenceNumber)).Result;
                         break;
                     case "iriscardissuance":
                         response = Task.Run(() => CardIssuance(request, referenceNumber)).Result;
@@ -211,7 +211,7 @@ namespace AlliedAdapter
                         response = Task.Run(() => AccountsDetails(request, referenceNumber)).Result;
                         break;
                     case "revieweddetails":
-                        response = Task.Run(() => ReviewedDetails(request, referenceNumber)).Result;  
+                        response = Task.Run(() => ReviewedDetails(request, referenceNumber)).Result;
                         break;
                     case "aoablcardlist":
                         //  response = Task.Run(() => AOABLCardList(request, referenceNumber)).Result;
@@ -453,33 +453,26 @@ namespace AlliedAdapter
                 };
 
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 5]: Sending request to SOAP Service at URL: {soapClient.Url}", _MethodName);
-                //   Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Prepared SOAP Request: {JsonConvert.SerializeObject(soapRequest)}", _MethodName);
-
+                //   Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Prepared SOAP Request: {JsonConvert.SerializeObject(soapRequest)}", _MethodName);                
                 // Call SOAP API
                 var soapResponse = soapClient.Operation1(soapRequest);
-
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: SOAP Response Received - Code: {soapResponse.CODE}, Message: {soapResponse.MESSAGE}", _MethodName);
-
                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
 
                 if (soapResponse.CODE == "100")
                 {
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Success", _MethodName);
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation successful";
-
                     bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
                 }
                 else
                 {
                     Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Failed", _MethodName);
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation Failed";
-
                     bodyElement.Add(new XElement("Message", "Bio Validation Failed"));
                 }
             }
@@ -1347,7 +1340,7 @@ namespace AlliedAdapter
             return response.ToString();
         }
         #endregion
-        
+
         #region ABL Debit Card Issuance
         public async Task<string> ABLDebitCardIssuance(XDocument request, string RefrenceNumber)
         {
@@ -1536,7 +1529,7 @@ namespace AlliedAdapter
         }
 
         #endregion
-      
+
         #region AtmMarkYesForExistingCustomer
 
         public async Task<bool> AtmMarkYesForExistingCustomer(string accountNumber, string BranchCode, string formattedDate, string kioskId)
@@ -5656,7 +5649,7 @@ namespace AlliedAdapter
                         track1Pattern = @"%B(\d{16})\^([^ ^]+(?: [^ ^]+)*)\s*\^(\d{9})";
                         track2Pattern = @";(\d{16})=(\d{7})";
                     }
-                   
+
                     MatchCollection nameMatches = Regex.Matches(fileContent, namePattern);
                     MatchCollection cardMatches = Regex.Matches(fileContent, cardPattern);
                     MatchCollection cvv1Matches = Regex.Matches(fileContent, cvv1Pattern);
@@ -5669,7 +5662,7 @@ namespace AlliedAdapter
                     int recordCount;
                     if (ProductCode == "0080")
                     {
-                             recordCount = new[] {
+                        recordCount = new[] {
                              nameMatches.Count,
                              cardMatches.Count,
                              cvv1Matches.Count,
@@ -5682,7 +5675,7 @@ namespace AlliedAdapter
                     }
                     else
                     {
-                             recordCount = new[] {
+                        recordCount = new[] {
                              nameMatches.Count,
                              cardMatches.Count,
                              cvv2Matches.Count,
@@ -5692,19 +5685,19 @@ namespace AlliedAdapter
                              track2Matches.Count
                              }.Min();
                     }
-                        string name = "";
-                        string cardNumber = "";
-                        string cvv1 = "";
-                        string cvv2 = "";
-                        string icvv = "";
-                        string membersince = "";
-                        string track1 = "";
-                        string track2 = "";
-                        string validFromRaw = "";
-                        string validThruRaw = "";
-                        string validFrom = "";
-                        string validThru = "";
-                        string pan = "";
+                    string name = "";
+                    string cardNumber = "";
+                    string cvv1 = "";
+                    string cvv2 = "";
+                    string icvv = "";
+                    string membersince = "";
+                    string track1 = "";
+                    string track2 = "";
+                    string validFromRaw = "";
+                    string validThruRaw = "";
+                    string validFrom = "";
+                    string validThru = "";
+                    string pan = "";
 
                     for (int i = 0; i < recordCount; i++)
                     {
@@ -5755,18 +5748,7 @@ namespace AlliedAdapter
                             CVV2 = cvv2,
                             ICVV = icvv,
                         };
-                        cardList = new CardInfo
-                        {
-                            PAN = pan,
-                            CardHolderName = name,
-                            MemberSince = validFrom,
-                            Expiry = validThru,
-                            Track1 = track1,
-                            Track2 = track2,
-                            CVV1 = cvv1,
-                            CVV2 = cvv2,
-                            ICVV = icvv,
-                        };
+
 
                         Logs.WriteLogEntry("Info", KioskId,
                             $"Decrypted Card Info:" +
