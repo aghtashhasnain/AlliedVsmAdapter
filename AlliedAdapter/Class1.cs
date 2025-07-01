@@ -342,7 +342,7 @@ namespace AlliedAdapter
                                 new XElement("Name", hostData.Name),
                                 new XElement("CustomerNumber", hostData.CustomerNumber),
                                 new XElement("DOB", hostData.DOB),
-                                new XElement("PhoneNumber", hostData.PhoneNumber),
+                                new XElement("PhoneNumber", MobileNumber),
                                 new XElement("Email", hostData.Email),
                                 new XElement("CNIC", hostData.CNIC),
                                 new XElement("TransactionId", TransactionId),
@@ -352,7 +352,6 @@ namespace AlliedAdapter
                         {
                             Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Verification Failed - Record Not Found. Status Code: {ApiResponse.StatusCode}", _MethodName);
                             Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Error Message: {ApiResponse.Message}", _MethodName);
-
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
@@ -365,10 +364,8 @@ namespace AlliedAdapter
                     {
                         Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Request Failed - Status Code: {ApiResponse.StatusCode}", _MethodName);
                         Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Error Message: {ApiResponse.Message}", _MethodName);
-
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
                 }
@@ -376,10 +373,8 @@ namespace AlliedAdapter
                 {
                     Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: API Request Failed - Status Code: {ApiResponse.StatusCode}", _MethodName);
                     Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: API Error Message: {ApiResponse.Message}", _MethodName);
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                 }
             }
@@ -686,7 +681,7 @@ namespace AlliedAdapter
 
                 foreach (var item in atmCardList)
                 {
-                    bool isValidCard = cardFormats.Any(cf => cf.name == item.name);
+                    bool isValidCard = cardFormats.Any(cf => cf.name.ToLower() == item.name.ToLower());
                     if (!isValidCard) continue;
 
                     if (transactionType == "AsanAccount")
@@ -1520,7 +1515,7 @@ namespace AlliedAdapter
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in CustomerVerification: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry("Error", KioskId, $"Exception in ABLDebitCardIssuance: {ex.Message}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
@@ -2077,7 +2072,6 @@ namespace AlliedAdapter
                     //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
-
                 }
                 else
                 {
@@ -2349,14 +2343,15 @@ namespace AlliedAdapter
                             Logs.WriteLogEntry("error", KioskId, "Response: Failed to Get Card Status!", _MethodName);
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                             response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                             break;
 
                         case "AtExit":
-                            Logs.WriteLogEntry("error", KioskId, "Response: AtExit to Get Card Status!", _MethodName);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", hardwareResponse.description));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                            bodyElement.Add(
+                                 new XElement("RespMessage", APIResultCodes.Success)
+                            );
                             break;
                         case "Processing":
                             Logs.WriteLogEntry("Processing", KioskId, "Response: Processing!", _MethodName);
@@ -2373,7 +2368,6 @@ namespace AlliedAdapter
 
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
@@ -2384,7 +2378,6 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, "Error in Failed to Get Card Status!: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
             }
@@ -3218,6 +3211,7 @@ namespace AlliedAdapter
         #endregion
 
         #region CurrentAddress
+
         public async Task<string> CurrentAddress(XDocument request, string RefrenceNumber)
         {
 
@@ -3233,6 +3227,7 @@ namespace AlliedAdapter
                 string accessToken = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("accessToken")?.Value ?? string.Empty;
                 string town = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("town")?.Value ?? string.Empty;
                 string city = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("city")?.Value ?? string.Empty;
+                string mobileNo = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("mobileNo")?.Value ?? string.Empty;
 
 
                 Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
@@ -3260,17 +3255,17 @@ namespace AlliedAdapter
                                         {
                                             ["rdaCustomerProfileAddrId"] = consumer["addresses"][0]["rdaCustomerProfileAddrId"],
                                             ["rdaCustomerId"] = consumer["addresses"][0]["rdaCustomerId"],
-                                            ["phone"] = consumer["addresses"][0]["phone"],
                                             ["postalCode"] = consumer["addresses"][0]["postalCode"],
+                                            ["phone"] = mobileNo,
                                             ["nearestLandMark"] = consumer["addresses"][0]["nearestLandMark"],
-                                            ["mobileNo"] = consumer["addresses"][0]["mobileNo"],
+                                            ["mobileNo"] = mobileNo,
                                             ["customerTown"] = town,
                                             ["customerAddress"] = address1,
                                             ["customerAddressLine1"] = address2,
-                                            ["countryCodeMobile"] = +92,
+                                            ["countryCodeMobile"] = "+92",
                                             ["city"] = city,
                                             ["countryId"] = 157,
-                                            ["country"] =  "Pakistan",
+                                            ["country"] = "Pakistan",
                                             ["addressTypeForeignInd"] = consumer["addresses"][0]["addressTypeForeignInd"],
                                             ["addressTypeId"] = consumer["addresses"][0]["addressTypeId"],
                                         },
@@ -3278,14 +3273,14 @@ namespace AlliedAdapter
                                         {
                                             ["rdaCustomerProfileAddrId"] = consumer["addresses"][1]["rdaCustomerProfileAddrId"],
                                             ["rdaCustomerId"] = consumer["addresses"][1]["rdaCustomerId"],
-                                             ["postalCode"] = consumer["addresses"][1]["postalCode"],
-                                            ["phone"] = consumer["addresses"][1]["phone"],
+                                            ["postalCode"] = consumer["addresses"][1]["postalCode"],
+                                            ["phone"] = mobileNo,
                                             ["nearestLandMark"] = consumer["addresses"][1]["nearestLandMark"],
-                                            ["mobileNo"] = consumer["addresses"][1]["mobileNo"],
+                                            ["mobileNo"] = mobileNo,
                                             ["customerTown"] = town,
                                             ["customerAddress"] = consumer["addresses"][1]["customerAddress"],
                                             ["customerAddressLine1"] = consumer["addresses"][1]["customerAddressLine1"],
-                                            ["countryCodeMobile"] = +92,
+                                            ["countryCodeMobile"] = "+92",
                                             ["city"] = city,
                                             ["countryId"] = 157,
                                             ["country"] = "Pakistan",
@@ -3330,6 +3325,8 @@ namespace AlliedAdapter
             return response.ToString();
 
         }
+
+
         #endregion
 
         #region Occupational Details
@@ -4139,7 +4136,7 @@ namespace AlliedAdapter
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ex.Message));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
 
             return response.ToString();
@@ -5323,7 +5320,7 @@ namespace AlliedAdapter
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
-
+                     
                 }
             }
             catch (ArgumentNullException argEx)
@@ -5331,14 +5328,14 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, "ArgumentNullException in CardIssuance: " + argEx, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Missing required arguments: " + argEx.Message));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             catch (InvalidOperationException invOpEx)
             {
                 Logs.WriteLogEntry("Error", KioskId, "InvalidOperationException in CardIssuance: " + invOpEx, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Operation is not valid: " + invOpEx.Message));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
             }
             catch (Exception ex)
@@ -5346,7 +5343,7 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("Error", KioskId, "General Exception in CardIssuance: " + ex, _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ex.Message));
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
             }
             return response.ToString();
         }
@@ -5431,9 +5428,8 @@ namespace AlliedAdapter
 
         public static DataTable ImportExcel(string KioskId)
         {
-            //string filePath = ConfigurationManager.AppSettings["ExcelPath"].ToString();   
-
-            string filePath = "C:\\inetpub\\wwwroot\\CEM\\Excel\\Account Mapping with Card.xlsx";
+            string filePath = ConfigurationManager.AppSettings["ExcelFilePath"].ToString();
+            //string filePath = "C:\\inetpub\\wwwroot\\CEM\\Excel\\Account Mapping with Card.xlsx";
 
             Logs.WriteLogEntry("Info", KioskId, "Excel File Path: Step 1" + filePath, "ImportExcel");
 
@@ -5811,7 +5807,6 @@ namespace AlliedAdapter
                 if (genderList.Any())
                 {
                     Logs.WriteLogEntry("Info", KioskId, "Gender List Found: " + string.Join(", ", genderList), _MethodName);
-
                     foreach (var gender in genderList)
                     {
                         if (gender.ContainsKey("id") && gender.ContainsKey("name") && int.TryParse(gender["id"].ToString(), out int genderId))
