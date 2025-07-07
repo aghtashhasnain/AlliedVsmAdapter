@@ -613,7 +613,6 @@ namespace AlliedAdapter
         }
 
         #endregion
-
         #region ABL ATM CardList
 
         public async Task<string> ABLCardList(XDocument request, string RefrenceNumber)
@@ -681,7 +680,7 @@ namespace AlliedAdapter
 
                 foreach (var item in atmCardList)
                 {
-                    bool isValidCard = cardFormats.Any(cf => cf.name.ToLower() == item.name.ToLower());
+                    bool isValidCard = cardFormats.Any(cf => cf.name == item.KgsName);
                     if (!isValidCard) continue;
 
                     if (transactionType == "AsanAccount")
@@ -696,6 +695,7 @@ namespace AlliedAdapter
                             {
                                 {"id", item.IrisCardProductCode},
                                 {"name", item.name},
+                                {"kgsName", item.KgsName},
                                 {"replacementCharges", cardCharges.replacementamount},
                                 {"issuanceCharges", cardCharges.issuanceamount},
                                 {"t24CardCode", item.t24CardCode},
@@ -714,14 +714,13 @@ namespace AlliedAdapter
                     }
                     else
                     {
-
                         Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 13]: Processing general card: {item.name}", _MethodName);
                         CardCharges cardCharges = await ABLDebitCardCharges(item.t24CardCode, KioskId);
-
                         finalATMCardList.Add(new Dictionary<string, object>
                         {
                                 {"id", item.IrisCardProductCode},
                                 {"name", item.name},
+                                {"kgsName", item.KgsName},
                                 {"replacementCharges", cardCharges.replacementamount},
                                 {"issuanceCharges", cardCharges.issuanceamount},
                                 {"t24CardCode", item.t24CardCode},
@@ -811,6 +810,7 @@ namespace AlliedAdapter
                             {
                                 IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
                                 name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
+                                KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
                                 t24AccountCategoryCode = productcode,
                                 Currency = row["Currency"]?.ToString(),
                                 t24CardCode = row["T24 Card Code"]?.ToString(),
@@ -839,6 +839,7 @@ namespace AlliedAdapter
                                 {
                                     IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
                                     name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
+                                    KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
                                     t24AccountCategoryCode = productcode,
                                     Currency = row["Currency"]?.ToString(),
                                     t24CardCode = row["T24 Card Code"]?.ToString(),
@@ -862,6 +863,7 @@ namespace AlliedAdapter
                             {
                                 IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
                                 name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
+                                KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
                                 t24AccountCategoryCode = productcode,
                                 Currency = row["Currency"]?.ToString(),
                                 t24CardCode = row["T24 Card Code"]?.ToString(),
@@ -1371,7 +1373,7 @@ namespace AlliedAdapter
 
 
                 string TransactionId = GenerateTransactionId();
-                DateTime dateTime = DateTime.Now;
+                DateTime dateTime = DateTime.Now; 
                 string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
                 string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
                 Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
@@ -2428,6 +2430,9 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry("info", KioskId, "API Request : " + JsonConvert.SerializeObject(requestData.ToString()), _MethodName);
 
                 var aPIResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+
+                Logs.WriteLogEntry("info", KioskId, "API Response : " + JsonConvert.SerializeObject(aPIResponse), _MethodName);
+
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     OTPResponse otpResponse = JsonConvert.DeserializeObject<OTPResponse>(aPIResponse.ResponseContent);
@@ -2442,7 +2447,6 @@ namespace AlliedAdapter
                     Logs.WriteLogEntry("Error", KioskId, "API Call Failed. Status Code: " + aPIResponse.StatusCode, _MethodName);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                     response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
 
                 }
@@ -5097,6 +5101,7 @@ namespace AlliedAdapter
                 string CNIC = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CNIC")?.Value ?? string.Empty;
                 string DOB = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("DOB")?.Value ?? string.Empty;
                 string Nationality = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Nationality")?.Value ?? string.Empty;
+                string SelectedCardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("SelectedCardName")?.Value ?? string.Empty;
 
                 CNIC = CNIC.Replace("-", "");
 
@@ -5273,54 +5278,64 @@ namespace AlliedAdapter
                     {
                         Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
 
-                        //CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
-                        //Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
+                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
 
-                        //if (cardInfo != null)
-                        //{
+                        if (cardInfo != null)
+                        {
+                            Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
 
-                        //    string Description = "";
-                        //    HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, CardName, out Description, KioskId);
-                        //    Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
-                        //    if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
-                        //    {
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success),
-                        //             new XElement("RequestId", hardwareResponse.data));
+                            string Description = "";
+                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
+                            if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
+                            {
+                                Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
+                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
+                                    new XElement("RequestId", hardwareResponse.data));
 
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                        //    }
-                        //    else
-                        //    {
-                        //        Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
-                        //        var bodyElements = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        //        bodyElements.Add(new XElement("Message", hardwareResponse.description));
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
-                        //    }
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
+                            }
+                            else
+                            {
+                                Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
+                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                                //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
+                            }
 
-                        //}
+                        }
+                        else
+                        {
+                            Logs.WriteLogEntry("Error", KioskId, "cardInfo", _MethodName);
+                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                            //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        }
 
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        // response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                        ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+
                     }
                     else
                     {
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        bodyElement.Add(new XElement("Message", responseDescription));
-
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
                     }
 
-                     
+
                 }
             }
             catch (ArgumentNullException argEx)

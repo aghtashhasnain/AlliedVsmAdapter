@@ -20,6 +20,8 @@ namespace AlliedAdapter.Models
     {
         public string IrisCardProductCode { get; set; } //IRIS Card Product Code
         public string name { get; set; } //IRIS Card Product Description (Card Variant)
+        public string KgsName { get; set; } // KGS Card Format Name (Card plastic)
+
         public string description { get; set; }
         public string t24AccountCategoryCode { get; set; } // T24 Account Category Code
         public string Currency { get; set; } //Currency

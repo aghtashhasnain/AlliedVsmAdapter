@@ -95,10 +95,14 @@ namespace AlliedAdapter.Helpers
                 using (HttpClient client = new HttpClient(handler))
                 {
                     client.DefaultRequestHeaders.Clear();
+
                     if (apiKey != "")
                     {
-                      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                     
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                    
                     }
+
 
                     HttpResponseMessage response;
                     if (httpMethod == HttpMethods.POST)
