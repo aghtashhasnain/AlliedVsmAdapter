@@ -4057,7 +4057,7 @@ namespace AlliedAdapter
 
                 // Selfie Image Processing
                 string selfieImageToBase64 = "";
-                string _SourcePath = "C:\\CommonFiles\\FileStorage\\";
+                string _SourcePath = ConfigurationManager.AppSettings["LiveImageBasePath"].ToString();
                 string UserFileName = UserPicture.Replace("path=", ""); // Remove "path="
                 string selfieImageFileName = Path.Combine(UserFileName, "Photo.Jpeg");
                 string selfieImageSourceFile = Path.Combine(_SourcePath, selfieImageFileName);
@@ -4076,17 +4076,6 @@ namespace AlliedAdapter
                 }
 
                 #endregion
-
-                string finalBaseImage = "";
-                if (KioskId == "5" || KioskId == "7")
-                {
-                    finalBaseImage = "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";
-                }
-                else
-                {
-                    finalBaseImage = selfieImageToBase64;
-                }
-
                 var requestData = (dynamic)null;
                 foreach (var consumer in consumerList)
                 {
@@ -4098,14 +4087,14 @@ namespace AlliedAdapter
                             ["rdaCustomerId"] = consumer["rdaCustomerProfileId"],
                             ["rdaCustomerAccInfoId"] = consumer["accountInformation"]["rdaCustomerAccInfoId"],
                             ["cnicFrontURL"] = DecryptPath,
-                            ["livenessImage"] = finalBaseImage,
+                            ["livenessImage"] = selfieImageToBase64,
                             ["livenessFlag"] = true
                         }
                     };
 
                 }
 
-                //   Logs.WriteLogEntry("Info", KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
+                Logs.WriteLogEntry("Info", KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, accessToken, "");
                 JObject LiveImageResponse = JObject.Parse(apiResponse.ResponseContent);
                 var LiveImageData = LiveImageResponse["message"];
@@ -4239,12 +4228,11 @@ namespace AlliedAdapter
                         foreach (var profession in professions)
                         {
                             var professionEntry = new Dictionary<string, object>
-                    {
+                        {
                         { "id", profession["id"] },
                         { "name", profession["name"] },
                         { "description", profession["description"] }
-                    };
-
+                        };
                             professionList.Add(professionEntry);
                         }
                     }
@@ -4370,7 +4358,7 @@ namespace AlliedAdapter
                                 { "cityName", (string)(branch["cityName"] ?? "") },
                                 { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
                                 { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
-                                { "fcyBranch", (int)(branch["fcyBranch"] ?? 0) },
+                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
                                 { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
 
                             })
@@ -4432,7 +4420,7 @@ namespace AlliedAdapter
                                 { "cityName", (string)(branch["cityName"] ?? "") },
                                 { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
                                 { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
-                                { "fcyBranch", (int)(branch["fcyBranch"] ?? 0) },
+                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
                                 { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
 
                             })
