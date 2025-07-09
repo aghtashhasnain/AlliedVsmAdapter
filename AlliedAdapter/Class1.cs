@@ -1840,6 +1840,7 @@ namespace AlliedAdapter
                 string Nationality = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Nationality")?.Value ?? string.Empty;
                 string AccountCategory = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountCategory")?.Value ?? string.Empty;
                 string SelectedCardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("SelectedCardName")?.Value ?? string.Empty;
+                string Scheme = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Scheme")?.Value ?? string.Empty;
 
                 CNIC = CNIC.Replace("-", "");
 
@@ -2027,7 +2028,7 @@ namespace AlliedAdapter
                 {
                     Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
 
-                    CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
+                    CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
 
                     if (cardInfo != null)
                     {
@@ -2958,8 +2959,14 @@ namespace AlliedAdapter
                             FullName = consumer["fullName"].ToString();
                             DateOfBirth = consumer["dateOfBirth"].ToString();
                             rdaCustomerProfileId = consumer["rdaCustomerProfileId"].ToString();
-                            MotherName = Decrypt(consumer["motherMaidenNameEncrypted"].ToString());
+                            MotherName = consumer["motherMaidenName"].ToString();
+                            if (string.IsNullOrEmpty(MotherName))
+                            {
+                                MotherName =  Decrypt(consumer["motherMaidenNameEncrypted"].ToString());
+                            }
+
                             FatherName = consumer["fatherHusbandName"].ToString();
+
                             gender = consumer["gender"].ToString();
                             genderId = consumer["genderId"].ToString();
                             Address1 = consumer["addresses"]?[0]?["customerAddress"].ToString();
@@ -3059,6 +3066,7 @@ namespace AlliedAdapter
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
 
+                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} Step 1", _MethodName);
 
                 var jsonRequest = (dynamic)null;
 
@@ -3080,7 +3088,7 @@ namespace AlliedAdapter
                      ["fatherHusbandName"] = consumer["fatherHusbandName"],
                      ["motherMaidenName"] = motherName,
                      ["genderId"] = genderId,
-                     ["cityOfBirth"] = Decrypt(consumer["cityOfBirthEncrypted"].ToString()),
+                     ["cityOfBirth"] = consumer["cityOfBirth"].ToString(),
                      ["countryOfBirthPlaceId"] = 157,
                      ["isPrimary"] = consumer["isPrimary"],
                      ["nationalityTypeId"] = 100901,
@@ -3114,6 +3122,7 @@ namespace AlliedAdapter
                     };
 
                 }
+                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} Step 2", _MethodName);
                 Console.WriteLine(JsonConvert.SerializeObject(jsonRequest));
                 Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} jsonRequest:" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
 
@@ -3205,6 +3214,7 @@ namespace AlliedAdapter
             catch (Exception ex)
             {
                 Logs.WriteLogEntry("Error", KioskId, $"Exception in {{PersonalInfo}}: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{PersonalInfo}}: {ex}", _MethodName);
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
@@ -3403,7 +3413,7 @@ namespace AlliedAdapter
                                  ["fatherHusbandName"] = consumer["fatherHusbandName"],
                                  ["motherMaidenName"] = motherName,
                                  ["genderId"] = genderId,
-                                 ["cityOfBirth"] = Decrypt(consumer["cityOfBirthEncrypted"].ToString()),
+                                 ["cityOfBirth"] = consumer["cityOfBirth"].ToString(),
                                  ["countryOfBirthPlaceId"] = 157,
                                  ["isPrimary"] = consumer["isPrimary"],
                                  ["nationalityTypeId"] = 100901,
@@ -4076,6 +4086,8 @@ namespace AlliedAdapter
                 }
 
                 #endregion
+
+             
                 var requestData = (dynamic)null;
                 foreach (var consumer in consumerList)
                 {
@@ -5090,6 +5102,7 @@ namespace AlliedAdapter
                 string DOB = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("DOB")?.Value ?? string.Empty;
                 string Nationality = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Nationality")?.Value ?? string.Empty;
                 string SelectedCardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("SelectedCardName")?.Value ?? string.Empty;
+                string Scheme = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Scheme")?.Value ?? string.Empty;
 
                 CNIC = CNIC.Replace("-", "");
 
@@ -5266,7 +5279,7 @@ namespace AlliedAdapter
                     {
                         Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
 
-                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId);
+                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
 
                         if (cardInfo != null)
                         {
@@ -5541,7 +5554,7 @@ namespace AlliedAdapter
         #endregion
 
         #region Decrypt Embossing Files
-        public static CardInfo DecryptEmbossingFile(string BranchCode, string ProductCode, string KioskId)
+        public static CardInfo DecryptEmbossingFile(string BranchCode, string ProductCode, string KioskId, string Scheme)
         {
             CardInfo cardList = new CardInfo();
             string VSMCardBaesUrl = ConfigurationManager.AppSettings["VSMCardBaesUrl"].ToString();
@@ -5626,7 +5639,7 @@ namespace AlliedAdapter
                     string track1Pattern = "";
                     string track2Pattern = "";
 
-                    if (ProductCode == "0080")
+                    if (Scheme.ToLower() == "upi")
                     {
                         namePattern = @"!\s""([^""]+)";
                         cardPattern = @"=(\d{6})(\d{16})=(\d{4})";
@@ -5659,7 +5672,7 @@ namespace AlliedAdapter
                     MatchCollection track2Matches = Regex.Matches(fileContent, track2Pattern);
 
                     int recordCount;
-                    if (ProductCode == "0080")
+                    if (Scheme.ToLower() == "upi")
                     {
                         recordCount = new[] {
                              nameMatches.Count,
@@ -5700,7 +5713,7 @@ namespace AlliedAdapter
 
                     for (int i = 0; i < recordCount; i++)
                     {
-                        if (ProductCode == "0080")
+                        if (Scheme.ToLower() == "upi")
                         {
                             Logs.WriteLogEntry("Info", KioskId, "Going to Get Co-Bage Card Data :" + ProductCode, "DecryptEmbossingFile");
                             name = nameMatches[i].Groups[1].Value.Trim();
