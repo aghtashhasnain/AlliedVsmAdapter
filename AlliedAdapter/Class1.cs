@@ -75,7 +75,7 @@ namespace AlliedAdapter
         bool UETflag = false;
 
 
-        #region API URLs
+        #region API Base URLs
 
         string MyPdaUrl = ConfigurationManager.AppSettings["MyPdaUrl"].ToString();
         string T24Url = ConfigurationManager.AppSettings["T24Url"].ToString();
@@ -87,7 +87,6 @@ namespace AlliedAdapter
         private string _demoServiceUrl;
         private bool _isDemoServiceUrlFound;
 
-        private const string mobNoTag = "mobileNumber";
 
 
         /// <summary>
