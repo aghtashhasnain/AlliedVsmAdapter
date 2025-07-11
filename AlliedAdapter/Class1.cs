@@ -390,6 +390,7 @@ namespace AlliedAdapter
                 string contactNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("contactnumber")?.Value ?? string.Empty;
                 string NumTry = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("NumTry")?.Value ?? string.Empty;
 
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} Request {request.ToString()}", _MethodName);
                 Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 2]: Input - CNIC: {cnicNumber}, Contact: {contactNumber}, NumTry: {NumTry}", _MethodName);
 
                 cnicNumber = cnicNumber.Replace("-", "");
@@ -412,6 +413,7 @@ namespace AlliedAdapter
                     FLAG = "3"
                 };
 
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Request {JsonConvert.SerializeObject(soapRequest)}", _MethodName);
                 Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 4]: Sending request to SOAP Service at {soapClient.Url}", _MethodName);
 
                 var soapResponse = soapClient.Operation1(soapRequest);
@@ -429,7 +431,7 @@ namespace AlliedAdapter
                 else
                 {
                     Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 6]: BioVerification Failed", _MethodName);
-                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.BioValidationFailed);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.BioValidationFailed);
                     bodyElement.Add(new XElement("Message", ApiResponseConstants.BioValidationFailed));
                 }
             }
@@ -921,7 +923,7 @@ namespace AlliedAdapter
                 }
                 else
                 {
-                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "Hopper Not Available");
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Hopper Not Available");
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "CardNotAvailable"));
                     Logs.WriteLogEntry(LogType.Warning, kioskID, $"{_MethodName} [Step 10]: Hopper status failed", _MethodName);
                 }
@@ -1704,8 +1706,8 @@ namespace AlliedAdapter
                 Logs.WriteLogEntry(LogType.Info, kioskId, $"Final Request: {request}", _MethodName);
 
                 Random random = new Random();
-                //int otp = random.Next(100000, 999999);
-                int otp = 111111;
+                int otp = random.Next(100000, 999999);
+                //int otp = 111111;
                 string message = $"Your OTP for verification is: {otp}. Please enter this code to proceed.";
 
                 string url = ConfigurationManager.AppSettings["SendOtp"]?.ToString();
@@ -1749,7 +1751,7 @@ namespace AlliedAdapter
         private static string GenerateTransactionId()
         {
             const string methodName = "GenerateTransactionId";
-            string kioskId = "System"; 
+            string kioskId = "System";
 
             try
             {
@@ -1853,7 +1855,7 @@ namespace AlliedAdapter
                 SigmaDS4.DeviceOperations deviceOps = new SigmaDS4.DeviceOperations();
                 hardwareResponse = deviceOps.StartCardPersonalization(computerName, cardName, request);
 
-                Logs.WriteLogEntry(LogType.Info,kioskId,$"CardPersonalization Response: Code={hardwareResponse.code}, Description={hardwareResponse.description}, Data={hardwareResponse.data}",methodName
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"CardPersonalization Response: Code={hardwareResponse.code}, Description={hardwareResponse.description}, Data={hardwareResponse.data}", methodName
                 );
 
                 if (hardwareResponse.code == 0 && hardwareResponse.data != null)
@@ -2516,7 +2518,7 @@ namespace AlliedAdapter
                 {
                     Logs.WriteLogEntry(LogType.Error, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
                     SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, apiResponse.ResponseContent);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message",ApiResponseConstants.Message_UnableToProcess));
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
@@ -2566,49 +2568,48 @@ namespace AlliedAdapter
                     jsonRequest = new JObject
                     {
 
-
                         ["data"] = new JObject
                         {
                             ["consumerList"] = new JArray
-                 {
-                     new JObject
-                     {
-                   ["rdaCustomerProfileId"] = consumer["rdaCustomerProfileId"],
-                     ["rdaCustomerAccInfoId"] = consumer["accountInformation"]["rdaCustomerAccInfoId"],
-                     ["fullName"] = name,
-                     ["fatherHusbandName"] = consumer["fatherHusbandName"],
-                     ["motherMaidenName"] = motherName,
-                     ["genderId"] = genderId,
-                     ["cityOfBirth"] = consumer["cityOfBirth"].ToString(),
-                     ["countryOfBirthPlaceId"] = 157,
-                     ["isPrimary"] = consumer["isPrimary"],
-                     ["nationalityTypeId"] = 100901,
-                     ["nationalities"] = new JArray
-                     {
-                         new JObject
-                         {
-                             ["rdaCustomerId"] = consumer["rdaCustomerProfileId"],
-                             ["nationalityId"] = 157,
-                             ["idNumber"] = consumer["idNumber"]
-                         }
-                     },
-                     ["placeOfIssue"] = 157,
-                     ["occupationId"] = consumer["occupationId"] ?? JValue.CreateNull(),
-                     ["professionId"] = consumer["professionId"] ?? JValue.CreateNull(),
-                     ["emailAddress"] = consumer["emailAddress"] ?? JValue.CreateNull(),
-                     ["taxResidentInd"] = 0,
-                     ["countryOfResidenceId"] = 157,
-                     ["customerTitleId"] = 100801,
-                     ["nameOfOrganization"] = consumer["nameOfOrganization"] ?? JValue.CreateNull(),
-                     ["designation"] = consumer["designation"] ?? JValue.CreateNull(),
-                     ["employedSince"] = consumer["employedSince"] ?? JValue.CreateNull(),
-                     ["employerAddress"] = consumer["employerAddress"] ?? JValue.CreateNull(),
-                     ["employerAddressLine2"] = consumer["employerAddressLine2"] ?? JValue.CreateNull(),
-                     ["employerTown"] = consumer["employerTown"] ?? JValue.CreateNull(),
-                     ["employerCity"] = consumer["employerCity"] ?? JValue.CreateNull(),
-                     ["customerTypeId"] =106501
-                     }
-                 }
+                                 {
+                                 new JObject
+                                 {
+                                   ["rdaCustomerProfileId"] = consumer["rdaCustomerProfileId"],
+                                     ["rdaCustomerAccInfoId"] = consumer["accountInformation"]["rdaCustomerAccInfoId"],
+                                     ["fullName"] = name,
+                                     ["fatherHusbandName"] = consumer["fatherHusbandName"],
+                                     ["motherMaidenName"] = motherName,
+                                     ["genderId"] = genderId,
+                                     ["cityOfBirth"] = string.IsNullOrEmpty(consumer["cityOfBirth"]?.ToString()) ? Decrypt(consumer["cityOfBirthEncrypted"].ToString()): consumer["cityOfBirth"].ToString(),
+                                     ["countryOfBirthPlaceId"] = 157,
+                                     ["isPrimary"] = consumer["isPrimary"],
+                                     ["nationalityTypeId"] = 100901,
+                                     ["nationalities"] = new JArray
+                                     {
+                                         new JObject
+                                         {
+                                             ["rdaCustomerId"] = consumer["rdaCustomerProfileId"],
+                                             ["nationalityId"] = 157,
+                                             ["idNumber"] = consumer["idNumber"]
+                                         }
+                                     },
+                                     ["placeOfIssue"] = 157,
+                                     ["occupationId"] = consumer["occupationId"] ?? JValue.CreateNull(),
+                                     ["professionId"] = consumer["professionId"] ?? JValue.CreateNull(),
+                                     ["emailAddress"] = consumer["emailAddress"] ?? JValue.CreateNull(),
+                                     ["taxResidentInd"] = 0,
+                                     ["countryOfResidenceId"] = 157,
+                                     ["customerTitleId"] = 100801,
+                                     ["nameOfOrganization"] = consumer["nameOfOrganization"] ?? JValue.CreateNull(),
+                                     ["designation"] = consumer["designation"] ?? JValue.CreateNull(),
+                                     ["employedSince"] = consumer["employedSince"] ?? JValue.CreateNull(),
+                                     ["employerAddress"] = consumer["employerAddress"] ?? JValue.CreateNull(),
+                                     ["employerAddressLine2"] = consumer["employerAddressLine2"] ?? JValue.CreateNull(),
+                                     ["employerTown"] = consumer["employerTown"] ?? JValue.CreateNull(),
+                                     ["employerCity"] = consumer["employerCity"] ?? JValue.CreateNull(),
+                                     ["customerTypeId"] =106501
+                                 }
+                            }
                         }
                     };
 
@@ -2874,7 +2875,7 @@ namespace AlliedAdapter
                                  ["fatherHusbandName"] = consumer["fatherHusbandName"],
                                  ["motherMaidenName"] = motherName,
                                  ["genderId"] = genderId,
-                                 ["cityOfBirth"] = consumer["cityOfBirth"].ToString(),
+                                 ["cityOfBirth"] = string.IsNullOrEmpty(consumer["cityOfBirth"]?.ToString()) ? Decrypt(consumer["cityOfBirthEncrypted"].ToString()): consumer["cityOfBirth"].ToString(),
                                  ["countryOfBirthPlaceId"] = 157,
                                  ["isPrimary"] = consumer["isPrimary"],
                                  ["nationalityTypeId"] = 100901,
@@ -3037,7 +3038,7 @@ namespace AlliedAdapter
                 APIResponse aPIResponse = await apiService.SendRestTransaction(CustomerAccountInfoUrl, HttpMethods.POST, jsonRequest, accessToken, "");
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success , ApiResponseConstants.SuccessStatus);
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                 }
@@ -3514,7 +3515,7 @@ namespace AlliedAdapter
 
                 }
 
-                Logs.WriteLogEntry(LogType.Info, KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
+                // Logs.WriteLogEntry(LogType.Info, KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, accessToken, "");
                 JObject LiveImageResponse = JObject.Parse(apiResponse.ResponseContent);
                 var LiveImageData = LiveImageResponse["message"];
@@ -4671,8 +4672,6 @@ namespace AlliedAdapter
 
 
         #endregion
-
-
 
         #endregion
 
