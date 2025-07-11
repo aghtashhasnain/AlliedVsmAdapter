@@ -56,24 +56,50 @@ using System.Diagnostics;
 using Microsoft.Win32.SafeHandles;
 using System.Security.Principal;
 using AlliedAdapter;
+using static iTextSharp.text.pdf.PRTokeniser;
+using Twilio.Jwt;
 
-
-
-
-
-//using iTextSharp.text;
-//using iTextSharp.text.pdf;
 
 namespace AlliedAdapter
 {
     public class Class1 : IBackendServerAdapter
     {
+        #region Variables
+
         private const string DemoServiceUrlKey = "Url";
         private static List<AccountVariant> C_ASAAN_ACCOUNTS_SELECTION_LIST;
         public List<AccountVariantCacheItem> accountVariantsCache;
         private ApplicantData applicantData;
         bool UETflag = false;
+        private IApplicationConfiguration _applicationConfiguration;
+        private string _demoServiceUrl;
+        private bool _isDemoServiceUrlFound;
+        #endregion
 
+        #region Api Response Constants
+        public static class ApiResponseConstants
+        {
+            public const string SuccessStatus = "Success";
+            public const string Message_AccountNotExist = "AccountNotExist";
+            public const string Message_UnableToProcess = "UnableToProcessRequest";
+            public const string ValidationSuccess = "Validation successful";
+            public const string BioValidationSuccess = "Bio Validation successful";
+            public const string BioValidationFailed = "Bio Validation Failed";
+            public const string AccountFound = "Account Found !";
+            public const string PrinterNotConnected = "PrinterNotConnected";
+            public const string PrinterNotAvailable = "PrinterNotAvailable";
+            public const string DoNotMeetCriteria = "DoNotMeetCriteria";
+            public const string FreshCardNotAllowed = "FreshCardNotAllowed";
+            public const string OtpSendFailed = "OtpSendFailed";
+            public const string InvalidCNIC = "Invalid CNIC";
+            public const string AccountAlreadyInProcess = "Dear Customer, your Asaan Account request is already in process.";
+            public const string PmdFailed = "PmdFailed";
+            public const string PleaseProvideValidOTP = "Please provide Valid OTP";
+            public const string AccountDirectlyPushToT24 = "Account Directly Push to t24";
+            public const string PleaseProceedAccountWithDesk = "please proceed account with desk";
+            public const string ApplicationSubmitted = "Dear Customer your application has been submitted and currently under review. Bank will communicate the status of your application within two working days.";
+        }
+        #endregion ApiResponseConstants
 
         #region API Base URLs
 
@@ -83,59 +109,37 @@ namespace AlliedAdapter
 
         #endregion
 
-        private IApplicationConfiguration _applicationConfiguration;
-        private string _demoServiceUrl;
-        private bool _isDemoServiceUrlFound;
-
-
-
-        /// <summary>
-        /// check interface documentation
-        /// </summary>
-        /// 
-
+        #region Initialize
         public void Initialize()
         {
             try
             {
-                //Console.WriteLine("sdnjdnsdn")
-
-
-                Logs.WriteLogEntry("info", "", "Initializing", "Initialize");
-
+                Logs.WriteLogEntry(LogType.Info, "", "Initializing", nameof(Initialize));
                 _applicationConfiguration = SharedObjectsLocator.Instance.Get<IApplicationConfiguration>().First();
-                Logs.WriteLogEntry("info", "", "_applicationConfiguration received", "Initialize");
-                Logs.WriteLogEntry("info", "", "_applicationConfiguration" + JsonConvert.SerializeObject(_applicationConfiguration), "Initialize");
+                Logs.WriteLogEntry(LogType.Info, "", "_applicationConfiguration received", nameof(Initialize));
+                Logs.WriteLogEntry(LogType.Info, "", "_applicationConfiguration: " + JsonConvert.SerializeObject(_applicationConfiguration), nameof(Initialize));
 
-                //get url from "portal ==>System Adminstartion ==> System Settings ==>check Url key"
                 _isDemoServiceUrlFound = _applicationConfiguration.ConfigurationList.TryGetValue(DemoServiceUrlKey, out _demoServiceUrl);
-
-                Logs.WriteLogEntry("info", "", "_demoServiceUrl: " + _demoServiceUrl, "Initialize");
-
-                Logs.WriteLogEntry("info", "", "_isDemoServiceUrlFound: " + _isDemoServiceUrlFound, "Initialize");
-
-
+                Logs.WriteLogEntry(LogType.Info, "", "_demoServiceUrl: " + _demoServiceUrl, nameof(Initialize));
+                Logs.WriteLogEntry(LogType.Info, "", "_isDemoServiceUrlFound: " + _isDemoServiceUrlFound, nameof(Initialize));
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("info", "", "Exception: " + ex, "Initialize");
-
+                Logs.WriteLogEntry(LogType.Error, "", "Exception: " + ex.Message, nameof(Initialize));
             }
         }
+        #endregion
+
+        #region Call Backned
         public string CallBackEnd(XDocument request, string referenceNumber, RequestContent requestContent)
         {
-
             string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
             try
             {
-
                 string response = "";
-
-                // Retrieve the request type
                 string requestType = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.RequestType).Value;
-
-                Logs.WriteLogEntry("info", KioskId, "Request Type : " + requestType.ToLower(), "CallBackEnd");
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Request Type: {requestType.ToLower()}", nameof(CallBackEnd));
 
                 switch (requestType.ToLower())
                 {
@@ -172,13 +176,9 @@ namespace AlliedAdapter
                     case "iriscardissuance":
                         response = Task.Run(() => CardIssuance(request, referenceNumber)).Result;
                         break;
-                    //case "kgspersonalization":
-                    //    response = Task.Run(() => CardPersonalization(request, referenceNumber)).Result;
-                    //    break;
                     case "kgscardstatus":
                         response = Task.Run(() => GetCardStatus(request, referenceNumber)).Result;
                         break;
-                    /// Account Opening
                     case "sendotpasanaccount":
                         response = Task.Run(() => SendOtpAsanAccount(request, referenceNumber)).Result;
                         break;
@@ -212,9 +212,6 @@ namespace AlliedAdapter
                     case "revieweddetails":
                         response = Task.Run(() => ReviewedDetails(request, referenceNumber)).Result;
                         break;
-                    case "aoablcardlist":
-                        //  response = Task.Run(() => AOABLCardList(request, referenceNumber)).Result;
-                        break;
                     case "aoabldebitcardissuance":
                         response = Task.Run(() => AOABLDebitCardIssuance(request, referenceNumber)).Result;
                         break;
@@ -224,45 +221,45 @@ namespace AlliedAdapter
 
                     default:
                         throw new Exception("Unknown request type: " + requestType);
-
                 }
-
-                Logs.WriteLogEntry("info", KioskId, "Response: " + response.ToString(), "CallBackEnd");
-
-                return response.ToString();
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Response: " + response, nameof(CallBackEnd));
+                return response;
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("info", KioskId, "Exception: " + ex, "CallBackEnd");
-
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Exception: " + ex, nameof(CallBackEnd));
                 XDocument responseDoc = request.GetBasicResponseFromRequest();
                 responseDoc.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
                 responseDoc.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Exception in backend call: " + ex.Message;
                 responseDoc.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.Message).Value = "Technical error happened while calling our servers. Please try again later.";
+
                 return responseDoc.ToString();
             }
         }
+        #endregion
 
+        #region Check BackEnd Heartbeat
         public bool CheckBackEndHeartbeat()
         {
             try
             {
-                Logs.WriteLogEntry("info", "", "Checking backend heartbeat", "CheckBackEndHeartbeat");
+                Logs.WriteLogEntry(LogType.Info, "", "Checking backend heartbeat", nameof(CheckBackEndHeartbeat));
 
                 bool isBackendAlive = true;
 
-                Logs.WriteLogEntry("info", "", "Backend heartbeat check result: " + isBackendAlive, "CheckBackEndHeartbeat");
+                Logs.WriteLogEntry(LogType.Info, "", "Backend heartbeat check result: " + isBackendAlive, nameof(CheckBackEndHeartbeat));
 
                 return isBackendAlive;
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("error", ex.Message, ex.StackTrace, "CheckBackEndHeartbeat");
+                Logs.WriteLogEntry(LogType.Error, "", "Exception: " + ex.Message, nameof(CheckBackEndHeartbeat));
                 throw;
             }
         }
+        #endregion
 
+        #region Card Issuance
 
         #region Customer Verification 
         public async Task<string> CustomerVerification(XDocument request, string RefrenceNumber)
@@ -274,20 +271,19 @@ namespace AlliedAdapter
 
             try
             {
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Validating Input Data: {response}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 1]: Request received", _MethodName);
 
-                string tncurl = ConfigurationManager.AppSettings["TNCURL"].ToString();
+                string tncurl = ConfigurationManager.AppSettings["TNCURL"];
                 string TransactionId = GenerateTransactionId();
                 string formattedDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
-
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Validating Input Data: {response}", _MethodName);
 
                 string CnicNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("cnic")?.Value ?? string.Empty;
                 CnicNumber = CnicNumber.Replace("-", "");
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: CNIC Number: {CnicNumber}", _MethodName);
-                string url = T24Url + ConfigurationManager.AppSettings["CustomerVerification"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 2]: CNIC Number: {CnicNumber}", _MethodName);
+
+                string url = T24Url + ConfigurationManager.AppSettings["CustomerVerification"];
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 3]: API URL: {url}", _MethodName);
 
                 var requestPayload = new ABLCustomerVerificationRequest
                 {
@@ -313,28 +309,24 @@ namespace AlliedAdapter
 
                 if (ApiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 3]: API Response Content: {ApiResponse.ResponseContent}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 4]: API Response Content: {ApiResponse.ResponseContent}", _MethodName);
 
                     var responseData = JsonConvert.DeserializeObject<ABLCustomerVerificationResponse>(ApiResponse.ResponseContent);
                     var verificationResponse = responseData?.ABLCustomerVerificationRsp;
 
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Deserialized Verification Response: {verificationResponse}", _MethodName);
-
-                    if (verificationResponse != null && verificationResponse.StatusDesc == "Success")
+                    if (verificationResponse != null && verificationResponse.StatusDesc == ApiResponseConstants.SuccessStatus)
                     {
                         var hostData = verificationResponse.HostData;
-                        Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 5]: Host Data: {hostData}", _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 5]: Host Data: {hostData}", _MethodName);
 
                         if (hostData?.HostDesc == null && hostData.CustomerNumber != null)
                         {
                             var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
 
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Validation successful";
+                            SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.ValidationSuccess);
 
                             string MobileNumber = ExtractDigitsOnly(hostData.PhoneNumber);
-                            Logs.WriteLogEntry("Info", KioskId, $"Formated mobile number :{MobileNumber}", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 6]: Formatted Mobile Number: {MobileNumber}", _MethodName);
 
                             bodyElement.Add(
                                 new XElement("RespMessage", APIResultCodes.Success),
@@ -349,48 +341,37 @@ namespace AlliedAdapter
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Verification Failed - Record Not Found. Status Code: {ApiResponse.StatusCode}", _MethodName);
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Error Message: {ApiResponse.Message}", _MethodName);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 7]: Verification Failed - Record Not Found", _MethodName);
+                            SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_AccountNotExist);
                             response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
-                                new XElement("Message", "AccountNotExist"),
+                                new XElement("Message", ApiResponseConstants.Message_AccountNotExist),
                                 new XElement("IsAvailable", "Not"),
                                 new XElement("TNCURL", tncurl));
                         }
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Request Failed - Status Code: {ApiResponse.StatusCode}", _MethodName);
-                        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Error Message: {ApiResponse.Message}", _MethodName);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 8]: API response unsuccessful or status != Success {verificationResponse?.StatusDesc}", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: API Request Failed - Status Code: {ApiResponse.StatusCode}", _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: API Error Message: {ApiResponse.Message}", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 9]: API Request Failed - StatusCode: {ApiResponse.StatusCode}, Message: {ApiResponse.Message}", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 9]: Exception occurred: {ex.Message}", _MethodName);
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ex.Message));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 10]: Exception occurred: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
-
-
-
         #endregion
 
         #region Bio Verification
@@ -402,40 +383,25 @@ namespace AlliedAdapter
 
             try
             {
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Received Request: {request}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 1]: Received Request", _MethodName);
 
-                // Extract values
                 string cnicNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("cnic")?.Value ?? string.Empty;
                 string fingerImage = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("fingerImage")?.Value ?? string.Empty;
                 string contactNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("contactnumber")?.Value ?? string.Empty;
                 string NumTry = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("NumTry")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: Extracted Input - CNIC: {cnicNumber}, Contact: {contactNumber}, NumTry: {NumTry}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 2]: Input - CNIC: {cnicNumber}, Contact: {contactNumber}, NumTry: {NumTry}", _MethodName);
 
-                // Process Finger Index
                 cnicNumber = cnicNumber.Replace("-", "");
-                string FinalFingerIndex = "";
-                if (NumTry == "1")
-                {
-                    FinalFingerIndex = "1";
-                }
-                else if (NumTry == "2")
-                {
-                    FinalFingerIndex = "2";
-                }
-                else if (NumTry == "3")
-                {
-                    FinalFingerIndex = "6";
-                }
-                else if (NumTry == "4")
-                {
-                    FinalFingerIndex = "7";
-                }
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 3]: Processed FingerIndex: {FinalFingerIndex}", _MethodName);
+                string FinalFingerIndex = NumTry == "1" ? "1" :
+                                           NumTry == "2" ? "2" :
+                                           NumTry == "3" ? "6" :
+                                           NumTry == "4" ? "7" : "1";
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 3]: FingerIndex: {FinalFingerIndex}", _MethodName);
 
                 var soapClient = new BioService.ATMMSGSetSOAP_HTTP_Service();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {soapClient.Url}", _MethodName);
                 var soapRequest = new BioService.complexType
                 {
                     CNIC = cnicNumber,
@@ -446,41 +412,35 @@ namespace AlliedAdapter
                     FLAG = "3"
                 };
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 5]: Sending request to SOAP Service at URL: {soapClient.Url}", _MethodName);
-                //   Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Prepared SOAP Request: {JsonConvert.SerializeObject(soapRequest)}", _MethodName);                
-                // Call SOAP API
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 4]: Sending request to SOAP Service at {soapClient.Url}", _MethodName);
+
                 var soapResponse = soapClient.Operation1(soapRequest);
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: SOAP Response Received - Code: {soapResponse.CODE}, Message: {soapResponse.MESSAGE}", _MethodName);
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 5]: SOAP Response - Code: {soapResponse.CODE}, Message: {soapResponse.MESSAGE}", _MethodName);
+
                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
 
                 if (soapResponse.CODE == "100")
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Success", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation successful";
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 6]: BioVerification Success", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.BioValidationSuccess);
                     bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: BioVerification Failed", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Bio Validation Failed";
-                    bodyElement.Add(new XElement("Message", "Bio Validation Failed"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 6]: BioVerification Failed", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.BioValidationFailed);
+                    bodyElement.Add(new XElement("Message", ApiResponseConstants.BioValidationFailed));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: Exception occurred: {ex}", _MethodName);
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
-            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 9]: Final Response: {response}", _MethodName);
-
+            Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 8]: Final Response", _MethodName);
             return response.ToString();
         }
 
@@ -496,15 +456,14 @@ namespace AlliedAdapter
 
             try
             {
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Validating Input Data: {request}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 1]: Validating Input Data", _MethodName);
 
                 string TransactionId = GenerateTransactionId();
-                DateTime dateTime = DateTime.Now;
-                string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
+                string formattedDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
                 string CustomerNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CustomerNumber")?.Value ?? string.Empty;
 
-                string url = T24Url + ConfigurationManager.AppSettings["ABLCustomerAccountList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {url}", _MethodName);
+                string url = T24Url + ConfigurationManager.AppSettings["ABLCustomerAccountList"];
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 2]: API URL: {url}", _MethodName);
 
                 var requestPayload = new ABLCustomerAccountListRequest
                 {
@@ -526,258 +485,195 @@ namespace AlliedAdapter
                     }
                 };
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 3]: Prepared Request Payload: {JsonConvert.SerializeObject(requestPayload)}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 3]: Request Payload Prepared", _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
 
-                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                if (aPIResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Request successful. Parsing response...", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 4]: Request Successful", _MethodName);
 
                     var responseData = JsonConvert.DeserializeObject<ABLCustomerAccountListResponse>(aPIResponse.ResponseContent);
                     var accountListResponse = responseData?.ABLCustomerAccountListRsp;
 
-                    if (accountListResponse != null && accountListResponse.StatusDesc == "Success")
+                    if (accountListResponse != null && accountListResponse.StatusDesc == ApiResponseConstants.SuccessStatus)
                     {
-
-                        if (accountListResponse.HostData.Account != null)
+                        if (accountListResponse.HostData?.Account != null)
                         {
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 5]: Parsed response: {JsonConvert.SerializeObject(accountListResponse)}", _MethodName);
-
                             var idContentList = ExtractAndLogValues(aPIResponse.ResponseContent);
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Extracted Account Data", _MethodName);
                             string Name = "";
+
                             foreach (var column in accountListResponse.HostData.Account.Column)
                             {
                                 if (column.Id == "CUSTNAME")
-                                    Name = column.Content.ToString();
+                                    Name = column.Content;
                             }
 
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 7]: Extracted Customer Name: {Name}", _MethodName);
-
                             var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Account Found !";
+                            SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.AccountFound);
+
                             bodyElement.Add(
                                 new XElement("RespMessage", APIResultCodes.Success),
                                 new XElement("AccountData", idContentList),
                                 new XElement("Name", Name)
                             );
-                            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 8]: Account Data Added to Response", _MethodName);
+
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 5]: Account Data Added", _MethodName);
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 6]: No account data found in the response", _MethodName);
-
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "AccountNotExist"));
-
+                            Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 6]: No Account Data Found", _MethodName);
+                            SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_AccountNotExist);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_AccountNotExist));
                         }
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Request Failed - Status Code: {aPIResponse.StatusCode}", _MethodName);
-                        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Error Message: {aPIResponse.Message}", _MethodName);
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, $"{_MethodName} [Step 7]: API Response Invalid or Status != Success", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, accountListResponse?.StatusDesc?.ToString());
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 4]: Request failed with status code: {aPIResponse.StatusCode}", _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 5]: Error Message: {aPIResponse.Message}", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 8]: HTTP Error {aPIResponse.StatusCode} - {aPIResponse.Message}", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse?.StatusCode.ToString());
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 9]: Exception occurred: {ex.Message}", _MethodName);
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ex.Message));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 9]: Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
-            Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 10]: Final Response: {response}", _MethodName);
-
+            Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 10]: Final Response", _MethodName);
             return response.ToString();
         }
 
-        #endregion
-        #region ABL ATM CardList
 
+        #endregion
+
+        #region ABL ATM CardList
         public async Task<string> ABLCardList(XDocument request, string RefrenceNumber)
         {
             string _MethodName = "ABLCardList";
-            List<Dictionary<string, object>> finalATMCardList = new List<Dictionary<string, object>>();
             string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
-
             XDocument response = request.GetBasicResponseFromRequest();
+            List<Dictionary<string, object>> finalATMCardList = new List<Dictionary<string, object>>();
 
             try
             {
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Received request: {request}", _MethodName);
-                string kioskID = KioskId;
-                string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 1]: Received request", _MethodName);
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Retrieved PcName = {PcName}", _MethodName);
+                string pcNameRaw = ConfigurationManager.AppSettings[KioskId]?.ToString();
+                if (string.IsNullOrEmpty(pcNameRaw)) throw new Exception("PC Name not configured for this Kiosk");
 
-                string[] parts = PcName.Split('|');
+                string[] parts = pcNameRaw.Split('|');
                 string ComputerName = parts[0].Trim();
                 string BranchCode = parts[1].Trim();
-
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: ComputerName = {ComputerName}, BranchCode = {BranchCode}", _MethodName);
-
                 string CardImageBaseUrl = ConfigurationManager.AppSettings["CardImageBaseUrl"].ToString();
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: CardImageBaseUrl = {CardImageBaseUrl}", _MethodName);
 
                 string productcode = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("productcode")?.Value ?? string.Empty;
                 string AccountCurrency = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("AccountCurrency")?.Value ?? string.Empty;
                 string transactionType = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("TransactionType")?.Value ?? string.Empty;
                 string accountType = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("AccountType")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Extracted inputs - productcode: {productcode}, AccountCurrency: {AccountCurrency}, TransactionType: {transactionType}, AccountType: {accountType}", _MethodName);
-
-                List<ABLCardInfo> atmCardList = ABLAtmCardList(productcode, AccountCurrency, transactionType, KioskId);
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Retrieved ABLCardList with count: {atmCardList?.Count}", _MethodName);
-
+                var atmCardList = ABLAtmCardList(productcode, AccountCurrency, transactionType, KioskId);
                 if (atmCardList == null || atmCardList.Count == 0)
                 {
-                    Logs.WriteLogEntry("Erro", KioskId, $"{_MethodName} [Step 7]: Failed to retrieve ABL ATM card list.", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Failed to retrieve ABL ATM card list";
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "NoCardAllowed");
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "NoCardAllowed"));
                     return response.ToString();
                 }
 
-                List<CardFormats> cardFormats = GetCardFormats(ComputerName, kioskID);
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 8]: Fetching predefined card formats.", _MethodName);
-
-                //string jsonCardFormat = "[{\"name\":\"UPI PAYPAK CLASSIC DEBIT CARD\"},{\"name\":\"VISA CLASSIC DEBIT CARD\"},{\"name\":\"VISA ISLAMIC CLASSIC DEBIT CARD\"},{\"name\":\"VISA PLATINUM DEBIT CARD\"},{\"name\":\"VISA PREMIUM DEBIT CARD\"}]";
-                //List<CardFormats> cardFormats = JsonConvert.DeserializeObject<List<CardFormats>>(jsonCardFormat);
-
+                var cardFormats = GetCardFormats(ComputerName, KioskId);
                 if (cardFormats == null || cardFormats.Count == 0)
                 {
-                    Logs.WriteLogEntry("Erro", KioskId, $"{_MethodName} [Step 9]: Failed to get card formats.", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Failed to get card formats";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     return response.ToString();
                 }
-
-                Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 10]: Filtering cards by transaction type and format.", _MethodName);
 
                 foreach (var item in atmCardList)
                 {
                     bool isValidCard = cardFormats.Any(cf => cf.name == item.KgsName);
                     if (!isValidCard) continue;
 
+                    bool addCard = false;
                     if (transactionType == "AsanAccount")
                     {
                         if ((accountType == "114202" && (item.IrisCardProductCode == "0081" || item.IrisCardProductCode == "0075")) ||
                             (accountType == "114201" && (item.IrisCardProductCode == "0081" || item.IrisCardProductCode == "0070")))
                         {
-                            Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 11]: Processing card: {item.name}", _MethodName);
-                            CardCharges cardCharges = await ABLDebitCardCharges(item.t24CardCode, KioskId);
-
-                            finalATMCardList.Add(new Dictionary<string, object>
-                            {
-                                {"id", item.IrisCardProductCode},
-                                {"name", item.name},
-                                {"kgsName", item.KgsName},
-                                {"replacementCharges", cardCharges.replacementamount},
-                                {"issuanceCharges", cardCharges.issuanceamount},
-                                {"t24CardCode", item.t24CardCode},
-                                {"t24AccountCategoryCode", item.t24AccountCategoryCode},
-                                {"variant", item.variant},
-                                {"scheme", item.scheme},
-                                {"perDayFT", item.perDayFT},
-                                {"billPaymentLimit", item.billPaymentLimit},
-                                {"cashWithdrawalLimit", item.cashWithdrawalLimit},
-                                {"eCommerceLimit", item.eCommerceLimit},
-                                {"imagePath", CardImageBaseUrl + item.ImagePath}
-                            });
-
-                            Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 12]: Card Processed - ID: {item.IrisCardProductCode}, Name: {item.name}", _MethodName);
+                            addCard = true;
                         }
                     }
                     else
                     {
-                        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 13]: Processing general card: {item.name}", _MethodName);
-                        CardCharges cardCharges = await ABLDebitCardCharges(item.t24CardCode, KioskId);
+                        addCard = true;
+                    }
+
+                    if (addCard)
+                    {
+                        var cardCharges = await ABLDebitCardCharges(item.t24CardCode, KioskId);
                         finalATMCardList.Add(new Dictionary<string, object>
                         {
-                                {"id", item.IrisCardProductCode},
-                                {"name", item.name},
-                                {"kgsName", item.KgsName},
-                                {"replacementCharges", cardCharges.replacementamount},
-                                {"issuanceCharges", cardCharges.issuanceamount},
-                                {"t24CardCode", item.t24CardCode},
-                                {"t24AccountCategoryCode", item.t24AccountCategoryCode},
-                                {"variant", item.variant},
-                                {"scheme", item.scheme},
-                                {"perDayFT", item.perDayFT},
-                                {"billPaymentLimit", item.billPaymentLimit},
-                                {"cashWithdrawalLimit", item.cashWithdrawalLimit},
-                                {"eCommerceLimit", item.eCommerceLimit},
-                                {"imagePath", CardImageBaseUrl + item.ImagePath}
+                            {"id", item.IrisCardProductCode},
+                            {"name", item.name},
+                            {"kgsName", item.KgsName},
+                            {"replacementCharges", cardCharges.replacementamount},
+                            {"issuanceCharges", cardCharges.issuanceamount},
+                            {"t24CardCode", item.t24CardCode},
+                            {"t24AccountCategoryCode", item.t24AccountCategoryCode},
+                            {"variant", item.variant},
+                            {"scheme", item.scheme},
+                            {"perDayFT", item.perDayFT},
+                            {"billPaymentLimit", item.billPaymentLimit},
+                            {"cashWithdrawalLimit", item.cashWithdrawalLimit},
+                            {"eCommerceLimit", item.eCommerceLimit},
+                            {"imagePath", CardImageBaseUrl + item.ImagePath}
                         });
-                        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 14]: Card Processed - ID: {item.IrisCardProductCode}, Name: {item.name}", _MethodName);
                     }
                 }
                 if (finalATMCardList.Count == 0)
                 {
-                    Logs.WriteLogEntry("Erro", KioskId, $"{_MethodName} [Step 15]: No matching card formats found in ABL Card List.", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "No matching card formats found in ABL Card List";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "No matching card formats found");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 16]: Successfully processed {finalATMCardList.Count} cards.", _MethodName);
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "ABLCardList Received";
-                    bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success), new XElement("CardList", finalATMCardList));
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "ABLCardList Received");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
+                        new XElement("RespMessage", APIResultCodes.Success),
+                        new XElement("CardList", finalATMCardList)
+                    );
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 17]: Exception occurred: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "An error occurred while processing your request.";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Exception occurred: " + ex.Message));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 9]: Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
+
             return response.ToString();
         }
 
-        static List<ABLCardInfo> ABLAtmCardList(string productcode, string AccountCurrency, string transactionType, string KioskId)
+        private static List<ABLCardInfo> ABLAtmCardList(string productcode, string accountCurrency, string transactionType, string kioskId)
         {
             string _MethodName = "ABLAtmCardList";
+            List<ABLCardInfo> ablCardList = new List<ABLCardInfo>();
+
             try
             {
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Going to Import Excel", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 1]: Starting import of Excel data.", _MethodName);
 
-                DataTable cardDataTable = ImportExcel(KioskId);
+                DataTable cardDataTable = ImportExcel(kioskId);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 2]: Excel data imported successfully.", _MethodName);
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: Excel Imported", _MethodName);
-
-                List<ABLCardInfo> ablCardList = new List<ABLCardInfo>();
-
-                bool Flag = false;
+                bool matchedPreviously = false;
                 string lastAccountCategory = "";
 
                 foreach (DataRow row in cardDataTable.Rows)
@@ -786,110 +682,40 @@ namespace AlliedAdapter
                     string currency = row["Currency"]?.ToString().Trim();
 
                     if (!string.IsNullOrEmpty(accountCategory))
-                    {
                         lastAccountCategory = accountCategory;
-                    }
                     else
-                    {
                         accountCategory = lastAccountCategory;
-                    }
 
-                    string[] Codes = accountCategory.Split(',')
-                          .Select(code => code.Trim())
-                          .Where(code => !string.IsNullOrEmpty(code))
-                          .ToArray();
+                    string[] categoryCodes = accountCategory.Split(',')
+                                                            .Select(c => c.Trim())
+                                                            .Where(c => !string.IsNullOrEmpty(c))
+                                                            .ToArray();
 
-                    ABLCardInfo cardInfo;
+                    bool isMatch = categoryCodes.Contains(productcode) || matchedPreviously;
 
-                    if (transactionType == "AsanAccount")
+                    if (transactionType == "AsanAccount" && currency == "PKR")
                     {
-                        if (currency == "PKR")
-                        {
-                            cardInfo = new ABLCardInfo
-                            {
-                                IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
-                                name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
-                                KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
-                                t24AccountCategoryCode = productcode,
-                                Currency = row["Currency"]?.ToString(),
-                                t24CardCode = row["T24 Card Code"]?.ToString(),
-                                issuanceCharges = row["Issuance Charges"]?.ToString(),
-                                scheme = row["Scheme"]?.ToString(),
-                                variant = row["Variant"]?.ToString(),
-                                replacementCharges = row["Replacement Charges"]?.ToString(),
-                                perDayFT = row["Per Day ATM IBF/FT"]?.ToString(),
-                                billPaymentLimit = row["Bill Payment Limit/Donation"]?.ToString(),
-                                cashWithdrawalLimit = row["ATM Cash Withdrawal Limit"]?.ToString(),
-                                eCommerceLimit = row["POS/eCommerce Limit"]?.ToString(),
-                                ImagePath = row["Card Image Name"]?.ToString()
-                            };
-                            ablCardList.Add(cardInfo);
-                        }
+                        ablCardList.Add(MapToABLCardInfo(row, productcode));
                     }
-                    else
+                    else if (isMatch && accountCurrency != "PKR" && currency == accountCurrency)
                     {
-                        if ((Codes.Contains(productcode) || Flag) && AccountCurrency != "PKR")
-                        {
-                            string ImageName = row["Card Image Name"]?.ToString();
-
-                            if (currency == AccountCurrency)
-                            {
-                                cardInfo = new ABLCardInfo
-                                {
-                                    IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
-                                    name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
-                                    KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
-                                    t24AccountCategoryCode = productcode,
-                                    Currency = row["Currency"]?.ToString(),
-                                    t24CardCode = row["T24 Card Code"]?.ToString(),
-                                    issuanceCharges = row["Issuance Charges"]?.ToString(),
-                                    scheme = row["Scheme"]?.ToString(),
-                                    variant = row["Variant"]?.ToString(),
-                                    replacementCharges = row["Replacement Charges"]?.ToString(),
-                                    perDayFT = row["Per Day ATM IBF/FT"]?.ToString(),
-                                    billPaymentLimit = row["Bill Payment Limit/Donation"]?.ToString(),
-                                    cashWithdrawalLimit = row["ATM Cash Withdrawal Limit"]?.ToString(),
-                                    eCommerceLimit = row["POS/eCommerce Limit"]?.ToString(),
-                                    ImagePath = row["Card Image Name"]?.ToString()
-                                };
-                                ablCardList.Add(cardInfo);
-                                Flag = true;
-                            }
-                        }
-                        else if (Codes.Contains(productcode) && currency == "PKR")
-                        {
-                            cardInfo = new ABLCardInfo
-                            {
-                                IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
-                                name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
-                                KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
-                                t24AccountCategoryCode = productcode,
-                                Currency = row["Currency"]?.ToString(),
-                                t24CardCode = row["T24 Card Code"]?.ToString(),
-                                issuanceCharges = row["Issuance Charges"]?.ToString(),
-                                scheme = row["Scheme"]?.ToString(),
-                                variant = row["Variant"]?.ToString(),
-                                replacementCharges = row["Replacement Charges"]?.ToString(),
-                                perDayFT = row["Per Day ATM IBF/FT"]?.ToString(),
-                                billPaymentLimit = row["Bill Payment Limit/Donation"]?.ToString(),
-                                cashWithdrawalLimit = row["ATM Cash Withdrawal Limit"]?.ToString(),
-                                eCommerceLimit = row["POS/eCommerce Limit"]?.ToString(),
-                                ImagePath = row["Card Image Name"]?.ToString()
-                            };
-                            ablCardList.Add(cardInfo);
-                        }
+                        ablCardList.Add(MapToABLCardInfo(row, productcode));
+                        matchedPreviously = true;
+                    }
+                    else if (categoryCodes.Contains(productcode) && currency == "PKR")
+                    {
+                        ablCardList.Add(MapToABLCardInfo(row, productcode));
                     }
                 }
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 3]: Process completed successfully", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 3]: Completed processing. Total Cards Found: {ablCardList.Count}", _MethodName);
                 return ablCardList;
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 17]: Exception occurred: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{_MethodName} [Step 4]: Exception occurred - {ex}", _MethodName);
+                return null;
             }
-
-            return null;
         }
 
 
@@ -897,29 +723,26 @@ namespace AlliedAdapter
         #endregion
 
         #region Debit Charges
-        public async Task<CardCharges> ABLDebitCardCharges(string ProductCode, string KioskId)
+        public async Task<CardCharges> ABLDebitCardCharges(string productCode, string kioskId)
         {
-            string _MethodName = "ABLDebitCardCharges";
-            APIHelper apiService = new APIHelper();
-            CardCharges cardCharges = new CardCharges();
+            const string _MethodName = "ABLDebitCardCharges";
+            var apiService = new APIHelper();
+            var cardCharges = new CardCharges();
 
             try
             {
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 1]: Validating Input Data: ProductCode={ProductCode}, KioskId={KioskId}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 1]: Input - ProductCode={productCode}", _MethodName);
 
-                string TransactionId = GenerateTransactionId();
-                DateTime dateTime = DateTime.Now;
-                string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
+                string transactionId = GenerateTransactionId();
+                string formattedDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 2]: Generating TransactionId and Formatting Date: TransactionId={TransactionId}, FormattedDate={formattedDate}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 2]: Generated TransactionId={transactionId}, Date={formattedDate}", _MethodName);
 
-                string url = T24Url + ConfigurationManager.AppSettings["DebitCardCharges"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {url}", _MethodName);
+                string url = T24Url + ConfigurationManager.AppSettings["DebitCardCharges"];
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 3]: API URL={url}", _MethodName);
 
-
-                string updatedNumber = ProductCode.TrimStart('0');
-
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 3]: Constructed URL: {url}, Updated ProductCode: {updatedNumber}", _MethodName);
+                string cleanedProductCode = productCode.TrimStart('0');
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 4]: Trimmed ProductCode={cleanedProductCode}", _MethodName);
 
                 var requestPayload = new ABLDebitCardChargesRequest
                 {
@@ -935,51 +758,42 @@ namespace AlliedAdapter
                         Function = "DebitCardCharges",
                         HostData = new DebitCardHostData
                         {
-                            TransReferenceNo = TransactionId,
-                            IDNumber = updatedNumber
+                            TransReferenceNo = transactionId,
+                            IDNumber = cleanedProductCode
                         }
                     }
                 };
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 4]: Sending request to API", _MethodName);
-                APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 5]: Sending request to API.", _MethodName);
+                APIResponse apiResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, kioskId, "");
 
-                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                if (apiResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 5]: API Response received: {aPIResponse}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 6]: API response received.", _MethodName);
 
-                    // Deserialize and work with the response content
-                    List<(string ID, string Content)> idContentList = ExtractAndLogValues(aPIResponse.ResponseContent);
+                    var idContentList = ExtractAndLogValues(apiResponse.ResponseContent);
 
-                    foreach (var pair in idContentList)
+                    foreach (var (id, content) in idContentList)
                     {
-                        string id = pair.ID;
-                        string content = pair.Content;
-
-                        if (id == "ISSUANCE.AMOUNT")
-                        {
-                            cardCharges.issuanceamount = content;
-                        }
-                        else if (id == "REPLACEMENT.AMOUNT")
-                        {
-                            cardCharges.replacementamount = content;
-                        }
+                        if (id == "ISSUANCE.AMOUNT") cardCharges.issuanceamount = content;
+                        else if (id == "REPLACEMENT.AMOUNT") cardCharges.replacementamount = content;
                     }
 
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Step 6]: Processed Card Charges: IssuanceAmount={cardCharges.issuanceamount}, ReplacementAmount={cardCharges.replacementamount}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"{_MethodName} [Step 7]: Parsed Charges - Issuance: {cardCharges.issuanceamount}, Replacement: {cardCharges.replacementamount}", _MethodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: API Error Message: {aPIResponse.Message}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Error, kioskId, $"{_MethodName} [Step 8]: API error - {apiResponse.Message}", _MethodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 8]: Exception occurred: {ex.Message}", _MethodName);
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{_MethodName} [Step 9]: Exception - {ex}", _MethodName);
             }
 
             return cardCharges;
         }
+
 
 
         #endregion
@@ -989,69 +803,68 @@ namespace AlliedAdapter
         {
             string _MethodName = "GetPrinterStatus";
             XDocument response = request.GetBasicResponseFromRequest();
-            SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
             string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
+
+            SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
+
             try
             {
-                Logs.WriteLogEntry("info", kioskID, "KIOSK ID: " + kioskID, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 1]: Received request for printer status", _MethodName);
 
-                string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", kioskID, "Pc Name and Branch Code: " + PcName, _MethodName);
-                string[] parts = PcName.Split('|');
-                string ComputerName = parts[0].Trim();
-                string BranchCode = parts[1].Trim();
+                string pcConfig = ConfigurationManager.AppSettings[kioskID];
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 2]: Retrieved PC Config = {pcConfig}", _MethodName);
 
-                Logs.WriteLogEntry("info", kioskID, "Computer Name:" + ComputerName, _MethodName);
-                Logs.WriteLogEntry("info", kioskID, "Branch Code:" + BranchCode, _MethodName);
+                string[] parts = pcConfig.Split('|');
+                string computerName = parts[0].Trim();
+                string branchCode = parts[1].Trim();
 
-                Logs.WriteLogEntry("Info", kioskID, "Request " + request.ToString(), _MethodName);
-                string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
-                var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
-                Logs.WriteLogEntry("Info", kioskID, "Get Printer Status Response Code:" + getPrinterStatus.code, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 3]: Computer = {computerName}, Branch = {branchCode}", _MethodName);
+
+                string cardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 4]: Card Name = {cardName}", _MethodName);
+
+                var getPrinterStatus = deviceOperations.GetPrinterStatus(computerName, cardName);
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 5]: Printer status code = {getPrinterStatus.code}", _MethodName);
+
                 if (getPrinterStatus.code == 0)
                 {
-                    string jsonPrinterStatus = getPrinterStatus.data.ToString();
-                    Logs.WriteLogEntry("Info", kioskID, "Printer Status: " + jsonPrinterStatus, _MethodName);
-                    PrinterStatus printerStatus = JsonConvert.DeserializeObject<PrinterStatus>(jsonPrinterStatus);
-                    Logs.WriteLogEntry("Info", kioskID, "Printer Status Deserialized: " + printerStatus, _MethodName);
-                    if (printerStatus.status.ToLower() == "ready")
+                    string jsonStatus = getPrinterStatus.data.ToString();
+                    Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 6]: Raw JSON = {jsonStatus}", _MethodName);
+
+                    var printerStatus = JsonConvert.DeserializeObject<PrinterStatus>(jsonStatus);
+                    Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 7]: Deserialized Printer Status = {printerStatus?.status}", _MethodName);
+
+                    if (printerStatus?.status?.ToLower() == "ready")
                     {
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        bodyElement.Add(
-                             new XElement("RespMessage", APIResultCodes.Success)
-                        );
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
+                        Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 8]: Printer is Ready", _MethodName);
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Info", kioskID, "Printer Not Ready:" + printerStatus.status, _MethodName);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Ready:" + printerStatus.status;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "PrinterNotConnected"));
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, $"Printer Not Ready: {printerStatus.status}");
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.PrinterNotConnected));
+                        Logs.WriteLogEntry(LogType.Warning, kioskID, $"{_MethodName} [Step 9]: Printer Not Ready - {printerStatus.status}", _MethodName);
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", kioskID, "Printer Not Available", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Printer Not Available";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "PrinterNotAvailable"));
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Printer Not Available");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.PrinterNotAvailable));
+                    Logs.WriteLogEntry(LogType.Warning, kioskID, $"{_MethodName} [Step 10]: Printer status failed {getPrinterStatus?.code}", _MethodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", kioskID, "Error in Failed to Get Printer Status!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, kioskID, $"{_MethodName} [Step 11]: Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+
             }
 
             return response.ToString();
         }
+
 
         #endregion
 
@@ -1066,275 +879,149 @@ namespace AlliedAdapter
 
             try
             {
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 1]: Received request for hopper status", _MethodName);
 
-                Logs.WriteLogEntry("info", kioskID, "KIOSK ID: " + kioskID, _MethodName);
+                string pcConfig = ConfigurationManager.AppSettings[kioskID];
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 2]: Retrieved PC Config = {pcConfig}", _MethodName);
 
-                string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", kioskID, "Pc Name and Branch Code: " + PcName, _MethodName);
+                string[] parts = pcConfig.Split('|');
+                string computerName = parts[0].Trim();
+                string branchCode = parts[1].Trim();
 
-                string[] parts = PcName.Split('|');
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 3]: Computer = {computerName}, Branch = {branchCode}", _MethodName);
 
-                string ComputerName = parts[0].Trim();
-                string BranchCode = parts[1].Trim();
+                string cardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 4]: Card Name = {cardName}", _MethodName);
 
-                Logs.WriteLogEntry("info", kioskID, "Computer Name:" + ComputerName, _MethodName);
-                Logs.WriteLogEntry("info", kioskID, "Branch Code:" + BranchCode, _MethodName);
-
-
-                Logs.WriteLogEntry("Info", kioskID, "Request " + request.ToString(), _MethodName);
-                string CardName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardName")?.Value ?? string.Empty;
-
-                var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
-
-                Logs.WriteLogEntry("Info", kioskID, "Get Hopper Status Response :" + getHopperStatus, _MethodName);
+                var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(computerName, cardName);
+                Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 5]: Hopper Status Code = {getHopperStatus.code}", _MethodName);
 
                 if (getHopperStatus.code == 0)
                 {
-                    string jsonHopperStatus = getHopperStatus.data.ToString();
+                    string jsonStatus = getHopperStatus.data.ToString();
+                    Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 6]: Raw JSON = {jsonStatus}", _MethodName);
 
-                    HopperStatus HopperStatus = JsonConvert.DeserializeObject<HopperStatus>(jsonHopperStatus);
+                    HopperStatus hopperStatus = JsonConvert.DeserializeObject<HopperStatus>(jsonStatus);
+                    Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 7]: Deserialized Hopper Status - ProductAvailable = {hopperStatus?.productAvailable}", _MethodName);
 
-                    Logs.WriteLogEntry("Info", kioskID, "Hopper Status Desrelized: " + HopperStatus, _MethodName);
-                    if (HopperStatus.productAvailable)
+                    if (hopperStatus?.productAvailable == true)
                     {
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body)
+                            .Add(new XElement("RespMessage", APIResultCodes.Success));
 
-                        Logs.WriteLogEntry("Info", kioskID, "Hopper Status: " + jsonHopperStatus, _MethodName);
-
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-                        bodyElement.Add(
-                             new XElement("RespMessage", APIResultCodes.Success)
-                        );
-
+                        Logs.WriteLogEntry(LogType.Info, kioskID, $"{_MethodName} [Step 8]: Hopper is Available", _MethodName);
+                    }
+                    else
+                    {
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Hopper is Empty");
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "HopperEmpty"));
+                        Logs.WriteLogEntry(LogType.Warning, kioskID, $"{_MethodName} [Step 9]: Hopper is not available", _MethodName);
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", kioskID, "Hopper Not Available", _MethodName);
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Hopper Not Available";
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "Hopper Not Available");
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "CardNotAvailable"));
-
+                    Logs.WriteLogEntry(LogType.Warning, kioskID, $"{_MethodName} [Step 10]: Hopper status failed", _MethodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", kioskID, "Error in Failed to Get Hopper Status!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, kioskID, $"{_MethodName} [Step 11]: Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
 
+
         #endregion
-
-
-        //#region PrinterStatus
-        //public async Task<string> GetPrinterStatus(XDocument request, string RefrenceNumber)
-        //{
-        //    string _MethodName = "GetPrinterStatus";
-        //    XDocument response = request.GetBasicResponseFromRequest();
-        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-        //    string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
-
-        //    try
-        //    {
-
-        //        //CardInfo cardInfo = DecryptEmbossingFile("0010", "0070", KioskId);
-
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
-
-        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
-
-        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
-
-        //        string[] parts = PcName.Split('|');
-        //        string ComputerName = parts[0].Trim();
-        //        string BranchCode = parts[1].Trim();
-
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
-
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
-
-        //        // Call to device operation and logging
-        //        // var getPrinterStatus = deviceOperations.GetPrinterStatus(ComputerName, CardName);
-        //        // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Printer Status Response Code: {getPrinterStatus.code}", _MethodName);
-
-        //        // Continue with processing...
-
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-        //        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
-        //    }
-
-        //    return response.ToString();
-        //}
-
-
-        //#endregion
-
-        //#region Hopper Status
-        //public async Task<string> GetHopperStatus(XDocument request, string RefrenceNumber)
-        //{
-        //    string _MethodName = "GetHopperStatus";
-        //    XDocument response = request.GetBasicResponseFromRequest();
-        //    SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-        //    string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
-
-        //    try
-        //    {
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 1]: Validating KioskId: {KioskId}", _MethodName);
-
-        //        string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 2]: Kiosk ID: {kioskID}", _MethodName);
-
-        //        string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 3]: Pc Name and Branch Code: {PcName}", _MethodName);
-
-        //        string[] parts = PcName.Split('|');
-        //        string ComputerName = parts[0].Trim();
-        //        string BranchCode = parts[1].Trim();
-
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 4]: Computer Name: {ComputerName}, Branch Code: {BranchCode}", _MethodName);
-
-        //        Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 5]: Request: {request.ToString()}", _MethodName);
-
-        //        // Call to device operation and logging
-        //        // var getHopperStatus = deviceOperations.IsHopperAvailableForPrinting(ComputerName, CardName);
-        //        // Logs.WriteLogEntry("info", KioskId, $"{_MethodName} [Step 6]: Hopper Status Response: {getHopperStatus.code}", _MethodName);
-
-        //        // Continue with processing...
-
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-        //        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
-        //        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} [Step 7]: Exception occurred: {ex.Message}", _MethodName);
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-
-        //        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Request Could Not Be Processed at the Moment."));
-        //    }
-
-        //    return response.ToString();
-        //}
-
-
-        //#endregion
 
         #region Check Account Balance
         public async Task<string> CheckAccountBalance(XDocument request, string RefrenceNumber)
         {
             string _MethodName = "CheckAccountBalance";
             XDocument response = request.GetBasicResponseFromRequest();
-            smpp_ws_sendsms service = new smpp_ws_sendsms();
             string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
 
             try
             {
-                string AccountBalance = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountBalance")?.Value ?? string.Empty;
-                string IssuanceAmount = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("IssuanceAmount")?.Value ?? string.Empty;
-                string ReplacementAmount = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ReplacementAmount")?.Value ?? string.Empty;
-                string CardGenerationType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardGenerationType")?.Value ?? string.Empty;
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 1]: Received request", _MethodName);
 
-                Logs.WriteLogEntry("INFO", KioskId, $"Received Request: {request}", _MethodName);
+                string accountBalanceStr = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountBalance")?.Value ?? string.Empty;
+                string issuanceAmountStr = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("IssuanceAmount")?.Value ?? string.Empty;
+                string replacementAmountStr = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ReplacementAmount")?.Value ?? string.Empty;
+                string cardGenerationType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardGenerationType")?.Value ?? string.Empty;
 
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 2]: Extracted values - AccountBalance: {accountBalanceStr}, IssuanceAmount: {issuanceAmountStr}, ReplacementAmount: {replacementAmountStr}, CardGenerationType: {cardGenerationType}", _MethodName);
 
-                double FinalIssueAmount = 0;
-                double FinalReplaceAmount = 0;
-                if (!double.TryParse(AccountBalance, out double FinalBalance) ||
-                 !double.TryParse(IssuanceAmount, out FinalIssueAmount) ||
-                 !double.TryParse(ReplacementAmount, out FinalReplaceAmount))
+                if (!double.TryParse(accountBalanceStr, out double accountBalance) ||
+                    !double.TryParse(issuanceAmountStr, out double issuanceAmount) ||
+                    !double.TryParse(replacementAmountStr, out double replacementAmount))
                 {
-                    Logs.WriteLogEntry("ERROR", KioskId, "Invalid numeric values in request.", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Invalid numeric values in request");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 3]: Invalid numeric inputs", _MethodName);
+                    return response.ToString();
                 }
 
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 4]: Parsed values - AccountBalance: {accountBalance}, IssuanceAmount: {issuanceAmount}, ReplacementAmount: {replacementAmount}", _MethodName);
 
-                bool BalanceAvailabe = false;
+                bool isBalanceSufficient = false;
 
-                Logs.WriteLogEntry("info", KioskId, $"CardGenerationType : {CardGenerationType}, Account Balance : {FinalBalance}, Card Issuance Amount : {FinalIssueAmount}, Card Replacement Amount : {FinalReplaceAmount}", _MethodName);
-
-                if (CardGenerationType == "Fresh" || CardGenerationType == "Upgrade")
+                if (cardGenerationType == "Fresh" || cardGenerationType == "Upgrade")
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Going to check Account Balance is Avaialble to compare issuance Amount", _MethodName);
-                    if (FinalBalance >= FinalIssueAmount)
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 5]: Checking balance for issuance", _MethodName);
+                    if (accountBalance >= issuanceAmount)
                     {
-                        BalanceAvailabe = true;
-                        Logs.WriteLogEntry("INFO", KioskId, "Account balance is sufficient for Card Issuance", _MethodName);
-                    }
-                    else
-                    {
-                        Logs.WriteLogEntry("ERROR", KioskId, "Insufficient balance for Card Replacement", _MethodName);
-                    }
-
-                }
-                else if (CardGenerationType == "Replace")
-                {
-
-                    if (FinalBalance >= FinalReplaceAmount)
-                    {
-                        BalanceAvailabe = true;
-                        Logs.WriteLogEntry("INFO", KioskId, "Account balance is sufficient for Replacement", _MethodName);
-                    }
-                    else
-                    {
-                        Logs.WriteLogEntry("ERROR", KioskId, "Insufficient balance for Card Replacement", _MethodName);
+                        isBalanceSufficient = true;
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 6]: Sufficient balance for issuance", _MethodName);
                     }
                 }
-                if (BalanceAvailabe)
+                else if (cardGenerationType == "Replace")
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
-                    Logs.WriteLogEntry("INFO", KioskId, "Account balance is sufficient.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 7]: Checking balance for replacement", _MethodName);
+                    if (accountBalance >= replacementAmount)
+                    {
+                        isBalanceSufficient = true;
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 8]: Sufficient balance for replacement", _MethodName);
+                    }
+                }
 
+                if (isBalanceSufficient)
+                {
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body)
+                        .Add(new XElement("RespMessage", APIResultCodes.Success));
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Step 9]: Balance check passed", _MethodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("ERROR", KioskId, "Insufficient balance for requested transaction.", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Insufficient balance");
+                    var body = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    body.Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
+                    body.Add(new XElement("Message", "Insufficient balance for requested transaction"));
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Insufficient balance for requested transaction"));
-
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 10]: Balance check failed", _MethodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in CheckAccountBalance: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ex.Message));
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Exception occurred");
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body)
+                    .Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 11]: Exception - {ex}", _MethodName);
             }
 
             return response.ToString();
         }
+
+
         #endregion
 
         #region ABL Debit Card Issuance
@@ -1344,200 +1031,170 @@ namespace AlliedAdapter
             XDocument response = request.GetBasicResponseFromRequest();
             APIHelper apiService = new APIHelper();
             string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
             try
             {
-                Logs.WriteLogEntry("info", KioskId, "ABLDebitCardIssuance Step 1: Validating Input Data" + request.ToString(), _MethodName);
-                string CompanyCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CompanyCode")?.Value ?? string.Empty;
-                string AccountNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountNumber")?.Value ?? string.Empty;
-                string ProdCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ProdCode")?.Value ?? string.Empty;
-                string DpsScheme = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("DpsScheme")?.Value ?? string.Empty;
-                string CardGenerationType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardGenerationType")?.Value ?? string.Empty;
-                string UpdateType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("UpdateType")?.Value ?? string.Empty;
+                Logs.WriteLogEntry(LogType.Info, KioskId, _MethodName + " Step 1: Validating Input Data: " + request.ToString(), _MethodName);
+
+                string CompanyCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CompanyCode")?.Value ?? "";
+                string AccountNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountNumber")?.Value ?? "";
+                string ProdCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ProdCode")?.Value ?? "";
+                string DpsScheme = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("DpsScheme")?.Value ?? "";
+                string CardGenerationType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardGenerationType")?.Value ?? "";
+                string UpdateType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("UpdateType")?.Value ?? "";
 
                 string AtmReqType = "";
-                if ((CardGenerationType == "Fresh") || (CardGenerationType == "Upgrade" && UpdateType == "0"))
-                {
+                if (CardGenerationType == "Fresh" || (CardGenerationType == "Upgrade" && UpdateType == "0"))
                     AtmReqType = "1";
-
-                }
                 else if (CardGenerationType == "Replace")
-                {
                     AtmReqType = "2";
-
-                }
                 else if (CardGenerationType == "Upgrade" && UpdateType == "1")
-                {
                     AtmReqType = "5";
-                }
-
 
                 string TransactionId = GenerateTransactionId();
-                DateTime dateTime = DateTime.Now; 
-                string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
-                string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                string formattedDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+                string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"];
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, _MethodName + " URL: " + url, _MethodName);
 
                 bool flag = await AtmMarkYesForExistingCustomer(AccountNumber, CompanyCode, formattedDate, KioskId);
 
-                if (flag)
+                if (!flag)
                 {
-                    var requestPayload = new
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "ATM Marking Failed");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+                    return response.ToString();
+                }
+
+                var requestPayload = new
+                {
+                    ABLDebitCardIssuanceReq = new
                     {
-                        ABLDebitCardIssuanceReq = new
+                        UserID = "XXXXX",
+                        Password = "XXXXX",
+                        ChannelType = "WEB",
+                        ChannelSubType = "SSK",
+                        TransactionType = "000",
+                        TransactionSubType = "000",
+                        TranDateAndTime = formattedDate,
+                        Function = "DebitCardIssuance",
+                        HostData = new
                         {
-                            UserID = "XXXXX",
-                            Password = "XXXXX",
-                            ChannelType = "WEB",
-                            ChannelSubType = "SSK",
-                            TransactionType = "000",
-                            TransactionSubType = "000",
-                            TranDateAndTime = formattedDate,
-                            Function = "DebitCardIssuance",
-                            HostData = new
-                            {
-                                TransReferenceNo = TransactionId,
-                                Company = CompanyCode,
-                                TransactionId = AccountNumber,
-                                Status = "20",
-                                PackageType = ProdCode,
-                                AtmReqType = AtmReqType,
-                                DPS_Scheme = DpsScheme,
-                                CustomerNature = "ETB",
-                                AddressFlag = "NO",
-                                DaoAtmAddr1 = "",
-                                DaoAtmAddr2 = "",
-                                DaoAtmAddr3 = "",
-                                DaoAtmAddr4 = "",
-                                DaoAtmAddr5 = ""
-                            }
-                        }
-                    };
-
-                    Logs.WriteLogEntry("info", KioskId, "Request Payload 1: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
-
-                    APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
-                    // string aa = "{\r\n  \"ABLDebitCardIssuanceRsp\": {\r\n    \"StatusCode\": \"1000\",\r\n    \"StatusDesc\": \"Success\",\r\n    \"STAN\": \"90e1ebfa-4772-11f0-844e-0ae0141b0000\",\r\n    \"HostData\": {\r\n      \"TransReferenceNo\": \"250612145617\",\r\n      \"HostCode\": \"00\",\r\n      \"HostDesc\": \"Success\",\r\n      \"field\": [\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2706670\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.REQUEST\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20220305\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACT.TITLE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MY ACCOUNT\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"STATUS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ATM.REQ.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NAME.ON.ATM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"TEST NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"SHORT.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SHORT NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"BIRTH.DATE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20010101\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"MOTHER.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MOM NAME\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.NAM\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ID-N\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"LGL.DOC.ID\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"3520083065479\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"GENDER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"MALE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Single\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"NATIONALITY.1\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"POST.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"12345\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUST.EMAIL\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"BANK@EXAMPLE.COM\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ACCOUNT.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"SINGLE\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"OPERATING.INSTRUCTIONS\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"Singly\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"PACKAGE.TYPE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"20\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"HUSBAND.NAME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"19500.0000000000000000000000000000000000\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DPS.SCHEME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2-Frequent Online Shopping\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"ADDRESS.FLAG\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"NO\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CUSTOMER.NATURE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"ETB\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CURR.NO\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"INPUTTER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_I_INAU_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DATE.TIME\",\r\n          \"mv\": \"2\",\r\n          \"content\": \"2506121456\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"AUTHORISER\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"36743_CIBOFSML.1_OFS_OFSML\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"CO.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"PK0010722\"\r\n        },\r\n        {\r\n          \"sv\": \"1\",\r\n          \"name\": \"DEPT.CODE\",\r\n          \"mv\": \"1\",\r\n          \"content\": \"1\"\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}";
-                    if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
-                        var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
-                        Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
-
-                        string hostCode = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostCode;
-                        var hostDesc = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostDesc;
-
-                        if (hostCode == "00")
-                        {
-                            Logs.WriteLogEntry("info", KioskId, "Host Code: " + debitCardResponse.HostData, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Host Description: " + debitCardResponse.StatusDesc, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.TransReferenceNo, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostCode, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostDesc, _MethodName);
-
-                            // Declare variables outside the loop
-                            string MotherName = "";
-                            string FatherName = "";
-                            string CustomerType = "";
-                            string AccountType = "";
-                            string CurrencyCode = "";
-                            string BranchCode = "";
-                            string DefaultAccount = "";
-                            string AccountStatus = "";
-                            string BankIMD = "";
-                            string Email = "";
-                            string Nationality = "";
-
-                            foreach (var item in debitCardResponse.HostData.field)
-                            {
-                                Logs.WriteLogEntry("info", KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
-
-                                // Assign values based on item name
-                                if (item.name == "MOTHER.NAME") MotherName = item.content;
-                                if (item.name == "HUSBAND.NAME") FatherName = item.content;
-                                if (item.name == "CUSTOMER.NATURE") CustomerType = item.content;
-                                if (item.name == "ACCOUNT.NATURE") AccountType = item.content;
-                                if (item.name == "CURR.NO") CurrencyCode = item.content;
-                                if (item.name == "CO.CODE") BranchCode = item.content;
-                                if (item.name == "DEFAULT.ACCOUNT") DefaultAccount = item.content;
-                                if (item.name == "STATUS") AccountStatus = item.content;
-                                if (item.name == "BANK.IMD") BankIMD = item.content;
-                                if (item.name == "CUST.EMAIL") Email = item.conte41nt;
-                                if (item.name == "NATIONALITY") Nationality = item.content;
-                            }
-
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            bodyElement.Add(
-                                new XElement("RespMessage", APIResultCodes.Success),
-                                new XElement("MotherName", MotherName),
-                                new XElement("FatherName", FatherName),
-                                new XElement("CustomerType", CustomerType),
-                                new XElement("AccountType", AccountType),
-                                new XElement("CurrencyCode", CurrencyCode),
-                                new XElement("BranchCode", BranchCode),
-                                new XElement("DefaultAccount", DefaultAccount),
-                                new XElement("AccountStatus", AccountStatus),
-                                new XElement("BankIMD", BankIMD),
-                                new XElement("Email", Email),
-                                new XElement("Nationality", Nationality)
-                            );
-                        }
-                        else
-                        {
-                            string errorMessage = ExtractErrorMessage(responseData, KioskId);
-                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", ""));
-                            if (errorMessage == "Customer do not meet Basic Eligibility Criteria, Please select Other Criteria.")
-                            {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "DoNotMeetCriteria"));
-                            }
-                            else
-                            {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", errorMessage));
-                            }
+                            TransReferenceNo = TransactionId,
+                            Company = CompanyCode,
+                            TransactionId = AccountNumber,
+                            Status = "20",
+                            PackageType = ProdCode,
+                            AtmReqType = AtmReqType,
+                            DPS_Scheme = DpsScheme,
+                            CustomerNature = "ETB",
+                            AddressFlag = "NO",
+                            DaoAtmAddr1 = "",
+                            DaoAtmAddr2 = "",
+                            DaoAtmAddr3 = "",
+                            DaoAtmAddr4 = "",
+                            DaoAtmAddr5 = ""
                         }
                     }
-                    else
+                };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Request Payload: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
+
+                APIResponse apiResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
+
+                if (apiResponse.StatusCode != HttpStatusCode.OK)
+                {
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "T24 call failed");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+                    return response.ToString();
+                }
+
+                dynamic responseData = JsonConvert.DeserializeObject(apiResponse.ResponseContent);
+                dynamic debitCardResponse = responseData != null ? responseData.ABLDebitCardIssuanceRsp : null;
+
+                string hostCode = Convert.ToString(debitCardResponse.HostData.HostCode);
+                string hostDesc = Convert.ToString(debitCardResponse.HostData.HostDesc);
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "HostCode: " + hostCode + " Desc: " + hostDesc, _MethodName);
+
+                if (hostCode == "00")
+                {
+                    string MotherName = "", FatherName = "", CustomerType = "", AccountType = "", CurrencyCode = "", BranchCode = "";
+                    string DefaultAccount = "", AccountStatus = "", BankIMD = "", Email = "", Nationality = "";
+
+                    foreach (var item in debitCardResponse.HostData.field)
                     {
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        string name = Convert.ToString(item.name);
+                        string content = Convert.ToString(item.content);
+
+                        if (name == "MOTHER.NAME") MotherName = content;
+                        else if (name == "HUSBAND.NAME") FatherName = content;
+                        else if (name == "CUSTOMER.NATURE") CustomerType = content;
+                        else if (name == "ACCOUNT.NATURE") AccountType = content;
+                        else if (name == "CURR.NO") CurrencyCode = content;
+                        else if (name == "CO.CODE") BranchCode = content;
+                        else if (name == "DEFAULT.ACCOUNT") DefaultAccount = content;
+                        else if (name == "STATUS") AccountStatus = content;
+                        else if (name == "BANK.IMD") BankIMD = content;
+                        else if (name == "CUST.EMAIL") Email = content;
+                        else if (name == "NATIONALITY") Nationality = content;
                     }
+
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
+                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    bodyElement.Add(
+                        new XElement("RespMessage", ApiResponseConstants.SuccessStatus),
+                        new XElement("MotherName", MotherName),
+                        new XElement("FatherName", FatherName),
+                        new XElement("CustomerType", CustomerType),
+                        new XElement("AccountType", AccountType),
+                        new XElement("CurrencyCode", CurrencyCode),
+                        new XElement("BranchCode", BranchCode),
+                        new XElement("DefaultAccount", DefaultAccount),
+                        new XElement("AccountStatus", AccountStatus),
+                        new XElement("BankIMD", BankIMD),
+                        new XElement("Email", Email),
+                        new XElement("Nationality", Nationality)
+                    );
                 }
                 else
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    string errorMessage = ExtractErrorMessage(responseData, KioskId);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Host returned error");
+                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    bodyElement.Add(new XElement("MessageHead", ""));
+                    bodyElement.Add(new XElement("Message",
+                        errorMessage == "Customer do not meet Basic Eligibility Criteria, Please select Other Criteria."
+                        ? ApiResponseConstants.DoNotMeetCriteria
+                        : errorMessage));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in ABLDebitCardIssuance: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} : Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
+
             return response.ToString();
         }
+
 
         #endregion
 
         #region AtmMarkYesForExistingCustomer
-
         public async Task<bool> AtmMarkYesForExistingCustomer(string accountNumber, string BranchCode, string formattedDate, string kioskId)
         {
             APIHelper apiService = new APIHelper();
             string methodName = "AtmMarkYesForExistingCustomer";
             bool flag = false;
+
             try
             {
                 string TransactionId = GenerateTransactionId();
-                string url = T24Url + ConfigurationManager.AppSettings["ABLAtmFlagUpdate"].ToString();
-                Logs.WriteLogEntry("Info", kioskId, $"{methodName} [URL]:  {url}", methodName);
+                string url = T24Url + ConfigurationManager.AppSettings["ABLAtmFlagUpdate"];
+
+                Logs.WriteLogEntry(LogType.Info, kioskId, methodName + " [URL]: " + url, methodName);
 
                 var requestPayload = new
                 {
@@ -1555,33 +1212,33 @@ namespace AlliedAdapter
                         {
                             TransReferenceNo = TransactionId,
                             Company = BranchCode,
-                            TransactionId = accountNumber,
+                            TransactionId = accountNumber
                         }
                     }
                 };
 
-
-                Logs.WriteLogEntry("info", kioskId, "API Request : " + requestPayload.ToString(), methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, "API Request: " + JsonConvert.SerializeObject(requestPayload), methodName);
 
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestPayload, kioskId, "");
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("info", kioskId, "API Call Successful! " + apiResponse.Message, methodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, "API Call Successful! " + apiResponse.Message, methodName);
                     flag = true;
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", kioskId, $"API Call Failed. Status Code: {apiResponse.StatusCode}", methodName);
+                    Logs.WriteLogEntry(LogType.Error, kioskId, "API Call Failed. Status Code: " + apiResponse.StatusCode, methodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", kioskId, "Error while deleting application: " + ex, methodName);
+                Logs.WriteLogEntry(LogType.Error, kioskId, "Exception in " + methodName + ": " + ex, methodName);
             }
 
             return flag;
         }
+
         #endregion
 
         #region IRIS APIs
@@ -1603,15 +1260,15 @@ namespace AlliedAdapter
                 string finalAccountNumber = branchCode.Length >= 4 ? branchCode.Substring(branchCode.Length - 4) + accountNumber : accountNumber;
                 string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"];
 
-                Logs.WriteLogEntry("Info", KioskId, $"Request URL: {url}", _MethodName);
-                Logs.WriteLogEntry("Info", KioskId, $"Request XML: {request}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Request URL: {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Request XML: {request}", _MethodName);
 
                 wsABLCARDSTATUSCHANGE webService = new wsABLCARDSTATUSCHANGE { Url = url };
                 var result = webService.CardListing(CnicNumber);
                 string innerXml = XMLHelper.ExtractInnerXml(result);
                 string cleanedXml = XMLHelper.FixNestedCardInfo(innerXml);
 
-                Logs.WriteLogEntry("Info", KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
 
                 var responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
                 var bodyElement = response.Element(TransactionTags.Response)?.Element(TransactionTags.Body);
@@ -1624,7 +1281,7 @@ namespace AlliedAdapter
                     var allCards = responseObject.Output.Cards;
                     var matchedCards = allCards.Where(c => c.CARDSTATUS != "02" && c.PRODUCTCODE != "0098").ToList();
 
-                    Logs.WriteLogEntry("Info", KioskId, $"Total non-blocked cards found: {matchedCards.Count}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Total non-blocked cards found: {matchedCards.Count}", _MethodName);
 
                     if (matchedCards.Any())
                     {
@@ -1633,7 +1290,7 @@ namespace AlliedAdapter
                         if (FreshCardList != null)
                         {
                             CardFoundButFreshCard = true;
-                            Logs.WriteLogEntry("Info", KioskId, $"Fresh card found for ProductCode: {FreshCardList.PRODUCTCODE} and Account Number : {FreshCardList.ACCOUNTID}  ", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"Fresh card found for ProductCode: {FreshCardList.PRODUCTCODE} and Account Number : {FreshCardList.ACCOUNTID}  ", _MethodName);
                         }
                         else
                         {
@@ -1643,7 +1300,7 @@ namespace AlliedAdapter
                             {
                                 foreach (var card in relevantCards)
                                 {
-                                    Logs.WriteLogEntry("Info", KioskId, $"Card check - Status: {card.CARDSTATUS}, ProductCode: {card.PRODUCTCODE}", _MethodName);
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Card check - Status: {card.CARDSTATUS}, ProductCode: {card.PRODUCTCODE}", _MethodName);
                                     if (card.CARDSTATUS == "00" || card.CARDSTATUS == "01")
                                     {
                                         CardGenerationType = "Replace";
@@ -1655,20 +1312,20 @@ namespace AlliedAdapter
                                         CardStatus = card.CARDSTATUS;
                                         CardFoundForReplace = true;
 
-                                        Logs.WriteLogEntry("Info", KioskId, $"Replace card found: {CardNumber}", _MethodName);
+                                        Logs.WriteLogEntry(LogType.Info, KioskId, $"Replace card found: {CardNumber}", _MethodName);
                                         break;
                                     }
                                 }
                                 if (!CardFoundForReplace)
                                 {
                                     CardGenerationType = "Fresh";
-                                    Logs.WriteLogEntry("Info", KioskId, $"No active card found, marked as Fresh", _MethodName);
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, $"No active card found, marked as Fresh", _MethodName);
                                 }
                             }
                             else
                             {
                                 CardGenerationType = "Upgrade";
-                                Logs.WriteLogEntry("Info", KioskId, $"No matching product code card found, marked as Upgrade", _MethodName);
+                                Logs.WriteLogEntry(LogType.Info, KioskId, $"No matching product code card found, marked as Upgrade", _MethodName);
                             }
                         }
                     }
@@ -1679,17 +1336,17 @@ namespace AlliedAdapter
                         var blockCards = allCards
                         .Where(c => c.CARDSTATUS == "02" && c.PRODUCTCODE != "0098").ToList();
 
-                        Logs.WriteLogEntry("Info", KioskId, $"Total blocked cards found : {blockCards.Count}", _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"Total blocked cards found : {blockCards.Count}", _MethodName);
 
                         if (blockCards.Any())
                         {
                             var maxExpiry = blockCards.Max(c => c.CARDEXPIRYDATE);
-                            Logs.WriteLogEntry("Info", KioskId, $"Max expiry date among blocked cards: {maxExpiry}", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"Max expiry date among blocked cards: {maxExpiry}", _MethodName);
 
                             var expiryCard = blockCards.FirstOrDefault(c => c.CARDEXPIRYDATE == maxExpiry);
                             if (expiryCard != null)
                             {
-                                Logs.WriteLogEntry("Info", KioskId, $"Blocked card found with max expiry: {expiryCard.CARDNUMBER}", _MethodName);
+                                Logs.WriteLogEntry(LogType.Info, KioskId, $"Blocked card found with max expiry: {expiryCard.CARDNUMBER}", _MethodName);
 
                                 CardNumber = expiryCard.CARDNUMBER;
                                 CardExpiryDate = expiryCard.CARDEXPIRYDATE;
@@ -1701,12 +1358,12 @@ namespace AlliedAdapter
                             }
                             else
                             {
-                                Logs.WriteLogEntry("Warning", KioskId, $"No card found with the max expiry date", _MethodName);
+                                Logs.WriteLogEntry(LogType.Warning, KioskId, $"No card found with the max expiry date", _MethodName);
                             }
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Info", KioskId, $"No blocked cards found", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"No blocked cards found", _MethodName);
                         }
 
 
@@ -1714,18 +1371,17 @@ namespace AlliedAdapter
                     }
                     if (CardFoundButFreshCard && !CardFoundForReplace)
                     {
-                        Logs.WriteLogEntry("info", KioskId, $"Card Found But Not For Replace: Card Number: {CardNumber}, Status: {CardStatus}, AccountNumber: {AccountId}", _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"Card Found But Not For Replace: Card Number: {CardNumber}, Status: {CardStatus}, AccountNumber: {AccountId}", _MethodName);
                         Flag = true;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "FreshCardNotAllowed");
                         bodyElement.Add(
                             new XElement("MessageHead", "Card Replace Failed !"),
-                            new XElement("Message", "FreshCardNotAllowed"));
+                            new XElement("Message", ApiResponseConstants.FreshCardNotAllowed));
                     }
                     else if (!CardFoundForReplace && !CardFoundButFreshCard)
                     {
                         CardGenerationType = "Upgrade";
-                        Logs.WriteLogEntry("info", KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, $"This is an {CardGenerationType} Card: {ProductCode}", _MethodName);
                     }
                     if (!Flag)
                     {
@@ -1741,15 +1397,13 @@ namespace AlliedAdapter
                         new XElement("ProductDescription", ProductDescription),
                         new XElement("CardProductCode", ProductCode));
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "IRIS CardList Response Received");
                     }
                 }
-                else if (responseObject?.WebMethodResponse?.ResponseDescription == "Invalid CNIC")
+                else if (responseObject?.WebMethodResponse?.ResponseDescription == ApiResponseConstants.InvalidCNIC)
                 {
                     CardGenerationType = "Fresh";
-                    Logs.WriteLogEntry("Info", KioskId, $"Invalid CNIC — defaulting to Fresh card", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Invalid CNIC — defaulting to Fresh card", _MethodName);
 
                     bodyElement.Add(
                         new XElement("RespMessage", APIResultCodes.Success),
@@ -1763,30 +1417,24 @@ namespace AlliedAdapter
                         new XElement("ProductDescription", ProductDescription),
                         new XElement("CardProductCode", ProductCode));
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS CardList Response Received";
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "IRIS CardList Response Received");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, "IRIS card list fetch failed", _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    bodyElement.Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "IRIS card list fetch failed", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "IRIS card list fetch failed");
+                    bodyElement.Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"{_MethodName} Exception: {ex}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} : Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
-
-
         #endregion
 
         #region IRIS Card Issuance
@@ -1802,10 +1450,10 @@ namespace AlliedAdapter
             {
 
                 string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", KioskId, "KIOSK ID: " + kioskID, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", KioskId, "PC NAME: " + PcName, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "PC NAME: " + PcName, _MethodName);
 
                 string[] parts = PcName.Split('|');
 
@@ -1816,7 +1464,7 @@ namespace AlliedAdapter
                 Console.WriteLine($"Branch Code: {BranchCode}");
 
 
-                Logs.WriteLogEntry("info", KioskId, "IRISCardIssuance Step 1: " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "IRISCardIssuance Step 1: " + request.ToString(), _MethodName);
                 string CardGenerationType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CardGenerationType")?.Value ?? string.Empty;
                 string IrisCardNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("IrisCardNumber")?.Value ?? string.Empty;
                 string FullName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("FullName")?.Value ?? string.Empty;
@@ -1827,7 +1475,6 @@ namespace AlliedAdapter
                 string CustomerType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CustomerType")?.Value ?? string.Empty;
                 string ProductCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ProductCode")?.Value ?? string.Empty;
                 string AccountNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountNumber")?.Value ?? string.Empty;
-                // string AccountType = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountType")?.Value ?? string.Empty;
                 string CurrencyCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CurrencyCode")?.Value ?? string.Empty;
                 string AccountTitle = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountTitle")?.Value ?? string.Empty;
                 string BranceCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("BranceCode")?.Value ?? string.Empty;
@@ -1842,55 +1489,15 @@ namespace AlliedAdapter
                 string Scheme = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("Scheme")?.Value ?? string.Empty;
 
                 CNIC = CNIC.Replace("-", "");
-
-
-                string lastFourDigits = BranceCode.Substring(BranceCode.Length - 4);
-                string finalAccountNumber = lastFourDigits + AccountNumber;
-
-                int AccountCategoryCode = int.Parse(AccountCategory);
-                int from = 1000;
-                int to = 3015;
-                string AccountType = "";
-                if (AccountCategoryCode >= from && AccountCategoryCode <= to)
-                {
-                    AccountType = "20";
-                }
-                else
-                {
-                    AccountType = "10";
-                }
-
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance AccountType : " + AccountType, _MethodName);
-
-                string BankIMD = "";
-
-                switch (ProductCode)
-                {
-                    case "0092":
-                        BankIMD = "428638";
-                        break;
-                    case "0071":
-                        BankIMD = "407572";
-                        break;
-                    case "0070":
-                        BankIMD = "476215";
-                        break;
-                    case "0075":
-                        BankIMD = "476215";
-                        break;
-                    case "0080":
-                        BankIMD = "629240";
-                        break;
-                }
-
-                string TrakingId = GenerateTransactionId();
-                int? isoCode = GetIsoCode(CurrencyCode);
-                Logs.WriteLogEntry("info", KioskId, "ISO Code Found Against Currency Code: " + isoCode, _MethodName);
-                string finaCurrenctCode = Convert.ToString(isoCode).ToString();
-
-
+                string FinalAccountNumber = BranceCode.Substring(BranceCode.Length - 4) + AccountNumber;
+                string TrackingId = GenerateTransactionId();
+                int IsoCode = GetIsoCode(CurrencyCode) ?? 0;
+                string finaCurrenctCode = Convert.ToString(IsoCode).ToString();
+                string BankIMD = GetBankIMD(ProductCode);
                 string ActivationDate = DateTime.Now.ToString("yyyyMMdd");
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance ActivationDate : " + ActivationDate, _MethodName);
+                string AccountType = GetAccountType(int.Parse(AccountCategory));
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"IRIS Request Details: AccountType={AccountType}, ActivationDate={ActivationDate}, IMD={BankIMD}", _MethodName);
 
                 string ActionCode = "";
                 string FinalCardNumber = "";
@@ -1909,10 +1516,9 @@ namespace AlliedAdapter
                     ActionCode = "A";
                 }
 
-                string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
-                InstantCard webService = new InstantCard();
-                webService.Url = URL;
+                string irisUrl = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"];
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Calling IRIS URL: {irisUrl}", _MethodName);
+                InstantCard webService = new InstantCard { Url = irisUrl };
 
                 string requestLog = $@"
                     <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
@@ -1921,7 +1527,7 @@ namespace AlliedAdapter
                         <tem:ImportCustomer>
                         <tem:ActionCode>{ActionCode}</tem:ActionCode>
                         <tem:CNIC>{CNIC}</tem:CNIC>
-                        <tem:TrackingID>{TrakingId}</tem:TrackingID>
+                        <tem:TrackingID>{TrackingId}</tem:TrackingID>
                         <tem:FullName>{FullName}</tem:FullName>
                         <tem:DateOfBirth>{DOB}</tem:DateOfBirth>
                         <tem:MothersName>{MotherName}</tem:MothersName>
@@ -1932,7 +1538,7 @@ namespace AlliedAdapter
                         <tem:CardName>{FullName}</tem:CardName>
                         <tem:CustomerType>1</tem:CustomerType>
                         <tem:ProductCode>{ProductCode}</tem:ProductCode>
-                        <tem:AccountNo>{finalAccountNumber}</tem:AccountNo>
+                        <tem:AccountNo>{FinalAccountNumber}</tem:AccountNo>
                         <tem:AccountType>{AccountType}</tem:AccountType>
                         <tem:AccountCurrency>{finaCurrenctCode}</tem:AccountCurrency>
                         <tem:AccountStatus>00</tem:AccountStatus>
@@ -1962,15 +1568,12 @@ namespace AlliedAdapter
                         </soapenv:Body>
                      </soapenv:Envelope>";
 
-                Logs.WriteLogEntry("info", KioskId, requestLog, _MethodName);
-
-
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance URL : " + webService.Url, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, requestLog, _MethodName);
 
                 string result = webService.ImportCustomer(
                      ActionCode: ActionCode,
                      CNIC: CNIC,
-                     TrackingID: TrakingId,
+                     TrackingID: TrackingId,
                      FullName: FullName,
                      DateOfBirth: DOB,
                      MothersName: MotherName,
@@ -1981,7 +1584,7 @@ namespace AlliedAdapter
                      CardName: CardName,
                      CustomerType: "1",
                      ProductCode: ProductCode,
-                     AccountNo: finalAccountNumber,
+                     AccountNo: FinalAccountNumber,
                      AccountType: AccountType,
                      AccountCurrency: finaCurrenctCode,
                      AccountStatus: "00",
@@ -2013,105 +1616,72 @@ namespace AlliedAdapter
 
                 );
 
-
                 XDocument doc = XDocument.Parse(result);
                 string trackingID = doc.Root.Element("WebMethodResponse").Element("TrackingID")?.Value;
                 string responseCode = doc.Root.Element("WebMethodResponse").Element("ResponseCode")?.Value;
                 string responseDescription = doc.Root.Element("WebMethodResponse").Element("ResponseDescription")?.Value;
 
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
 
-                if (responseDescription == "Success" && responseCode == "00")
+                if (responseCode == "00" && responseDescription == "Success")
                 {
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
-
-                    CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
-
-                    if (cardInfo != null)
+                    var cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
+                    if (cardInfo.CardHolderName != null)
                     {
-                        Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
-
-                        string Description = "";
-                        HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
-                        if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
+                        string description;
+                        var personalizationResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out description, KioskId);
+                        if (personalizationResponse.data.ToString() != "" && personalizationResponse.data != null)
                         {
-                            Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
-                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
-                                new XElement("RequestId", hardwareResponse.data));
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(
+                                new XElement("RespMessage", APIResultCodes.Success),
+                                new XElement("RequestId", personalizationResponse.data)
+                            );
 
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
+                            SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "IRIS Request Successfully Sent");
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
-                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
+                            SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, description);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                         }
-
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Error", KioskId, "cardInfo", _MethodName);
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        Logs.WriteLogEntry(LogType.Error, KioskId, "CardInfo is null", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Embossing file decryption failed");
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
-
-                    //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
-                    //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
-                    //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
                 }
                 else
                 {
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"IRIS Card Issuance Failed: Code={responseCode}, Description={responseDescription}", _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "IRIS Issuance Failed");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
-
-
-
             }
             catch (ArgumentNullException argEx)
             {
-                Logs.WriteLogEntry("Error", KioskId, "ArgumentNullException in CardIssuance: " + argEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"ArgumentNullException in {_MethodName}: {argEx}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Missing required data");
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             catch (InvalidOperationException invOpEx)
             {
-                Logs.WriteLogEntry("Error", KioskId, "InvalidOperationException in CardIssuance: " + invOpEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"InvalidOperationException in {_MethodName}: {invOpEx}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Invalid operation");
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "General Exception in CardIssuance: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Unhandled Exception in {_MethodName}: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Internal Server Error");
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
+
             return response.ToString();
+
         }
 
         #endregion
@@ -2121,64 +1691,66 @@ namespace AlliedAdapter
         #region Send Sms
         public async Task<string> SendOTP(XDocument request, string RefrenceNumber)
         {
-            string _MethodName = "SendOTP";
+            const string _MethodName = "SendOTP";
             XDocument response = request.GetBasicResponseFromRequest();
             smpp_ws_sendsms service = new smpp_ws_sendsms();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+            string kioskId = request.Element(TransactionTags.Request)?.Element(TransactionTags.Header)?.Element(TransactionTags.KioskIdentity)?.Value ?? "Unknown";
+
             try
             {
-                string mobileNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("mobileNumber")?.Value ?? string.Empty; ;
+                string mobileNumber = request.Element(TransactionTags.Request)?.Element(TransactionTags.Body)?.Element("mobileNumber")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, "Final Request" + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Final Request: {request}", _MethodName);
 
                 Random random = new Random();
-                int otp = random.Next(100000, 999999);
-                //int otp = 111111;
-
-
-                string url = ConfigurationManager.AppSettings["SendOtp"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
+                //int otp = random.Next(100000, 999999);
+                int otp = 111111;
                 string message = $"Your OTP for verification is: {otp}. Please enter this code to proceed.";
 
-                Logs.WriteLogEntry("info", KioskId, "Going to send otp sms", _MethodName);
+                string url = ConfigurationManager.AppSettings["SendOtp"]?.ToString();
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Send URL: {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Attempting to send OTP SMS to {mobileNumber}", _MethodName);
 
                 var serviceResponse = service.QueueSMS("SSK", mobileNumber, message, "3");
 
-                if (serviceResponse != null)
+                if (!string.IsNullOrEmpty(serviceResponse))
                 {
-                    Logs.WriteLogEntry("info", KioskId, "SendOTP Response: " + serviceResponse, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"SendOTP Response: {serviceResponse}", _MethodName);
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "OTP Sent Successfully");
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(
-                      new XElement("OTP", otp));
+                    bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                    bodyElement.Add(new XElement("OTP", otp));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("error", KioskId, "Failed to send OTP. Response: " + serviceResponse, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "OtpSendFailed"));
-                }
+                    Logs.WriteLogEntry(LogType.Error, kioskId, "Failed to send OTP. Null response from SMS gateway.", _MethodName);
 
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.OtpSendFailed);
+                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                    bodyElement.Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
+                    bodyElement.Add(new XElement("Message", ApiResponseConstants.OtpSendFailed));
+                }
             }
             catch (Exception ex)
             {
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{_MethodName} : Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
+
         #endregion
 
         #region Get Transiction Id
         private static string GenerateTransactionId()
         {
+            const string methodName = "GenerateTransactionId";
+            string kioskId = "System"; 
+
             try
             {
                 DateTime now = DateTime.Now;
@@ -2186,233 +1758,220 @@ namespace AlliedAdapter
                 string randomDigits = new Random().Next(10, 99).ToString();
 
                 string transactionId = $"{dateTimeNow}{randomDigits}";
-                Console.WriteLine($"Transaction ID: {transactionId}");
+
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Generated Transaction ID: {transactionId}", methodName);
+
                 return transactionId;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"Exception in GenerateTransactionId: {ex}", methodName);
                 throw;
             }
         }
-
         #endregion
 
         #region Get Cards Formats
-        private List<CardFormats> GetCardFormats(string computerName, string KioskId)
+        private List<CardFormats> GetCardFormats(string computerName, string kioskId)
         {
-            string MethodName = "GetCardFormats";
-
-            SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
+            const string methodName = "GetCardFormats";
             List<CardFormats> cardFormatList = new List<CardFormats>();
 
-            if (!string.IsNullOrEmpty(computerName))
+            try
             {
+                if (string.IsNullOrEmpty(computerName))
+                {
+                    Logs.WriteLogEntry(LogType.Warning, kioskId, "Computer name is null or empty. Cannot proceed with GetCardFormats.", methodName);
+                    return cardFormatList;
+                }
 
-                Logs.WriteLogEntry("info", $"Going to get card formats with kiosk " + computerName + "", KioskId, MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Initiating card format retrieval for computer: {computerName}", methodName);
 
+                SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
                 HardwareResponse getCardFormats = deviceOperations.GetCardFormats(computerName);
 
-                Logs.WriteLogEntry("info", KioskId, "GetCardFormats Response Code: " + getCardFormats.code + "Description :" + getCardFormats.description + "Data : " + getCardFormats.data, MethodName);
-                if (getCardFormats.code == 0)
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"GetCardFormats API Response - Code: {getCardFormats.code}, Description: {getCardFormats.description}, Data: {getCardFormats.data}", methodName);
+
+                if (getCardFormats.code == 0 && getCardFormats.data != null)
                 {
                     string jsonCardFormat = getCardFormats.data.ToString();
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"Card Format JSON: {jsonCardFormat}", methodName);
 
-                    Logs.WriteLogEntry("info", KioskId, " Card Format: " + jsonCardFormat, MethodName);
                     cardFormatList = JsonConvert.DeserializeObject<List<CardFormats>>(jsonCardFormat);
-                    Logs.WriteLogEntry("info", KioskId, " Card Format Deserialized : " + cardFormatList, MethodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"Card Formats deserialized successfully. Count: {cardFormatList.Count}", methodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("info", KioskId, " Card Formats Data Not Available", MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, kioskId, "Card format data not available", methodName);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Logs.WriteLogEntry("info", KioskId, "Computer Name Not Available", MethodName);
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"Exception in GetCardFormats: {ex}", methodName);
             }
+
             return cardFormatList;
         }
+
 
         #endregion
 
         #region CardPersonalization
-        private HardwareResponse CardPersonalization(CardInfo cardInfo, string ComputerName, string CardName, out string Description, string KioskId)
+        private HardwareResponse CardPersonalization(CardInfo cardInfo, string computerName, string cardName, out string description, string kioskId)
         {
-            string _MethodName = "CardPersonalization";
-            string Data = "";
-            SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-            Description = "";
+            const string methodName = "CardPersonalization";
+            description = string.Empty;
             HardwareResponse hardwareResponse = new HardwareResponse();
+
             try
             {
-                if (ComputerName != null)
+                if (string.IsNullOrEmpty(computerName))
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Adding Data for Card Personalization" + "", _MethodName);
+                    Logs.WriteLogEntry(LogType.Error, kioskId, "Computer name is null or empty. Cannot personalize card.", methodName);
+                    return hardwareResponse;
+                }
 
-                    List<DataItem> dataItems = new List<DataItem>
-                      {
-                        new DataItem { name = "@PAN@", value = cardInfo.PAN.Replace(" ", "") ?? "" },
-                        new DataItem { name = "@Expiry@", value = cardInfo.Expiry ?? "" },
-                        new DataItem { name = "@CardHolderName@", value = cardInfo.CardHolderName ?? "" },
-                        new DataItem { name = "@CVV2@", value = cardInfo.CVV2 ?? "" },
-                        new DataItem { name = "@iCVV@", value = cardInfo.ICVV ?? "" },
-                        new DataItem { name = "@Track1@", value = cardInfo.Track1 ?? "" },
-                        new DataItem { name = "@Track2@", value = cardInfo.Track2 ?? "" },
-                        new DataItem { name = "@CVV@", value = cardInfo.CVV1 ?? "" },
-                        new DataItem { name = "@MemberSince@", value = cardInfo.MemberSince ?? "" }
-                      };
+                Logs.WriteLogEntry(LogType.Info, kioskId, "Preparing data for card personalization.", methodName);
 
-                    CardPersonalizationRequest personalizationRequest = new CardPersonalizationRequest { dataItems = dataItems };
+                List<DataItem> dataItems = new List<DataItem>
+                {
+                    new DataItem { name = "@PAN@", value = cardInfo.PAN?.Replace(" ", "") ?? string.Empty },
+                    new DataItem { name = "@Expiry@", value = cardInfo.Expiry ?? string.Empty },
+                    new DataItem { name = "@CardHolderName@", value = cardInfo.CardHolderName ?? string.Empty },
+                    new DataItem { name = "@CVV2@", value = cardInfo.CVV2 ?? string.Empty },
+                    new DataItem { name = "@iCVV@", value = cardInfo.ICVV ?? string.Empty },
+                    new DataItem { name = "@Track1@", value = cardInfo.Track1 ?? string.Empty },
+                    new DataItem { name = "@Track2@", value = cardInfo.Track2 ?? string.Empty },
+                    new DataItem { name = "@CVV@", value = cardInfo.CVV1 ?? string.Empty },
+                    new DataItem { name = "@MemberSince@", value = cardInfo.MemberSince ?? string.Empty }
+                };
 
-                    Logs.WriteLogEntry("info", KioskId, "Going to send data for card personlization request" + "", _MethodName);
+                CardPersonalizationRequest request = new CardPersonalizationRequest { dataItems = dataItems };
+                string jsonRequest = JsonConvert.SerializeObject(request);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"CardPersonalization request JSON: {jsonRequest}", methodName);
 
-                    var json = JsonConvert.SerializeObject(personalizationRequest);
-                    Logs.WriteLogEntry("info", KioskId, "Personlization Request : " + json, _MethodName);
-                    hardwareResponse = deviceOperations.StartCardPersonalization(ComputerName, CardName, personalizationRequest);
+                SigmaDS4.DeviceOperations deviceOps = new SigmaDS4.DeviceOperations();
+                hardwareResponse = deviceOps.StartCardPersonalization(computerName, cardName, request);
 
+                Logs.WriteLogEntry(LogType.Info,kioskId,$"CardPersonalization Response: Code={hardwareResponse.code}, Description={hardwareResponse.description}, Data={hardwareResponse.data}",methodName
+                );
 
-                    Logs.WriteLogEntry("info", KioskId, $"{hardwareResponse?.data?.ToString() + "|" + hardwareResponse?.code + "|" + hardwareResponse?.description?.ToString()}" + "", _MethodName);
-
-                    if (hardwareResponse.code == 0 || hardwareResponse.data != null)
-                    {
-                        Data = hardwareResponse.data.ToString();
-                        Logs.WriteLogEntry("error", KioskId, "Response: Data Found : " + Data, _MethodName);
-                    }
-                    else
-                    {
-                        Logs.WriteLogEntry("error", KioskId, "Response: Data is Null", _MethodName);
-                        Logs.WriteLogEntry("error", KioskId, "Response: Status and Description" + hardwareResponse.code + "-" + hardwareResponse.description, _MethodName);
-                        Description = hardwareResponse.description;
-                    }
+                if (hardwareResponse.code == 0 && hardwareResponse.data != null)
+                {
+                    Logs.WriteLogEntry(LogType.Info, kioskId, "Card personalization successful. Data found.", methodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("error", KioskId, "Response: Computer name is null", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, kioskId, "Card personalization failed or returned null data.", methodName);
+                    description = hardwareResponse.description ?? "No description returned.";
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Personlization!: " + ex, _MethodName);
-
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"Exception in CardPersonalization: {ex}", methodName);
+                description = "Exception during card personalization.";
             }
+
             return hardwareResponse;
         }
+
         #endregion
 
         #region Card Status
-        public async Task<string> GetCardStatus(XDocument request, string RefrenceNumber)
+        public async Task<string> GetCardStatus(XDocument request, string referenceNumber)
         {
-            string _MethodName = "GetCardStatus";
+            const string methodName = "GetCardStatus";
             XDocument response = request.GetBasicResponseFromRequest();
             SigmaDS4.DeviceOperations deviceOperations = new SigmaDS4.DeviceOperations();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+            string kioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
 
             try
             {
-                string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", KioskId, "KIOSK ID: " + kioskID, _MethodName);
+                string pcName = ConfigurationManager.AppSettings[kioskId]?.ToString() ?? string.Empty;
 
-                string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", KioskId, "PC NAME: " + PcName, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"KIOSK ID: {kioskId}", methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"PC NAME: {pcName}", methodName);
 
-                string RequestId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("RequestId")?.Value ?? string.Empty;
-                Logs.WriteLogEntry("info", KioskId, KioskId, _MethodName);
+                string requestId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("RequestId")?.Value ?? string.Empty;
 
-                if (RequestId != null)
+                if (string.IsNullOrEmpty(requestId))
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Going to check Card Status" + "", _MethodName);
-
-                    HardwareResponse hardwareResponse = deviceOperations.GetPersonalizationRequestStatus(RequestId, 3, 15);
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    Logs.WriteLogEntry("info", KioskId, "data " + hardwareResponse.data.ToString(), _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "code " + hardwareResponse.code, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "description " + hardwareResponse.description, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "description " + hardwareResponse, _MethodName);
-
-                    switch (hardwareResponse.data.ToString())
-                    {
-                        case "Success":
-
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            bodyElement.Add(
-                                 new XElement("RespMessage", APIResultCodes.Success)
-                            );
-                            break;
-                        case "Failed":
-
-                            Logs.WriteLogEntry("error", KioskId, "Response: Failed to Get Card Status!", _MethodName);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                            break;
-
-                        case "AtExit":
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                            bodyElement.Add(
-                                 new XElement("RespMessage", APIResultCodes.Success)
-                            );
-                            break;
-                        case "Processing":
-                            Logs.WriteLogEntry("Processing", KioskId, "Response: Processing!", _MethodName);
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Processing"));
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                    Logs.WriteLogEntry(LogType.Warning, kioskId, "RequestId is missing in request.", methodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                    return response.ToString();
                 }
 
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Checking card status for RequestId: {requestId}", methodName);
+
+                HardwareResponse hardwareResponse = deviceOperations.GetPersonalizationRequestStatus(requestId, 3, 15);
+                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Card Status Data: {hardwareResponse.data}", methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Card Status Code: {hardwareResponse.code}", methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Card Status Description: {hardwareResponse.description}", methodName);
+
+                string status = hardwareResponse.data?.ToString();
+
+                switch (hardwareResponse.data.ToString())
+                {
+                    case "Success":
+
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "Card Printed");
+                        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                        break;
+                    case "Failed":
+                        Logs.WriteLogEntry(LogType.Error, kioskId, "Card status indicates failure.", methodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                        break;
+                    case "AtExit":
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "Card Printed");
+                        bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                        break;
+                    case "Processing":
+                        Logs.WriteLogEntry(LogType.Warning, kioskId, "Card is still processing.", methodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, "Processing");
+                        break;
+                    default:
+                        break;
+                }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to Get Card Status!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{methodName} [Step 9]: Exception - {ex}", methodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
+
+
+        #endregion
 
         #endregion
 
         #region Account Opening
 
         #region Send OTP 
-
-        public async Task<string> SendOtpAsanAccount(XDocument request, string RefrenceNumber)
+        public async Task<string> SendOtpAsanAccount(XDocument request, string referenceNumber)
         {
-
-            string _MethodName = "SendOtpAsanAccount";
+            const string methodName = "SendOtpAsanAccount";
             APIHelper apiService = new APIHelper();
             XDocument response = request.GetBasicResponseFromRequest();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+            string kioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
             try
             {
                 string mobileNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("mobileNumber")?.Value ?? string.Empty;
                 string cnicNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("cnicNumber")?.Value ?? string.Empty;
                 cnicNumber = cnicNumber.Replace("-", "");
-                Logs.WriteLogEntry("info", KioskId, "Request : " + request.ToString(), _MethodName);
 
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["SendOtpPda"].ToString();
-
-
-
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"Request XML: {request}", methodName);
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["SendOtpPda"];
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"[{methodName}] URL: {url}", methodName);
 
                 var requestData = new
                 {
@@ -2427,65 +1986,60 @@ namespace AlliedAdapter
                     }
                 };
 
-                Logs.WriteLogEntry("info", KioskId, "API Request : " + JsonConvert.SerializeObject(requestData.ToString()), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"API Request Payload: {JsonConvert.SerializeObject(requestData)}", methodName);
 
-                var aPIResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, kioskId, "");
 
-                Logs.WriteLogEntry("info", KioskId, "API Response : " + JsonConvert.SerializeObject(aPIResponse), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"API Response: {JsonConvert.SerializeObject(apiResponse)}", methodName);
 
-                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                if (apiResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    OTPResponse otpResponse = JsonConvert.DeserializeObject<OTPResponse>(aPIResponse.ResponseContent);
-                    Logs.WriteLogEntry("info", KioskId, "API Call Successful!" + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                    OTPResponse otpResponse = JsonConvert.DeserializeObject<OTPResponse>(apiResponse.ResponseContent);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"OTP Send Success: {apiResponse.Message}", methodName);
+
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, "Success");
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body)
+                            .Add(new XElement("RespMessage", APIResultCodes.Success));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, "API Call Failed. Status Code: " + aPIResponse.StatusCode, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                    Logs.WriteLogEntry(LogType.Error, kioskId, $"Failed OTP Send. StatusCode: {apiResponse.StatusCode}", methodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to SendOtpAsanAccount!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{methodName} [Step 9]: Exception - {ex}", methodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
+
             return response.ToString();
-
         }
-
 
         #endregion
 
         #region Delete Application
-        public async Task<string> DeleteApplication(XDocument request, string RefrenceNumber)
-
+        public async Task<string> DeleteApplication(XDocument request, string referenceNumber)
         {
-
-            string _MethodName = "DeleteApplication";
+            const string methodName = "DeleteApplication";
             APIHelper apiService = new APIHelper();
             XDocument response = request.GetBasicResponseFromRequest();
-            string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
+
+            string kioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
 
             try
             {
                 string nadraResponse = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("nadraResponse")?.Value ?? string.Empty;
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["UpdateApplication"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
-                Logs.WriteLogEntry("info", KioskId, "Request url: " + url, _MethodName);
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["UpdateApplication"];
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"[{methodName}] URL: {url}", methodName);
+
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
-                var jsonRequest = (dynamic)null;
+
+                JObject jsonRequest = null;
 
                 foreach (var consumer in consumerList)
                 {
@@ -2493,51 +2047,39 @@ namespace AlliedAdapter
                     {
                         ["data"] = new JObject
                         {
-
                             ["customerProfileId"] = consumer["rdaCustomerProfileId"],
-                            ["customerAccountInfoId"] = consumer["accountInformation"]["rdaCustomerAccInfoId"]
-
+                            ["customerAccountInfoId"] = consumer["accountInformation"]?["rdaCustomerAccInfoId"]
                         }
                     };
                 }
 
-                Logs.WriteLogEntry("info", KioskId, "API Request : " + jsonRequest.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"API Request: {jsonRequest}", methodName);
 
-                var aPIResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, jsonRequest, KioskId, "");
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, jsonRequest, kioskId, "");
 
-                if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                if (apiResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    OTPResponse otpResponse = JsonConvert.DeserializeObject<OTPResponse>(aPIResponse.ResponseContent);
-                    Logs.WriteLogEntry("info", KioskId, "API Call Successful!" + aPIResponse.Message, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, $"API Call Successful! {apiResponse.Message}", methodName);
 
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success));
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body)
+                            .Add(new XElement("RespMessage", APIResultCodes.Success));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, "API Call Failed. Status Code: " + aPIResponse.StatusCode, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                    Logs.WriteLogEntry(LogType.Error, kioskId, $"API Call Failed. StatusCode: {apiResponse.StatusCode}", methodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_AccountNotExist);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (Exception ex)
             {
-
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to DeleteApplication!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                Logs.WriteLogEntry(LogType.Error, kioskId, $"{methodName} : Exception - {ex}", methodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
-
         }
 
 
@@ -2559,10 +2101,10 @@ namespace AlliedAdapter
                 string otp = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("otp")?.Value ?? string.Empty;
                 cnicNumber = cnicNumber.Replace("-", "");
 
-                Logs.WriteLogEntry("info", KioskId, "Request: " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Request: " + request.ToString(), _MethodName);
 
                 string url = MyPdaUrl + ConfigurationManager.AppSettings["VerifyOtp"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 string OTP = EncryptUsingAES256(otp);
 
@@ -2583,12 +2125,12 @@ namespace AlliedAdapter
                     }
                 };
 
-                Logs.WriteLogEntry("Info", KioskId, $"API Request bodyElement: {requestData}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"API Request bodyElement: {requestData}", _MethodName);
 
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
 
                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                Logs.WriteLogEntry("Info", KioskId, $"API Response bodyElement: {apiResponse.ResponseContent}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"API Response bodyElement: {apiResponse.ResponseContent}", _MethodName);
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
@@ -2604,15 +2146,13 @@ namespace AlliedAdapter
 
                         if (appListToken.Type == JTokenType.Array)
                         {
-
                             foreach (var item in appListToken)
                             {
-
                                 var accStatusId = Convert.ToString(item["accountStatusId"]?.ToString());
 
                                 if (accStatusId != "100702")
                                 {
-                                    Logs.WriteLogEntry("Info", KioskId, $"Account Status ID: {accStatusId}", _MethodName);
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Account Status ID: {accStatusId}", _MethodName);
                                     flag = true;
                                     break;
                                 }
@@ -2623,19 +2163,14 @@ namespace AlliedAdapter
 
                                 if (!string.IsNullOrEmpty(profileId)) profileIds.Add(profileId);
                                 if (!string.IsNullOrEmpty(accInfoId)) accInfoIds.Add(accInfoId);
-
-
-
                             }
                         }
 
                         if (flag)
                         {
-                            Logs.WriteLogEntry("Info", KioskId, $"Customer Application Already in Process:", _MethodName);
-
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer, your Asaan Account request is already in process."));
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"Customer Application Already in Process:", _MethodName);
+                            SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.AccountAlreadyInProcess);
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.AccountAlreadyInProcess));
 
                         }
                         else
@@ -2643,24 +2178,19 @@ namespace AlliedAdapter
                             string[] CustomerProfileIds = profileIds.ToArray();
                             string[] CustomerAccInfoIds = accInfoIds.ToArray();
 
-
                             profileIdsCsv = string.Join(", ", CustomerProfileIds);
                             accInfoIdsCsv = string.Join(", ", CustomerAccInfoIds);
 
-                            Logs.WriteLogEntry("Info", KioskId, $"CustomerprofileIds: {profileIdsCsv}", _MethodName);
-                            Logs.WriteLogEntry("Info", KioskId, $"CustomerAccInfoIds: {accInfoIdsCsv}", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"CustomerprofileIds: {profileIdsCsv}", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"CustomerAccInfoIds: {accInfoIdsCsv}", _MethodName);
 
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                            SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                             bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
                             new XElement("CustomerProfileIds", profileIdsCsv),
                             new XElement("CustomerAccInfoIds", accInfoIdsCsv));
                         }
 
                     }
-
-
-
                 }
                 else
                 {
@@ -2668,38 +2198,29 @@ namespace AlliedAdapter
                     string Status = jsonResponse?.message?.status;
                     string Description = jsonResponse?.message?.description;
                     string errorDetail = jsonResponse?.message?.errorDetail;
-                    Logs.WriteLogEntry("Info", KioskId, $"API Response: {Description} - {errorDetail} - {Status}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"API Response: {Description} - {errorDetail} - {Status}", _MethodName);
 
-                    if (Description == "Please provide Valid OTP")
+                    if (Description == ApiResponseConstants.PleaseProvideValidOTP)
                     {
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = Description;
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, $"API Call OTP Failed: {Status} - {Description} - {errorDetail}", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, Description);
                         bodyElement.Add(new XElement("RespMessage", "OtpFailed"),
-                             new XElement("OTP", "Failed"));
-
-                        Logs.WriteLogEntry("Error", KioskId, $"API Call OTP Failed: {Status} - {Description} - {errorDetail}", _MethodName);
+                        new XElement("OTP", "Failed"));
                     }
                     else
                     {
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                        bodyElement.Add(new XElement("RespMessage", "PmdFailed"));
-
-                        Logs.WriteLogEntry("Error", KioskId, $"API Call PMD Failed: {Status} - {Description} - {errorDetail}", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, Description);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+                        bodyElement.Add(new XElement("RespMessage", ApiResponseConstants.PmdFailed));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, $"API Call PMD Failed: {Status} - {Description} - {errorDetail}", _MethodName);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Exception in PmdVerification: " + ex, _MethodName);
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"{_MethodName} [Step 9]: Exception - {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
@@ -2716,7 +2237,7 @@ namespace AlliedAdapter
             try
             {
                 string url = MyPdaUrl + ConfigurationManager.AppSettings["UpdateApplication"].ToString();
-                Logs.WriteLogEntry("Info", kioskId, $"{methodName} [URL]:  {url}", methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, $"{methodName} [URL]:  {url}", methodName);
 
                 var deleteRequest = new JObject
                 {
@@ -2727,22 +2248,22 @@ namespace AlliedAdapter
                     }
                 };
 
-                Logs.WriteLogEntry("info", kioskId, "API Request : " + deleteRequest.ToString(), methodName);
+                Logs.WriteLogEntry(LogType.Info, kioskId, "API Request : " + deleteRequest.ToString(), methodName);
 
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, deleteRequest, kioskId, "");
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("info", kioskId, "API Call Successful! " + apiResponse.Message, methodName);
+                    Logs.WriteLogEntry(LogType.Info, kioskId, "API Call Successful! " + apiResponse.Message, methodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", kioskId, $"API Call Failed. Status Code: {apiResponse.StatusCode}", methodName);
+                    Logs.WriteLogEntry(LogType.Warning, kioskId, $"API Call Failed. Status Code: {apiResponse.StatusCode}", methodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", kioskId, "Error while deleting application: " + ex, methodName);
+                Logs.WriteLogEntry(LogType.Error, kioskId, "Error while deleting application: " + ex, methodName);
             }
         }
 
@@ -2768,31 +2289,23 @@ namespace AlliedAdapter
                 string TnCEnglish = ConfigurationManager.AppSettings["TnCEnglish"].ToString();
                 string TnCUrdu = ConfigurationManager.AppSettings["TnCUrdu"].ToString();
 
-                Logs.WriteLogEntry("info", KioskId, "AsaanDigitalAccountConventional url: " + AsaanDigitalAccountConventional, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "AsaanDigitalAccountIslamic url: " + AsaanDigitalAccountIslamic, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "AsaanDigitalRemittanceAccountConventional url: " + AsaanDigitalRemittanceAccountConventional, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "AsaanDigitalRemittanceAccountIslamic url: " + AsaanDigitalRemittanceAccountIslamic, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "Declaration url: " + Declaration, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "TnCEnglish url: " + TnCEnglish, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "TnCUrdu url: " + TnCUrdu, _MethodName);
-
-
-                Logs.WriteLogEntry("Info", KioskId, "GetCustomerFromNadra Request !: " + request.ToString(), _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "AsaanDigitalAccountConventional url: " + AsaanDigitalAccountConventional, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "AsaanDigitalAccountIslamic url: " + AsaanDigitalAccountIslamic, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "AsaanDigitalRemittanceAccountConventional url: " + AsaanDigitalRemittanceAccountConventional, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "AsaanDigitalRemittanceAccountIslamic url: " + AsaanDigitalRemittanceAccountIslamic, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Declaration url: " + Declaration, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "TnCEnglish url: " + TnCEnglish, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "TnCUrdu url: " + TnCUrdu, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "GetCustomerFromNadra Request !: " + request.ToString(), _MethodName);
 
                 string mobileNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("mobileNumber")?.Value ?? string.Empty;
                 string cnicNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("cnic")?.Value ?? string.Empty;
                 string dateOfIssuance = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("dateOfIssuance")?.Value ?? string.Empty;
-
                 string CustomerProfileIds = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CustomerProfileIds")?.Value ?? string.Empty;
                 string CustomerAccInfoIds = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CustomerAccInfoIds")?.Value ?? string.Empty;
 
-
-
-
                 if (CustomerAccInfoIds != "")
                 {
-
                     string profileId = CustomerProfileIds.Split(',').Select(x => x.Trim()).FirstOrDefault();
                     var accountInfoIdList = CustomerAccInfoIds.Split(',').Select(x => x.Trim()).ToList();
 
@@ -2802,12 +2315,11 @@ namespace AlliedAdapter
                     }
                 }
 
-
                 DateTime date = DateTime.ParseExact(dateOfIssuance, "yyyy-MM-dd", null);
                 string formattedDate = date.ToString("dd/MM/yyyy");
 
-                Logs.WriteLogEntry("Info", KioskId, "GetCustomerFromNadra Request!: " + request.ToString(), _MethodName);
-                Logs.WriteLogEntry("Info", KioskId, "GetCustomerFromNadra formattedDate!: " + formattedDate, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "GetCustomerFromNadra Request!: " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "GetCustomerFromNadra formattedDate!: " + formattedDate, _MethodName);
 
                 #region List Of Variants
 
@@ -2815,82 +2327,82 @@ namespace AlliedAdapter
                 List<Dictionary<string, object>> OccupationList = await GetOccupationListAsync(KioskId);
                 if (OccupationList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Occupation List Found !: " + OccupationList, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Occupation List Found !: " + OccupationList, _MethodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Occupation List Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Occupation List Not Found !: ", _MethodName);
                 }
 
                 // Profession List
                 List<Dictionary<string, object>> professionList = await GetProfessionListAsync(KioskId);
                 if (professionList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Profession List Found: " + professionList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Profession List Found: " + professionList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Profession List Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Profession List Not Found !: ", _MethodName);
                 }
 
                 // Town / Tehsil List
                 List<Dictionary<string, object>> townTehsilList = await TownTehsilList(KioskId);
                 if (townTehsilList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Town / Tehsil List Found: " + professionList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Town / Tehsil List Found: " + professionList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Town / Tehsil Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Town / Tehsil Not Found !: ", _MethodName);
                 }
 
                 // Branches List
                 List<Dictionary<string, object>> islamicBranchList = await IslamicBranchList(KioskId);
                 if (islamicBranchList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Islamic Branch List Found: " + islamicBranchList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Islamic Branch List Found: " + islamicBranchList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Islamic Branch Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Islamic Branch Not Found !: ", _MethodName);
                 }
 
                 // Conventional List
                 List<Dictionary<string, object>> conventionalBranchList = await ConventionalBranchList(KioskId);
                 if (conventionalBranchList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Conventional Branch List Found: " + conventionalBranchList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Conventional Branch List Found: " + conventionalBranchList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Conventional Branch Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Conventional Branch Not Found !: ", _MethodName);
                 }
 
                 // Gender List
                 List<Dictionary<string, object>> genderList = await GenderList(KioskId);
                 if (genderList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Gender List Found: " + genderList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Gender List Found: " + genderList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Gender Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Gender Not Found !: ", _MethodName);
                 }
                 // Branches List
                 List<Dictionary<string, object>> accountPurposeList = await AccountPurpose(KioskId);
                 if (accountPurposeList.Count > 0)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "AccountPurpose List Found: " + accountPurposeList, "GetCustomerFromNadra");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "AccountPurpose List Found: " + accountPurposeList, "GetCustomerFromNadra");
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "AccountPurpose Not Found !: ", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "AccountPurpose Not Found !: ", _MethodName);
                 }
 
                 #endregion
 
                 string url = MyPdaUrl + ConfigurationManager.AppSettings["GetCustomerFromNadra"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
 
                 var requestData = new
@@ -2920,19 +2432,17 @@ namespace AlliedAdapter
                 };
 
 
-                Logs.WriteLogEntry("Info", KioskId, "GetCustomerFromNadra API Request !: " + JsonConvert.SerializeObject(requestData), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "GetCustomerFromNadra API Request !: " + JsonConvert.SerializeObject(requestData), _MethodName);
                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-
-
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
                     var consumerList = jsonResponse["data"]?["consumerList"];
 
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
 
                     string FullName = "";
                     string DateOfBirth = "";
@@ -2947,10 +2457,6 @@ namespace AlliedAdapter
                     string AccessToken = "";
                     string IsTranslate = "";
 
-
-
-
-
                     if (consumerList != null)
                     {
                         foreach (var consumer in consumerList)
@@ -2961,11 +2467,9 @@ namespace AlliedAdapter
                             MotherName = consumer["motherMaidenName"].ToString();
                             if (string.IsNullOrEmpty(MotherName))
                             {
-                                MotherName =  Decrypt(consumer["motherMaidenNameEncrypted"].ToString());
+                                MotherName = Decrypt(consumer["motherMaidenNameEncrypted"].ToString());
                             }
-
                             FatherName = consumer["fatherHusbandName"].ToString();
-
                             gender = consumer["gender"].ToString();
                             genderId = consumer["genderId"].ToString();
                             Address1 = consumer["addresses"]?[0]?["customerAddress"].ToString();
@@ -2975,9 +2479,7 @@ namespace AlliedAdapter
                             IsTranslate = consumer["nadraTranslationInUrduInd"].ToString();
                         }
 
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                         bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
 
                         new XElement("FullName", FullName),
@@ -3008,30 +2510,20 @@ namespace AlliedAdapter
                         new XElement("AsaanDigitalAccountIslamic", AsaanDigitalAccountIslamic),
                         new XElement("AsaanDigitalRemittanceAccountConventional", AsaanDigitalRemittanceAccountConventional),
                         new XElement("AsaanDigitalRemittanceAccountIslamic", AsaanDigitalRemittanceAccountIslamic));
-
-
-
-
                     }
                 }
                 else
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                    Logs.WriteLogEntry(LogType.Error, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, apiResponse.ResponseContent);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message",ApiResponseConstants.Message_UnableToProcess));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to GetCustomerFromNadra!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Error in Failed to GetCustomerFromNadra!: " + ex, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
 
@@ -3054,18 +2546,18 @@ namespace AlliedAdapter
                 string accessToken = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("accessToken")?.Value ?? string.Empty;
                 string genderId = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("gender")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, "{PersonalInfo} Step 1: Going to send request basic info personal Data", _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "{PersonalInfo} Step 1: Going to send request basic info personal Data", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request, _MethodName);
 
                 string CustomerBasicInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
                 string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} Step 1", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} Step 1", _MethodName);
 
                 var jsonRequest = (dynamic)null;
 
@@ -3121,25 +2613,16 @@ namespace AlliedAdapter
                     };
 
                 }
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} Step 2", _MethodName);
-                Console.WriteLine(JsonConvert.SerializeObject(jsonRequest));
-                Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} jsonRequest:" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
-
-
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} Step 2", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-basic-info} jsonRequest:" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendRestTransaction(CustomerBasicInfoUrl, HttpMethods.POST, jsonRequest, accessToken, "");
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-
-                    Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} Response was successful. Step 2:", _MethodName);
-
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-basic-info} Response was successful. Step 2:", _MethodName);
                     var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
-
-
-
-                    Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} Response Content  Step 3:" + responseData, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "Going to send request of {personal-account-info}   Step 4:", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-basic-info} Response Content  Step 3:" + responseData, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {personal-account-info}   Step 4:", _MethodName);
                     var jsonRequest2 = (dynamic)null;
                     foreach (var consumer in consumerList)
                     {
@@ -3173,50 +2656,40 @@ namespace AlliedAdapter
                         };
                     }
 
-                    Logs.WriteLogEntry("info", KioskId, "{personal-account-info}" + jsonRequest2, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CustomerAccountInfoUrl" + CustomerAccountInfoUrl, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-account-info}" + jsonRequest2, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "CustomerAccountInfoUrl" + CustomerAccountInfoUrl, _MethodName);
                     APIResponse aPIResponse2 = await apiService.SendRestTransaction(CustomerAccountInfoUrl, HttpMethods.POST, jsonRequest2, accessToken, "");
                     if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                     {
-
-
-                        Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} Response was successful. Step 2:", _MethodName);
-
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-basic-info} Response was successful. Step 2:", _MethodName);
                         var responseData2 = JsonConvert.DeserializeObject<dynamic>(aPIResponse2.ResponseContent);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "{personal-basic-info} Response Content  Step 3:" + responseData2, _MethodName);
 
-                        Logs.WriteLogEntry("info", KioskId, "{personal-basic-info} Response Content  Step 3:" + responseData2, _MethodName);
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                     }
                     else
                     {
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, aPIResponse?.StatusCode.ToString(), _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
-
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, " {PersonalInfo} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, " {PersonalInfo} Error Message: " + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {PersonalInfo} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {PersonalInfo} Error Message: " + aPIResponse.Message, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
 
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{PersonalInfo}}: {ex.Message}", _MethodName);
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{PersonalInfo}}: {ex}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in {{PersonalInfo}}: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
@@ -3243,15 +2716,12 @@ namespace AlliedAdapter
                 string mobileNo = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("mobileNo")?.Value ?? string.Empty;
 
 
-                Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request, _MethodName);
                 string url = MyPdaUrl + ConfigurationManager.AppSettings["CurrentAddress"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
-
-
                 var jsonRequest = (dynamic)null;
 
                 foreach (var consumer in consumerList)
@@ -3307,33 +2777,27 @@ namespace AlliedAdapter
                     };
 
                 }
-                Console.WriteLine(JsonConvert.SerializeObject(jsonRequest));
-                Logs.WriteLogEntry("info", KioskId, "{CurrentAddress} jsonRequest:" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "{CurrentAddress} jsonRequest:" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
                 APIResponse aPIResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, jsonRequest, accessToken, "");
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, " {CurrentAddress} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, " {CurrentAddress} Error Message: " + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {CurrentAddress} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {CurrentAddress} Error Message: " + aPIResponse.Message, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{CurrentAddress}}: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in {{CurrentAddress}}: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
 
@@ -3366,8 +2830,8 @@ namespace AlliedAdapter
                 string Email = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("email")?.Value ?? string.Empty;
 
 
-                Logs.WriteLogEntry("info", KioskId, "{OccupationalDetail} Step 1: Going to send request basic info personal Data", _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "{OccupationalDetail} Step 1: Going to send request basic info personal Data", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request, _MethodName);
 
 
                 if (string.IsNullOrEmpty(professionId) && !string.IsNullOrEmpty(professionName))
@@ -3385,15 +2849,13 @@ namespace AlliedAdapter
                     }
                 }
                 string CustomerBasicInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerBasicInfo"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerBasicInfo URL]:  {CustomerBasicInfoUrl}", _MethodName);
 
                 string SaveKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["SaveKyc"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [SaveKycUrl URL]:  {SaveKycUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [SaveKycUrl URL]:  {SaveKycUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
-
-
                 var jsonRequest = (dynamic)null;
 
                 foreach (var consumer in consumerList)
@@ -3446,18 +2908,16 @@ namespace AlliedAdapter
                     };
 
                 }
-
-                Logs.WriteLogEntry("info", KioskId, "Request :" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Request :" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
                 APIResponse aPIResponse = await apiService.SendRestTransaction(CustomerBasicInfoUrl, HttpMethods.POST, jsonRequest, accessToken, "");
 
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-
-                    Logs.WriteLogEntry("info", KioskId, "{occupational-basic-info} Response was successful. Step 2:", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "{occupational-basic-info} Response was successful. Step 2:", _MethodName);
                     var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
 
-                    Logs.WriteLogEntry("info", KioskId, "{occupational-basic-info} Response Content  Step 3:" + responseData, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "Going to send request of {kyc-save}   Step 4:", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "{occupational-basic-info} Response Content  Step 3:" + responseData, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {kyc-save}   Step 4:", _MethodName);
                     var jsonRequest2 = (dynamic)null;
 
                     foreach (var consumer in consumerList)
@@ -3475,40 +2935,40 @@ namespace AlliedAdapter
                             }
                         };
                     }
-
-                    Logs.WriteLogEntry("info", KioskId, "kyc-save" + JsonConvert.SerializeObject(jsonRequest2), _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "kyc-save" + JsonConvert.SerializeObject(jsonRequest2), _MethodName);
                     APIResponse aPIResponse2 = await apiService.SendRestTransaction(SaveKycUrl, HttpMethods.POST, jsonRequest2, accessToken, "");
                     if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        Logs.WriteLogEntry("info", KioskId, "{kyc-save} Response was successful. Step 2:", _MethodName);
-
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "{kyc-save} Response was successful. Step 2:", _MethodName);
                         var responseData2 = JsonConvert.DeserializeObject<dynamic>(aPIResponse2.ResponseContent);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "{kyc-save} Response Content  Step 3:" + responseData2, _MethodName);
 
-                        Logs.WriteLogEntry("info", KioskId, "{kyc-save} Response Content  Step 3:" + responseData2, _MethodName);
-
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                         response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                     }
-
+                    else
+                    {
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, " {OccupationalDetail} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, " {OccupationalDetail} Error Message: " + aPIResponse.Message, _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+                    }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, " {OccupationalDetail} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, " {OccupationalDetail} Error Message: " + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {OccupationalDetail} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {OccupationalDetail} Error Message: " + aPIResponse.Message, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{CustomerAccountList}}: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in {{CustomerAccountList}}: {ex.Message}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
@@ -3531,15 +2991,12 @@ namespace AlliedAdapter
                 string accessToken = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("accessToken")?.Value ?? string.Empty;
                 string name = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("name")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request, _MethodName);
                 string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
-
-
                 var jsonRequest = (dynamic)null;
 
                 foreach (var consumer in consumerList)
@@ -3575,40 +3032,31 @@ namespace AlliedAdapter
                 }
 
 
-                Logs.WriteLogEntry("info", KioskId, "jsonRequest" + jsonRequest, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "jsonRequest" + jsonRequest, _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendRestTransaction(CustomerAccountInfoUrl, HttpMethods.POST, jsonRequest, accessToken, "");
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success , ApiResponseConstants.SuccessStatus);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
                 }
                 else
                 {
 
-                    Logs.WriteLogEntry("Error", KioskId, " {BankingReference} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, " {BankingReference} Error Message: " + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {BankingReference} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {BankingReference} Error Message: " + aPIResponse.Message, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
 
                 }
 
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{BankingReference}}: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in {{BankingReference}}: {ex.Message}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
 
@@ -3642,16 +3090,14 @@ namespace AlliedAdapter
                 string occupationID = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("occupationId")?.Value ?? string.Empty;
                 string DateOfBirth = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("dateOfBirth")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, "request" + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request.ToString(), _MethodName);
                 int accountstate = 0;
-                // 
                 if (accountStatement == "true")
                 {
                     accountstate = 1;
                 }
-
                 string CustomerAccountInfoUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerAccountInfo"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerAccountInfo URL]:  {CustomerAccountInfoUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
@@ -3673,8 +3119,7 @@ namespace AlliedAdapter
                     string Date = consumer1["dateOfBirth"].ToString();
                     date = DateTime.ParseExact(Date, "dd/MM/yyyy", null);
                 }
-
-                Logs.WriteLogEntry("info", KioskId, "Updated Date Of Birth" + date, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Updated Date Of Birth" + date, _MethodName);
 
                 VariantInfo variantInfo = await GetAccoutListWithAccountNames(FinalAccountType, accountPurpose, bankingMode, GenderID, occupationID, date, KioskId);
                 var jsonRequest = (dynamic)null;
@@ -3720,41 +3165,32 @@ namespace AlliedAdapter
                         }
                     };
                 }
-
-                Logs.WriteLogEntry("Info", KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(jsonRequest), _MethodName);
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(jsonRequest), _MethodName);
                 APIResponse aPIResponse = await apiService.SendRestTransaction(CustomerAccountInfoUrl, HttpMethods.POST, jsonRequest, accessToken, "");
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    Logs.WriteLogEntry("Info", KioskId, " {AccountsDetails} Response: " + aPIResponse.ResponseContent, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                    Logs.WriteLogEntry(LogType.Info, KioskId, " {AccountsDetails} Response: " + aPIResponse.ResponseContent, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                     bodyElement.Add(new XElement("AccountCategory", variantInfo.Name));
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, " {AccountsDetails} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
-                    Logs.WriteLogEntry("Error", KioskId, " {AccountsDetails} Error Message: " + aPIResponse.Message, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {AccountsDetails} Request failed with status code: " + aPIResponse.StatusCode, _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, " {AccountsDetails} Error Message: " + aPIResponse.Message, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to AccountsDetails!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Error in Failed to AccountsDetails!: " + ex, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
-
-
         #endregion
 
         #region Post Reviewed Details
@@ -3769,27 +3205,27 @@ namespace AlliedAdapter
                 string nadraResponse = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("nadraResponse")?.Value ?? string.Empty;
                 string accessToken = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("accessToken")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("info", KioskId, "request" + request, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "request" + request, _MethodName);
 
                 string UpdateKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["UpdateKyc"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [UpdateKyc URL]:  {UpdateKycUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [UpdateKyc URL]:  {UpdateKycUrl}", _MethodName);
 
                 string AuthorizerKycUrl = MyPdaUrl + ConfigurationManager.AppSettings["AuthorizerKyc"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [AuthorizerKyc URL]:  {AuthorizerKycUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [AuthorizerKyc URL]:  {AuthorizerKycUrl}", _MethodName);
 
                 string CustomerProfileStatusUrl = MyPdaUrl + ConfigurationManager.AppSettings["CustomerProfileStatus"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [CustomerProfileStatus URL]:  {CustomerProfileStatusUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [CustomerProfileStatus URL]:  {CustomerProfileStatusUrl}", _MethodName);
 
                 string ScreeningUrl = MyPdaUrl + ConfigurationManager.AppSettings["Screening"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [ScreeningUrl URL]:  {ScreeningUrl}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [ScreeningUrl URL]:  {ScreeningUrl}", _MethodName);
 
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
 
 
-                //// Update KYC
+                //<-- Update KYC --->
 
-                Logs.WriteLogEntry("info", KioskId, "Going to send request of {update-kyc}:", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {update-kyc}:", _MethodName);
 
                 var jsonRequest = (dynamic)null;
 
@@ -3809,7 +3245,7 @@ namespace AlliedAdapter
                     };
                 }
 
-                Logs.WriteLogEntry("info", KioskId, "update-kyc Request" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "update-kyc Request" + JsonConvert.SerializeObject(jsonRequest), _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendRestTransaction(UpdateKycUrl, HttpMethods.POST, jsonRequest, accessToken, "");
                 JObject updateKycResponse = JObject.Parse(aPIResponse.ResponseContent);
@@ -3817,20 +3253,16 @@ namespace AlliedAdapter
                 var updateKycMessage = updateKycResponse["message"];
                 string msg = updateKycData["msg"]?.ToString();
 
-                Logs.WriteLogEntry("info", KioskId, "Response updateKycData :" + aPIResponse.ResponseContent, _MethodName);
-                Logs.WriteLogEntry("info", KioskId, "Response updateKycMessage :" + updateKycMessage["status"] + "-" + updateKycMessage["description"], _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Response updateKycData :" + aPIResponse.ResponseContent, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Response updateKycMessage :" + updateKycMessage["status"] + "-" + updateKycMessage["description"], _MethodName);
 
-                bool flag = false;
                 if (aPIResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-
-
-                    Logs.WriteLogEntry("info", KioskId, "updateKycData" + updateKycData + "-" + msg, _MethodName);
-
-                    if (msg == "Account Directly Push to t24")
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "updateKycData" + updateKycData + "-" + msg, _MethodName);
+                    if (msg == ApiResponseConstants.AccountDirectlyPushToT24)
                     {
-                        //// Authorizer KYC
-                        Logs.WriteLogEntry("info", KioskId, "Going to send request of {AuthorizerKyc}:", _MethodName);
+                        // <---Authorizer KYC--->
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {AuthorizerKyc}:", _MethodName);
                         var jsonRequest2 = (dynamic)null;
                         foreach (var consumer in consumerList)
                         {
@@ -3843,12 +3275,10 @@ namespace AlliedAdapter
                                 }
                             };
                         }
-
-                        Logs.WriteLogEntry("info", KioskId, "Authorizer-Kyc Request" + JsonConvert.SerializeObject(jsonRequest2), _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Authorizer-Kyc Request" + JsonConvert.SerializeObject(jsonRequest2), _MethodName);
                         APIResponse aPIResponse2 = await apiService.SendRestTransaction(AuthorizerKycUrl, HttpMethods.POST, jsonRequest2, accessToken, "");
-                        Logs.WriteLogEntry("info", KioskId, "Response :" + aPIResponse2.ResponseContent, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Response :" + aPIResponse2.ResponseContent, _MethodName);
                         JObject AuthorizerKyceResponse = JObject.Parse(aPIResponse2.ResponseContent);
-
                         var AuthorizerKycMessage = AuthorizerKyceResponse["message"];
 
                         string AccountNumber = "";
@@ -3858,8 +3288,6 @@ namespace AlliedAdapter
                         string acccountStatus = "";
                         string accountStatusCodeId = "";
                         string cpNumber = "";
-
-
 
                         if (AuthorizerKyceResponse["data"] is JObject AuthorizerKycData)
                         {
@@ -3871,16 +3299,16 @@ namespace AlliedAdapter
                             cpNumber = AuthorizerKycData["cpNumber"]?.ToString();
                         }
 
-
-                        Logs.WriteLogEntry("info", KioskId, "Response DataResponseMessage :" + DataResponseMessage, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Response AuthorizerKycData :" + aPIResponse2.ResponseContent, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Response AuthorizerKycMessage :" + AuthorizerKycMessage["status"]?.ToString() + "-" + AuthorizerKycMessage["description"]?.ToString(), _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Response DataResponseMessage :" + DataResponseMessage, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Response AuthorizerKycData :" + aPIResponse2.ResponseContent, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Response AuthorizerKycMessage :" + AuthorizerKycMessage["status"]?.ToString() + "-" + AuthorizerKycMessage["description"]?.ToString(), _MethodName);
 
                         if (aPIResponse2.StatusCode == System.Net.HttpStatusCode.OK && !string.IsNullOrEmpty(AccountNumber))
                         {
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Response Account Number Recieved :" + AccountNumber, _MethodName);
 
-                            Logs.WriteLogEntry("info", KioskId, "Response Account Number Recieved :" + AccountNumber, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Going to send request of {Screening}:", _MethodName);
+                            // <---Screening--->
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {Screening}:", _MethodName);
                             var jsonRequest3 = (dynamic)null;
                             foreach (var consumer in consumerList)
                             {
@@ -3893,27 +3321,21 @@ namespace AlliedAdapter
                                     }
                                 };
                             }
-
-
-                            Logs.WriteLogEntry("info", KioskId, "Screening Request" + JsonConvert.SerializeObject(jsonRequest3), _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Screening Request" + JsonConvert.SerializeObject(jsonRequest3), _MethodName);
 
                             APIResponse aPIRespons3 = await apiService.SendRestTransaction(ScreeningUrl, HttpMethods.POST, jsonRequest3, accessToken, "");
                             JObject ScreeningResponse = JObject.Parse(aPIRespons3.ResponseContent);
                             var ScreeningData = ScreeningResponse["data"];
                             var ScreeningMessage = ScreeningResponse["message"];
 
-                            Logs.WriteLogEntry("info", KioskId, "Response ScreeningData :" + aPIRespons3.ResponseContent, _MethodName);
-                            Logs.WriteLogEntry("info", KioskId, "Response ScreeningMessage :" + ScreeningMessage["status"] + "-" + ScreeningMessage["description"], _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Response ScreeningData :" + aPIRespons3.ResponseContent, _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Response ScreeningMessage :" + ScreeningMessage["status"] + "-" + ScreeningMessage["description"], _MethodName);
 
                             if (aPIRespons3.StatusCode == HttpStatusCode.OK)
                             {
-
-
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
+                                SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                                 var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-
                                 bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
                                     new XElement("ResponseMessage", responseMessage),
                                     new XElement("AcccountStatus", acccountStatus),
@@ -3924,33 +3346,26 @@ namespace AlliedAdapter
                             }
                             else
                             {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-
+                                Logs.WriteLogEntry(LogType.Warning, KioskId, "Screening " + aPIRespons3.StatusCode.ToString(), _MethodName);
+                                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.Message);
+                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                             }
-
-
                         }
                         else
                         {
-
-
                             if (AuthorizerKycMessage["description"].ToString() == "Your Personal Information is not as per Nadra record please correct your information and try again")
                             {
-                                Logs.WriteLogEntry("info", KioskId, "Error in Authorizer-Kyc " + AuthorizerKycMessage["description"].ToString(), _MethodName);
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                                Logs.WriteLogEntry(LogType.Info, KioskId, "Error in Authorizer-Kyc " + AuthorizerKycMessage["description"].ToString(), _MethodName);
+                                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, AuthorizerKycMessage["description"]?.ToString());
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Verification Failed !"));
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Your Personal Information is not as per Nadra record please correct your information and try again"));
                                 response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("ErrorType", "Retry"));
                             }
-                            else if (AuthorizerKycMessage["description"].ToString().ToLower() == "please proceed account with desk")
+                            else if (AuthorizerKycMessage["description"].ToString().ToLower() == ApiResponseConstants.PleaseProceedAccountWithDesk)
                             {
-                                //// Customer Profile Status
-                                Logs.WriteLogEntry("info", KioskId, "Going to send request of {CustomerProfileStatus}:", _MethodName);
+                                // <---Customer Profile Status--->
+                                Logs.WriteLogEntry(LogType.Info, KioskId, "Going to send request of {CustomerProfileStatus}:", _MethodName);
                                 var jsonRequest4 = (dynamic)null;
                                 foreach (var consumer in consumerList)
                                 {
@@ -3965,66 +3380,65 @@ namespace AlliedAdapter
                                     };
                                 }
 
-                                Logs.WriteLogEntry("info", KioskId, "CustomerProfileStatus Request" + JsonConvert.SerializeObject(jsonRequest4), _MethodName);
+                                Logs.WriteLogEntry(LogType.Info, KioskId, "CustomerProfileStatus Request" + JsonConvert.SerializeObject(jsonRequest4), _MethodName);
 
                                 APIResponse aPIRespons4 = await apiService.SendRestTransaction(CustomerProfileStatusUrl, HttpMethods.POST, jsonRequest4, accessToken, "");
                                 JObject CustomerProfileStatusResponse = JObject.Parse(aPIRespons4.ResponseContent);
                                 var CustomerProfileStatus = CustomerProfileStatusResponse["data"];
                                 var CustomerProfileStatusmessage = CustomerProfileStatusResponse["message"];
 
-                                Logs.WriteLogEntry("info", KioskId, "Response CustomerProfileStatus :" + aPIRespons4.ResponseContent, _MethodName);
-                                //Logs.WriteLogEntry("info", KioskId , "Response CustomerProfileStatusmessage :" + CustomerProfileStatusmessage["status"] + "-" + CustomerProfileStatusmessage["description"], _MethodName);
-
+                                Logs.WriteLogEntry(LogType.Info, KioskId, "Response CustomerProfileStatus :" + aPIRespons4.ResponseContent, _MethodName);
                                 if (aPIRespons4.StatusCode == HttpStatusCode.OK)
                                 {
-                                    Logs.WriteLogEntry("info", KioskId, "CustomerProfileStatus" + CustomerProfileStatusmessage["description"], _MethodName);
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, "CustomerProfileStatus" + CustomerProfileStatusmessage["description"], _MethodName);
+                                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, CustomerProfileStatusmessage["description"]?.ToString());
                                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
                                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Application Submitted"));
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer your application has been submitted and currently under review. Bank will communicate the status of your application within two working days."));
+                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.ApplicationSubmitted));
                                 }
                                 else
                                 {
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                                }
+                                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Response CustomerProfileStatus :" + aPIRespons4.ResponseContent, _MethodName);
+                                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, CustomerProfileStatusmessage["description"]?.ToString());
+                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
 
+                                }
                             }
                             else
                             {
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", AuthorizerKycMessage["description"].ToString()));
+                                Logs.WriteLogEntry(LogType.Warning, KioskId, "Response AuthorizerKycMessage :" + AuthorizerKycMessage["description"]?.ToString(), _MethodName);
+                                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, AuthorizerKycMessage["description"].ToString());
+                                if (!string.IsNullOrEmpty(AuthorizerKycMessage["description"].ToString()))
+                                {
+                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", AuthorizerKycMessage["description"].ToString()));
+
+                                }
+                                else
+                                {
+                                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
+                                }
                             }
                         }
                     }
                     else
                     {
-                        Logs.WriteLogEntry("info", KioskId, "Update KYC Response Data is Null", _MethodName);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, "Update KYC Response Data is Null", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, msg);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, " {update-kyc} Request failed  " + updateKycMessage, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    Logs.WriteLogEntry(LogType.Error, KioskId, " {update-kyc} Request failed  " + updateKycMessage, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, updateKycMessage.ToString());
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in {{Review Details}}: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in {{Review Details}}: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
@@ -4043,24 +3457,20 @@ namespace AlliedAdapter
 
             try
             {
-
                 string nadraResponse = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("nadraResponse")?.Value ?? string.Empty;
                 string accessToken = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("accessToken")?.Value ?? string.Empty;
                 string customerProfileImagePath = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("customerProfileImagePath")?.Value ?? string.Empty;
                 string UserPicture = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("UserPicture")?.Value ?? string.Empty;
 
-                Logs.WriteLogEntry("Info", KioskId, "UserPicture !: " + UserPicture, _MethodName);
-
-
-
+                Logs.WriteLogEntry(LogType.Info, KioskId, "UserPicture !: " + UserPicture, _MethodName);
                 JObject jsonResponse = JObject.Parse(nadraResponse);
                 var consumerList = jsonResponse["data"]?["consumerList"];
                 string DecryptPath = Decrypt(customerProfileImagePath);
 
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [Customer Nadra Image]:  {DecryptPath}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [Customer Nadra Image]:  {DecryptPath}", _MethodName);
 
                 string url = MyPdaUrl + ConfigurationManager.AppSettings["Liveliness"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 #region Selfie Image 
 
@@ -4071,22 +3481,21 @@ namespace AlliedAdapter
                 string selfieImageFileName = Path.Combine(UserFileName, "Photo.Jpeg");
                 string selfieImageSourceFile = Path.Combine(_SourcePath, selfieImageFileName);
 
-                Logs.WriteLogEntry("info", KioskId, $"Generated Selfie Image Source File Path: {selfieImageSourceFile}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Generated Selfie Image Source File Path: {selfieImageSourceFile}", _MethodName);
 
                 selfieImageToBase64 = ConvertImageToBase64(selfieImageSourceFile, _MethodName, KioskId);
 
                 if (selfieImageToBase64 != null)
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Selfie Image Base64 conversion successful", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Selfie Image Base64 conversion successful", _MethodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Selfie Image Base64 conversion failed", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Selfie Image Base64 conversion failed", _MethodName);
                 }
 
                 #endregion
 
-             
                 var requestData = (dynamic)null;
                 foreach (var consumer in consumerList)
                 {
@@ -4105,7 +3514,7 @@ namespace AlliedAdapter
 
                 }
 
-                Logs.WriteLogEntry("Info", KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "jsonRequest !: " + JsonConvert.SerializeObject(requestData), _MethodName);
                 var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, accessToken, "");
                 JObject LiveImageResponse = JObject.Parse(apiResponse.ResponseContent);
                 var LiveImageData = LiveImageResponse["message"];
@@ -4114,20 +3523,20 @@ namespace AlliedAdapter
                 var description = LiveImageData["description"]?.ToString();
                 var errorDetail = LiveImageData["errorDetail"]?.ToString();
 
-                Logs.WriteLogEntry("Info", KioskId, "LiveImageData !: " + LiveImageData, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "LiveImageData !: " + LiveImageData, _MethodName);
 
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
+                    SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Success));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
 
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Error", KioskId, "LiveImageData " + description, _MethodName);
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "LiveImageData " + description, _MethodName);
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, description);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("RespMessage", APIResultCodes.Unsuccessful));
                     var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                     response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", description));
@@ -4136,674 +3545,13 @@ namespace AlliedAdapter
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error in Failed to Get Card Status!: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "Something Went Wrong. Check Logs";
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Error in Failed to Get Card Status!: " + ex, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
 
             return response.ToString();
         }
-
-        #endregion 
-
-        #region Occupation List
-        public async Task<List<Dictionary<string, object>>> GetOccupationListAsync(string KioskId)
-        {
-            string _MethodName = "GetOccupationListAsync";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> occupationList = new List<Dictionary<string, object>>();
-
-            try
-            {
-
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-
-                var requestData = new { data = new { codeTypeId = 1014 } };
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Occupation List Request: " + requestData.ToString(), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var occupations = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "Occupation List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (occupations != null)
-                    {
-                        foreach (var occupation in occupations)
-                        {
-                            var occupationEntry = new Dictionary<string, object>
-                        {
-                            { "id", occupation["id"] },
-                            { "name", occupation["name"] },
-                            { "description", occupation["description"] }
-                        };
-
-                            occupationList.Add(occupationEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return occupationList;
-        }
-
-        #endregion
-
-        #region Profession List
-        public async Task<List<Dictionary<string, object>>> GetProfessionListAsync(string KioskId)
-        {
-            string _MethodName = "GetProfessionListAsync";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> professionList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-                var requestData = new { data = new { codeTypeId = 1016 } };
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Profession List Request: " + requestData.ToString(), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var professions = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "Profession List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (professions != null)
-                    {
-                        foreach (var profession in professions)
-                        {
-                            var professionEntry = new Dictionary<string, object>
-                        {
-                        { "id", profession["id"] },
-                        { "name", profession["name"] },
-                        { "description", profession["description"] }
-                        };
-                            professionList.Add(professionEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return professionList;
-        }
-
-
-        #endregion
-
-        #region Town / Tehsil List
-        public async Task<List<Dictionary<string, object>>> TownTehsilList(string KioskId)
-        {
-            string _MethodName = "TownTehsilList";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> tehsilList = new List<Dictionary<string, object>>();
-
-            try
-            {
-
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["TownTehsilList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-                var requestData = new { data = new { codeTypeId = 1016 } };
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Town Tehsil List Request: " + Newtonsoft.Json.JsonConvert.SerializeObject(requestData), _MethodName);
-
-                // Send API request
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, KioskId, Newtonsoft.Json.JsonConvert.SerializeObject(requestData), "");
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var towntehsillist = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "Town / Tehsil List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (towntehsillist != null)
-                    {
-                        foreach (var towntehsil in towntehsillist)
-                        {
-                            var townTehsilEntry = new Dictionary<string, object>
-                    {
-                        { "districtName", towntehsil["districtName"] },
-                        { "tehsilName", towntehsil["tehsilName"] },
-                        { "tehsilId", towntehsil["tehsilId"] }
-                    };
-
-                            tehsilList.Add(townTehsilEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return tehsilList;
-        }
-
-
-
-        #endregion
-
-        #region Branches List
-
-        public async Task<List<Dictionary<string, object>>> IslamicBranchList(string KioskId)
-        {
-            string _MethodName = "BranchList";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> branchList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["BranchList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                var requestData = new
-                {
-                    data = new
-                    {
-                        branchName = "",
-                        categoryType = "I",
-                        latitude = (double?)null,
-                        longitude = (double?)null,
-                        distance = 40
-                    }
-                };
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Islamic Branch List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject responseJson = JObject.Parse(apiResponse.ResponseContent);
-                    Logs.WriteLogEntry("Info", KioskId, "Sending Islamic Branch List Success Response", _MethodName);
-                    if (responseJson["data"]?["branchList"] != null)
-                    {
-                        branchList = responseJson["data"]["branchList"]
-                            .Select(branch => new Dictionary<string, object>
-                            {
-                                { "id", (int)(branch["id"] ?? 0) },
-                                { "branchName", (string)(branch["branchName"] ?? "") },
-                                { "branchCode", (string)(branch["branchCode"] ?? "") },
-                                { "tBranchCode", (string)(branch["tBranchCode"] ?? "") },
-                                { "cityName", (string)(branch["cityName"] ?? "") },
-                                { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
-                                { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
-                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
-                                { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
-
-                            })
-                            .ToList();
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return branchList;
-        }
-
-        public async Task<List<Dictionary<string, object>>> ConventionalBranchList(string KioskId)
-        {
-            string _MethodName = "BranchList";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> branchList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["BranchList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                var requestData = new
-                {
-                    data = new
-                    {
-                        branchName = "",
-                        categoryType = "C",
-                        latitude = (double?)null,
-                        longitude = (double?)null,
-                        distance = 40
-                    }
-                };
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Conventional Branch List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    Logs.WriteLogEntry("Info", KioskId, "Sending Conventional Branch List Success Response", _MethodName);
-                    JObject responseJson = JObject.Parse(apiResponse.ResponseContent);
-                    if (responseJson["data"]?["branchList"] != null)
-                    {
-                        branchList = responseJson["data"]?["branchList"]?
-                            .Select(branch => new Dictionary<string, object>
-                            {
-                                { "id", (int)(branch["id"] ?? 0) },
-                                { "branchName", (string)(branch["branchName"] ?? "") },
-                                { "branchCode", (string)(branch["branchCode"] ?? "") },
-                                { "tBranchCode", (string)(branch["tBranchCode"] ?? "") },
-                                { "cityName", (string)(branch["cityName"] ?? "") },
-                                { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
-                                { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
-                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
-                                { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
-
-                            })
-                            .ToList();
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return branchList;
-        }
-
-
-        #endregion 
-
-        #region Gender List
-
-        public async Task<List<Dictionary<string, object>>> GenderList(string KioskId)
-        {
-            string _MethodName = "GenderList";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
-
-            try
-            {
-
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-
-                var requestData = new { data = new { codeTypeId = 1006 } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Gender List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var genderList = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "Gender List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (genderList != null)
-                    {
-                        foreach (var gender in genderList)
-                        {
-                            var genderEntry = new Dictionary<string, object>
-                        {
-                            { "id", gender["id"] },
-                            { "name", gender["name"] },
-                            { "description", gender["description"] }
-                        };
-
-                            GenderList.Add(genderEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return GenderList;
-        }
-
-
-        #endregion #region Gender List
-
-        #region Account Purpose 
-
-        public async Task<List<Dictionary<string, object>>> AccountPurpose(string KioskId)
-        {
-            string _MethodName = "AccountPurpose";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> AccountPurposeList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-                var requestData = new { data = new { codeTypeId = 1081 } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Account Purpose List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var AccountList = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "AccountPurposeList List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (AccountList != null)
-                    {
-                        foreach (var AccountPurpose in AccountList)
-                        {
-                            var AccountPurposeEntry = new Dictionary<string, object>
-                        {
-                            { "id", AccountPurpose["id"] },
-                            { "name", AccountPurpose["name"] },
-                            { "description", AccountPurpose["description"] }
-                        };
-
-                            AccountPurposeList.Add(AccountPurposeEntry);
-
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return AccountPurposeList;
-        }
-
-        #endregion
-
-        #region Conventional Savings Account Variants List
-
-        public async Task<List<Dictionary<string, object>>> ConventionalSavingsAccountVariants(string KioskId)
-        {
-            string _MethodName = "ConventionalSavingsAccountVariants";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-
-                var requestData = new { data = new { codeTypeId = 1006, codeOrder = 2, codeDescription = "C" } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var ConventionalSavingsAccountVariants = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "ConventionalSavingsAccountVariants List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (ConventionalSavingsAccountVariants != null)
-                    {
-                        foreach (var Account in ConventionalSavingsAccountVariants)
-                        {
-                            var genderEntry = new Dictionary<string, object>
-                        {
-                            { "id", Account["id"] },
-                            { "name", Account["name"] },
-                            { "description", Account["description"] }
-                        };
-
-                            GenderList.Add(genderEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return GenderList;
-        }
-
-
-        #endregion
-
-        #region Conventional Current Account Variants List
-
-        public async Task<List<Dictionary<string, object>>> ConventionalCurrentAccountVariants(string KioskId)
-        {
-            string _MethodName = "ConventionalCurrentAccountVariants";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var ConventionalCurrentAccountVariants = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "ConventionalCurrentAccountVariants List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (ConventionalCurrentAccountVariants != null)
-                    {
-                        foreach (var Account in ConventionalCurrentAccountVariants)
-                        {
-                            var genderEntry = new Dictionary<string, object>
-                        {
-                            { "id", Account["id"] },
-                            { "name", Account["name"] },
-                            { "description", Account["description"] }
-                        };
-
-                            GenderList.Add(genderEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return GenderList;
-        }
-
-
-        #endregion
-
-        #region Islamic Savings Account Variants List
-
-        public async Task<List<Dictionary<string, object>>> IslamicSavingsAccountVariants(string KioskId)
-        {
-            string _MethodName = "IslamicSavingsAccountVariants";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var IslamicSavingsAccountVariants = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "IslamicSavingsAccountVariants List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (IslamicSavingsAccountVariants != null)
-                    {
-                        foreach (var Account in IslamicSavingsAccountVariants)
-                        {
-                            var genderEntry = new Dictionary<string, object>
-                        {
-                            { "id", Account["id"] },
-                            { "name", Account["name"] },
-                            { "description", Account["description"] }
-                        };
-
-                            GenderList.Add(genderEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return GenderList;
-        }
-
-
-        #endregion 
-
-        #region Islamic Current Account Variants List
-
-        public async Task<List<Dictionary<string, object>>> IslamicCurrentAccountVariants(string KioskId)
-        {
-            string _MethodName = "IslamicCurrentAccountVariants";
-            APIHelper apiService = new APIHelper();
-            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
-
-            try
-            {
-                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
-                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
-
-
-                Logs.WriteLogEntry("Info", KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
-
-                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
-                    var IslamicCurrentAccountVariants = jsonResponse["data"];
-
-                    Logs.WriteLogEntry("Info", KioskId, "IslamicCurrentAccountVariants List Retrieved Successfully.", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
-                    Logs.WriteLogEntry("Info", KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
-
-                    if (IslamicCurrentAccountVariants != null)
-                    {
-                        foreach (var Account in IslamicCurrentAccountVariants)
-                        {
-                            var genderEntry = new Dictionary<string, object>
-                        {
-                            { "id", Account["id"] },
-                            { "name", Account["name"] },
-                            { "description", Account["description"] }
-                        };
-
-                            GenderList.Add(genderEntry);
-                        }
-                    }
-                }
-                else
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.WriteLogEntry("Error", KioskId, "Parsing Error: " + ex.Message, _MethodName);
-            }
-
-            return GenderList;
-        }
-
 
         #endregion
 
@@ -4818,7 +3566,7 @@ namespace AlliedAdapter
             string KioskId = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element(TransactionTags.KioskIdentity).Value;
             try
             {
-                Logs.WriteLogEntry("info", KioskId, "ABLDebitCardIssuance Step 1: Validating Input Data" + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "ABLDebitCardIssuance Step 1: Validating Input Data" + request.ToString(), _MethodName);
                 string CompanyCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("CompanyCode")?.Value ?? string.Empty;
                 string AccountNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("AccountNumber")?.Value ?? string.Empty;
                 string ProdCode = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("ProdCode")?.Value ?? string.Empty;
@@ -4848,17 +3596,17 @@ namespace AlliedAdapter
                             if (CompanyCode != null)
                             {
 
-                                Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
+                                Logs.WriteLogEntry(LogType.Info, KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
                             }
                             else
                             {
 
-                                Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Islamic branch list.", _MethodName);
+                                Logs.WriteLogEntry(LogType.Warning, KioskId, $"Branch '{branchName}' not found in Islamic branch list.", _MethodName);
                             }
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Info", KioskId, "Islamic Branch List Not Found!", _MethodName);
+                            Logs.WriteLogEntry(LogType.Warning, KioskId, "Islamic Branch List Not Found!", _MethodName);
                         }
                     }
                     else
@@ -4877,17 +3625,17 @@ namespace AlliedAdapter
 
                             if (CompanyCode != null)
                             {
-                                Logs.WriteLogEntry("Info", KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
+                                Logs.WriteLogEntry(LogType.Info, KioskId, $"tBranchCode for '{branchName}' is: {CompanyCode}", _MethodName);
 
                             }
                             else
                             {
-                                Logs.WriteLogEntry("Info", KioskId, $"Branch '{branchName}' not found in Conventional branch list.", _MethodName);
+                                Logs.WriteLogEntry(LogType.Warning, KioskId, $"Branch '{branchName}' not found in Conventional branch list.", _MethodName);
                             }
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Info", KioskId, "Conventional Branch List Not Found!", _MethodName);
+                            Logs.WriteLogEntry(LogType.Warning, KioskId, "Conventional Branch List Not Found!", _MethodName);
                         }
                     }
                 }
@@ -4898,7 +3646,7 @@ namespace AlliedAdapter
                 string formattedDate = dateTime.ToString("dd-MM-yyyy HH:mm:ss");
 
                 string url = T24Url + ConfigurationManager.AppSettings["ABLDebitCardIssuance"].ToString();
-                Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
 
                 string FinalAddressType = "NO";
                 string FinalAddress1 = "";
@@ -4945,7 +3693,7 @@ namespace AlliedAdapter
                     }
                 };
 
-                Logs.WriteLogEntry("info", KioskId, "Request Code: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Request Code: " + JsonConvert.SerializeObject(requestPayload), _MethodName);
 
                 APIResponse aPIResponse = await apiService.SendTransaction(url, HttpMethods.POST, requestPayload, KioskId, "");
 
@@ -4954,26 +3702,24 @@ namespace AlliedAdapter
 
                     var responseData = JsonConvert.DeserializeObject<dynamic>(aPIResponse.ResponseContent);
                     var debitCardResponse = responseData?.ABLDebitCardIssuanceRsp;
-                    Logs.WriteLogEntry("info", KioskId, "hostCode Data: " + responseData, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "hostCode Data: " + responseData, _MethodName);
 
                     string hostCode = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostCode;
                     var hostDesc = responseData?.ABLDebitCardIssuanceRsp?.HostData?.HostDesc;
 
                     if (hostCode == "00")
                     {
-                        Logs.WriteLogEntry("info", KioskId, "Status Code: " + debitCardResponse.StatusCode, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "StatusDesc: " + debitCardResponse.StatusDesc, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "STAN: " + debitCardResponse.STAN, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Status Code: " + debitCardResponse.StatusCode, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "StatusDesc: " + debitCardResponse.StatusDesc, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "STAN: " + debitCardResponse.STAN, _MethodName);
 
 
-                        Logs.WriteLogEntry("info", KioskId, "Host Code: " + debitCardResponse.HostData, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Host Description: " + debitCardResponse.StatusDesc, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.TransReferenceNo, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostCode, _MethodName);
-                        Logs.WriteLogEntry("info", KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostDesc, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Host Code: " + debitCardResponse.HostData, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Host Description: " + debitCardResponse.StatusDesc, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Transaction Reference No: " + debitCardResponse.HostData.TransReferenceNo, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostCode, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Transaction Reference No: " + debitCardResponse.HostData.HostDesc, _MethodName);
 
-
-                        // Declare variables outside the loop
                         string MotherName = "";
                         string FatherName = "";
                         string CustomerType = "";
@@ -4989,9 +3735,7 @@ namespace AlliedAdapter
 
                         foreach (var item in debitCardResponse.HostData.field)
                         {
-                            Logs.WriteLogEntry("info", KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
-
-                            // Assign values based on item name
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Host Code 3: " + item.name + " - " + item.content, _MethodName);
                             if (item.name == "MOTHER.NAME") MotherName = item.content;
                             if (item.name == "HUSBAND.NAME") FatherName = item.content;
                             if (item.name == "CUSTOMER.NATURE") CustomerType = item.content;
@@ -5006,9 +3750,7 @@ namespace AlliedAdapter
                             if (item.name == "BIRTH.DATE") DateOfBirth = item.content;
                         }
 
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-
+                        SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
                         bodyElement.Add(
                             new XElement("RespMessage", APIResultCodes.Success),
@@ -5032,27 +3774,23 @@ namespace AlliedAdapter
                     {
                         string errorMessage = ExtractErrorMessage(responseData, KioskId);
                         var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, errorMessage);
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", ""));
                         response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", errorMessage));
                     }
                 }
                 else
                 {
-
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, aPIResponse.ResponseContent);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
 
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in AOABLDebitCardIssuance: {ex.Message}", _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in AOABLDebitCardIssuance: {ex}", _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
@@ -5070,12 +3808,11 @@ namespace AlliedAdapter
 
             try
             {
-
                 string kioskID = request.Element(TransactionTags.Request).Element(TransactionTags.Header).Element("KioskIdentity").Value;
-                Logs.WriteLogEntry("info", KioskId, "KIOSK ID: " + kioskID, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "KIOSK ID: " + kioskID, _MethodName);
 
                 string PcName = ConfigurationManager.AppSettings[kioskID].ToString();
-                Logs.WriteLogEntry("info", KioskId, "PC NAME: " + PcName, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "PC NAME: " + PcName, _MethodName);
 
                 string[] parts = PcName.Split('|');
 
@@ -5085,10 +3822,7 @@ namespace AlliedAdapter
                 Console.WriteLine($"Computer Name: {ComputerName}");
                 Console.WriteLine($"Branch Code: {BranchCode}");
 
-
-
-
-                Logs.WriteLogEntry("info", KioskId, "IRISCardIssuance Step 1: " + request.ToString(), _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "IRISCardIssuance Step 1: " + request.ToString(), _MethodName);
                 string FullName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("FullName")?.Value ?? string.Empty;
                 string MotherName = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("MotherName")?.Value ?? string.Empty;
                 string MobileNumber = request.Element(TransactionTags.Request).Element(TransactionTags.Body).Element("MobileNumber")?.Value ?? string.Empty;
@@ -5105,72 +3839,47 @@ namespace AlliedAdapter
 
                 CNIC = CNIC.Replace("-", "");
 
-                if (UETflag)
+
+                int from = 1000;
+                int to = 3015;
+                string AccountType = "10";
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance AccountType : " + AccountType, _MethodName);
+
+                string BankIMD = "";
+
+                switch (ProductCode)
                 {
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                    response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                    var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                    bodyElement.Add(
-                       new XElement("RespMessage", APIResultCodes.Success));
+                    case "0092":
+                        BankIMD = "428638";
+                        break;
+                    case "0071":
+                        BankIMD = "407572";
+                        break;
+                    case "0070":
+                        BankIMD = "476215";
+                        break;
+                    case "0075":
+                        BankIMD = "476215";
+                        break;
+                    case "0080":
+                        BankIMD = "629240";
+                        break;
                 }
-                else
-                {
 
-                    //int AccountCategoryCode = int.Parse(AccountCategory);
-                    int from = 1000;
-                    int to = 3015;
-                    string AccountType = "10";
+                string TrakingId = GenerateTransactionId();
+                int? isoCode = GetIsoCode("PKR");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "ISO Code Found Against Currency Code: " + isoCode, _MethodName);
+                string finaCurrenctCode = Convert.ToString(isoCode).ToString();
 
-                    //if (AccountCategoryCode >= from && AccountCategoryCode <= to)
-                    //{
-                    //    AccountType = "20";
-                    //}
-                    //else
-                    //{
-                    //    AccountType = "10";
-                    //}
+                string ActivationDate = DateTime.Now.ToString("yyyyMMdd");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance ActivationDate : " + ActivationDate, _MethodName);
 
+                string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
+                InstantCard webService = new InstantCard();
+                webService.Url = URL;
 
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance AccountType : " + AccountType, _MethodName);
-
-                    string BankIMD = "";
-
-                    switch (ProductCode)
-                    {
-                        case "0092":
-                            BankIMD = "428638";
-                            break;
-                        case "0071":
-                            BankIMD = "407572";
-                            break;
-                        case "0070":
-                            BankIMD = "476215";
-                            break;
-                        case "0075":
-                            BankIMD = "476215";
-                            break;
-                        case "0080":
-                            BankIMD = "629240";
-                            break;
-                    }
-
-                    string TrakingId = GenerateTransactionId();
-                    int? isoCode = GetIsoCode("PKR");
-                    Logs.WriteLogEntry("info", KioskId, "ISO Code Found Against Currency Code: " + isoCode, _MethodName);
-                    string finaCurrenctCode = Convert.ToString(isoCode).ToString();
-
-                    string ActivationDate = DateTime.Now.ToString("yyyyMMdd");
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance ActivationDate : " + ActivationDate, _MethodName);
-
-
-
-                    string URL = IrisUrl + ConfigurationManager.AppSettings["IRISCardIssuance"].ToString();
-                    Logs.WriteLogEntry("Info", KioskId, $"{_MethodName} [URL]: {URL}", _MethodName);
-                    InstantCard webService = new InstantCard();
-                    webService.Url = URL;
-
-                    // Log input request before service call
-                    string requestLog = $@"
+                string requestLog = $@"
                     <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
                        <soapenv:Header/>
                        <soapenv:Body>
@@ -5218,147 +3927,121 @@ namespace AlliedAdapter
                        </soapenv:Body>
                     </soapenv:Envelope>";
 
-                    Logs.WriteLogEntry("info", KioskId, requestLog, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, requestLog, _MethodName);
 
-                    string result = webService.ImportCustomer(
-                         ActionCode: "A",
-                         CNIC: CNIC,
-                         TrackingID: TrakingId,
-                         FullName: FullName,
-                         DateOfBirth: DOB,
-                         MothersName: MotherName,
-                         BillingFlag: "H",
-                         MobileNumber: MobileNumber,
-                         ActivationDate: ActivationDate,
-                         FathersName: FatherName,
-                         CardName: FullName,
-                         CustomerType: "1",
-                         ProductCode: ProductCode,
-                         AccountNo: AccountNumber,
-                         AccountType: AccountType,
-                         AccountCurrency: finaCurrenctCode,
-                         AccountStatus: "00",
-                         AccountTitle: FullName,
-                         BankIMD: BankIMD,
-                         Branchcode: BranchCode,
-                         DefaultAccount: "1",
-                         Title: "",
-                         Prefered_Address_FLag: "",
-                         HomeAddress1: "",
-                         HomeAddress2: "",
-                         HomeAddress3: "",
-                         HomeAddress4: "",
-                         HomePostalCode: "",
-                         HomePhone: "",
-                         Email: "",
-                         Company: "Allied Bank Ltd",
-                         OfficeAddress1: "",
-                         OfficeAddress2: "",
-                         OfficeAddress3: "",
-                         OfficeAddress4: "",
-                         OfficeAddress5: "",
-                         OfficePostalCode: "",
-                         OfficePhone: "",
-                         PassportNo: "",
-                         Nationality: Nationality,
-                         OldCardNumber: ""
-                    );
+                string result = webService.ImportCustomer(
+                     ActionCode: "A",
+                     CNIC: CNIC,
+                     TrackingID: TrakingId,
+                     FullName: FullName,
+                     DateOfBirth: DOB,
+                     MothersName: MotherName,
+                     BillingFlag: "H",
+                     MobileNumber: MobileNumber,
+                     ActivationDate: ActivationDate,
+                     FathersName: FatherName,
+                     CardName: FullName,
+                     CustomerType: "1",
+                     ProductCode: ProductCode,
+                     AccountNo: AccountNumber,
+                     AccountType: AccountType,
+                     AccountCurrency: finaCurrenctCode,
+                     AccountStatus: "00",
+                     AccountTitle: FullName,
+                     BankIMD: BankIMD,
+                     Branchcode: BranchCode,
+                     DefaultAccount: "1",
+                     Title: "",
+                     Prefered_Address_FLag: "",
+                     HomeAddress1: "",
+                     HomeAddress2: "",
+                     HomeAddress3: "",
+                     HomeAddress4: "",
+                     HomePostalCode: "",
+                     HomePhone: "",
+                     Email: "",
+                     Company: "Allied Bank Ltd",
+                     OfficeAddress1: "",
+                     OfficeAddress2: "",
+                     OfficeAddress3: "",
+                     OfficeAddress4: "",
+                     OfficeAddress5: "",
+                     OfficePostalCode: "",
+                     OfficePhone: "",
+                     PassportNo: "",
+                     Nationality: Nationality,
+                     OldCardNumber: ""
+                );
 
-                    XDocument doc = XDocument.Parse(result);
+                XDocument doc = XDocument.Parse(result);
 
-                    string trackingID = doc.Root.Element("WebMethodResponse").Element("TrackingID")?.Value;
-                    string responseCode = doc.Root.Element("WebMethodResponse").Element("ResponseCode")?.Value;
-                    string responseDescription = doc.Root.Element("WebMethodResponse").Element("ResponseDescription")?.Value;
+                string trackingID = doc.Root.Element("WebMethodResponse").Element("TrackingID")?.Value;
+                string responseCode = doc.Root.Element("WebMethodResponse").Element("ResponseCode")?.Value;
+                string responseDescription = doc.Root.Element("WebMethodResponse").Element("ResponseDescription")?.Value;
 
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response responseCode : " + responseCode, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response trackingID : " + trackingID, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response responseDescription : " + responseDescription, _MethodName);
 
-                    if (responseDescription == "Success" && responseCode == "00")
+                if (responseDescription == "Success" && responseCode == "00")
+                {
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "CardIssuance API Response Description is Success", _MethodName);
+
+                    CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
+
+                    if (cardInfo != null)
                     {
-                        Logs.WriteLogEntry("info", KioskId, "CardIssuance API Response Description is Success", _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, cardInfo.CardHolderName, _MethodName);
 
-                        CardInfo cardInfo = DecryptEmbossingFile(BranchCode, ProductCode, KioskId, Scheme);
-
-                        if (cardInfo != null)
+                        string Description = "";
+                        HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
+                        if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
                         {
-                            Logs.WriteLogEntry("info", KioskId, cardInfo.CardHolderName, _MethodName);
-
-                            string Description = "";
-                            HardwareResponse hardwareResponse = CardPersonalization(cardInfo, ComputerName, SelectedCardName, out Description, kioskID);
-                            if (hardwareResponse.data.ToString() != "" && hardwareResponse.data != null)
-                            {
-                                Logs.WriteLogEntry("Info", KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
-                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
-                                    new XElement("RequestId", hardwareResponse.data));
-
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Success;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = "IRIS Request Successfuly Send";
-                            }
-                            else
-                            {
-                                Logs.WriteLogEntry("Error", KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
-                                var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                                //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultDescription).Value = hardwareResponse.description;
-                            }
-
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Personlization Response : " + hardwareResponse.description, _MethodName);
+                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
+                            bodyElement.Add(new XElement("RespMessage", APIResultCodes.Success),
+                                new XElement("RequestId", hardwareResponse.data));
+                            SetResponseHeader(response, TransactionResultString.Success, APIResultCodes.Success, ApiResponseConstants.SuccessStatus);
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Error", KioskId, "cardInfo", _MethodName);
-                            var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                            //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Something Went Wrong !"));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                            response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
+                            Logs.WriteLogEntry(LogType.Warning, KioskId, "Data is Null  " + hardwareResponse.description, _MethodName);
+                            SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, hardwareResponse.description.ToString());
+                            response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                         }
-
-                        //var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        ////response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("MessageHead", "Card Request Submited !"));
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "Dear Customer Your Debit Card Request has been processed successfully."));
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        //response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
 
                     }
                     else
                     {
-                        var bodyElement = response.Element(TransactionTags.Response).Element(TransactionTags.Body);
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-
-                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, "cardInfo", _MethodName);
+                        SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ApiResponseConstants.Message_UnableToProcess);
+                        response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                     }
-
-
+                }
+                else
+                {
+                    SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, responseDescription);
+                    response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
                 }
             }
             catch (ArgumentNullException argEx)
             {
-                Logs.WriteLogEntry("Error", KioskId, "ArgumentNullException in CardIssuance: " + argEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "ArgumentNullException in CardIssuance: " + argEx, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, argEx.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             catch (InvalidOperationException invOpEx)
             {
-                Logs.WriteLogEntry("Error", KioskId, "InvalidOperationException in CardIssuance: " + invOpEx, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "InvalidOperationException in CardIssuance: " + invOpEx, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, invOpEx.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
 
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "General Exception in CardIssuance: " + ex, _MethodName);
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.ResultCode).Value = TransactionResultString.Failed;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Header).Element(TransactionTags.APIResultCode).Value = APIResultCodes.Unsuccessful;
-                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", "UnableToProcessRequest"));
+                Logs.WriteLogEntry(LogType.Error, KioskId, "General Exception in CardIssuance: " + ex, _MethodName);
+                SetResponseHeader(response, TransactionResultString.Failed, APIResultCodes.Unsuccessful, ex.Message);
+                response.Element(TransactionTags.Response).Element(TransactionTags.Body).Add(new XElement("Message", ApiResponseConstants.Message_UnableToProcess));
             }
             return response.ToString();
         }
@@ -5367,15 +4050,641 @@ namespace AlliedAdapter
 
         #endregion
 
+        #region Occupation List
+        public async Task<List<Dictionary<string, object>>> GetOccupationListAsync(string KioskId)
+        {
+            string _MethodName = "GetOccupationListAsync";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> occupationList = new List<Dictionary<string, object>>();
+
+            try
+            {
+
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1014 } };
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Occupation List Request: " + requestData.ToString(), _MethodName);
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var occupations = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Occupation List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+                    if (occupations != null)
+                    {
+                        foreach (var occupation in occupations)
+                        {
+                            var occupationEntry = new Dictionary<string, object>
+                        {
+                            { "id", occupation["id"] },
+                            { "name", occupation["name"] },
+                            { "description", occupation["description"] }
+                        };
+
+                            occupationList.Add(occupationEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return occupationList;
+        }
+
+        #endregion
+
+        #region Profession List
+        public async Task<List<Dictionary<string, object>>> GetProfessionListAsync(string KioskId)
+        {
+            string _MethodName = "GetProfessionListAsync";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> professionList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1016 } };
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Profession List Request: " + requestData.ToString(), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var professions = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Profession List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (professions != null)
+                    {
+                        foreach (var profession in professions)
+                        {
+                            var professionEntry = new Dictionary<string, object>
+                        {
+                        { "id", profession["id"] },
+                        { "name", profession["name"] },
+                        { "description", profession["description"] }
+                        };
+                            professionList.Add(professionEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return professionList;
+        }
+
+
+        #endregion
+
+        #region Town / Tehsil List
+        public async Task<List<Dictionary<string, object>>> TownTehsilList(string KioskId)
+        {
+            string _MethodName = "TownTehsilList";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> tehsilList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["TownTehsilList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1016 } };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Town Tehsil List Request: " + Newtonsoft.Json.JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, KioskId, Newtonsoft.Json.JsonConvert.SerializeObject(requestData), "");
+
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var towntehsillist = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Town / Tehsil List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (towntehsillist != null)
+                    {
+                        foreach (var towntehsil in towntehsillist)
+                        {
+                            var townTehsilEntry = new Dictionary<string, object>
+                            {
+                                { "districtName", towntehsil["districtName"] },
+                                { "tehsilName", towntehsil["tehsilName"] },
+                                { "tehsilId", towntehsil["tehsilId"] }
+                            };
+                            tehsilList.Add(townTehsilEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return tehsilList;
+        }
+
+
+
+        #endregion
+
+        #region Branches List
+        public async Task<List<Dictionary<string, object>>> IslamicBranchList(string KioskId)
+        {
+            string _MethodName = "BranchList";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> branchList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["BranchList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new
+                {
+                    data = new
+                    {
+                        branchName = "",
+                        categoryType = "I",
+                        latitude = (double?)null,
+                        longitude = (double?)null,
+                        distance = 40
+                    }
+                };
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Islamic Branch List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject responseJson = JObject.Parse(apiResponse.ResponseContent);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Islamic Branch List Success Response", _MethodName);
+                    if (responseJson["data"]?["branchList"] != null)
+                    {
+                        branchList = responseJson["data"]["branchList"]
+                            .Select(branch => new Dictionary<string, object>
+                            {
+                                { "id", (int)(branch["id"] ?? 0) },
+                                { "branchName", (string)(branch["branchName"] ?? "") },
+                                { "branchCode", (string)(branch["branchCode"] ?? "") },
+                                { "tBranchCode", (string)(branch["tBranchCode"] ?? "") },
+                                { "cityName", (string)(branch["cityName"] ?? "") },
+                                { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
+                                { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
+                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
+                                { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
+
+                            })
+                            .ToList();
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return branchList;
+        }
+
+        public async Task<List<Dictionary<string, object>>> ConventionalBranchList(string KioskId)
+        {
+            string _MethodName = "BranchList";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> branchList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["BranchList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new
+                {
+                    data = new
+                    {
+                        branchName = "",
+                        categoryType = "C",
+                        latitude = (double?)null,
+                        longitude = (double?)null,
+                        distance = 40
+                    }
+                };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Conventional Branch List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Conventional Branch List Success Response", _MethodName);
+                    JObject responseJson = JObject.Parse(apiResponse.ResponseContent);
+                    if (responseJson["data"]?["branchList"] != null)
+                    {
+                        branchList = responseJson["data"]?["branchList"]?
+                            .Select(branch => new Dictionary<string, object>
+                            {
+                                { "id", (int)(branch["id"] ?? 0) },
+                                { "branchName", (string)(branch["branchName"] ?? "") },
+                                { "branchCode", (string)(branch["branchCode"] ?? "") },
+                                { "tBranchCode", (string)(branch["tBranchCode"] ?? "") },
+                                { "cityName", (string)(branch["cityName"] ?? "") },
+                                { "latitude", branch["latitude"]?.ToObject<double?>() ?? 0.0 },
+                                { "longitude", branch["longitude"]?.ToObject<double?>() ?? 0.0 },
+                                {"fcyBranch", branch["fcyBranch"]?.ToObject<int?>() ?? 0},
+                                { "distance", branch["distance"]?.ToObject<double?>() ?? 0.0 }
+
+                            })
+                            .ToList();
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Error, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex.Message, _MethodName);
+            }
+
+            return branchList;
+        }
+
+
+        #endregion 
+
+        #region Gender List
+        public async Task<List<Dictionary<string, object>>> GenderList(string KioskId)
+        {
+            string _MethodName = "GenderList";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1006 } };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Gender List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var genderList = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Gender List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (genderList != null)
+                    {
+                        foreach (var gender in genderList)
+                        {
+                            var genderEntry = new Dictionary<string, object>
+                            {
+                                { "id", gender["id"] },
+                                { "name", gender["name"] },
+                                { "description", gender["description"] }
+                            };
+
+                            GenderList.Add(genderEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return GenderList;
+        }
+
+
+        #endregion #region Gender List
+
+        #region Account Purpose 
+        public async Task<List<Dictionary<string, object>>> AccountPurpose(string KioskId)
+        {
+            string _MethodName = "AccountPurpose";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> AccountPurposeList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["ListOfVariant"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+
+                var requestData = new { data = new { codeTypeId = 1081 } };
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Account Purpose List Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var AccountList = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "AccountPurposeList List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (AccountList != null)
+                    {
+                        foreach (var AccountPurpose in AccountList)
+                        {
+                            var AccountPurposeEntry = new Dictionary<string, object>
+                            {
+                                { "id", AccountPurpose["id"] },
+                                { "name", AccountPurpose["name"] },
+                                { "description", AccountPurpose["description"] }
+                            };
+                            AccountPurposeList.Add(AccountPurposeEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return AccountPurposeList;
+        }
+
+        #endregion
+
+        #region Conventional Savings Account Variants List
+        public async Task<List<Dictionary<string, object>>> ConventionalSavingsAccountVariants(string KioskId)
+        {
+            string _MethodName = "ConventionalSavingsAccountVariants";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+
+                var requestData = new { data = new { codeTypeId = 1006, codeOrder = 2, codeDescription = "C" } };
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var ConventionalSavingsAccountVariants = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "ConventionalSavingsAccountVariants List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (ConventionalSavingsAccountVariants != null)
+                    {
+                        foreach (var Account in ConventionalSavingsAccountVariants)
+                        {
+                            var genderEntry = new Dictionary<string, object>
+                            {
+                                { "id", Account["id"] },
+                                { "name", Account["name"] },
+                                { "description", Account["description"] }
+                            };
+                            GenderList.Add(genderEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return GenderList;
+        }
+
+
+        #endregion
+
+        #region Conventional Current Account Variants List
+        public async Task<List<Dictionary<string, object>>> ConventionalCurrentAccountVariants(string KioskId)
+        {
+            string _MethodName = "ConventionalCurrentAccountVariants";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var ConventionalCurrentAccountVariants = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "ConventionalCurrentAccountVariants List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (ConventionalCurrentAccountVariants != null)
+                    {
+                        foreach (var Account in ConventionalCurrentAccountVariants)
+                        {
+                            var genderEntry = new Dictionary<string, object>
+                            {
+                                { "id", Account["id"] },
+                                { "name", Account["name"] },
+                                { "description", Account["description"] }
+                            };
+                            GenderList.Add(genderEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return GenderList;
+        }
+
+
+        #endregion
+
+        #region Islamic Savings Account Variants List
+
+        public async Task<List<Dictionary<string, object>>> IslamicSavingsAccountVariants(string KioskId)
+        {
+            string _MethodName = "IslamicSavingsAccountVariants";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var IslamicSavingsAccountVariants = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "IslamicSavingsAccountVariants List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (IslamicSavingsAccountVariants != null)
+                    {
+                        foreach (var Account in IslamicSavingsAccountVariants)
+                        {
+                            var genderEntry = new Dictionary<string, object>
+                            {
+                                { "id", Account["id"] },
+                                { "name", Account["name"] },
+                                { "description", Account["description"] }
+                            };
+                            GenderList.Add(genderEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return GenderList;
+        }
+
+
+        #endregion 
+
+        #region Islamic Current Account Variants List
+        public async Task<List<Dictionary<string, object>>> IslamicCurrentAccountVariants(string KioskId)
+        {
+            string _MethodName = "IslamicCurrentAccountVariants";
+            APIHelper apiService = new APIHelper();
+            List<Dictionary<string, object>> GenderList = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string url = MyPdaUrl + ConfigurationManager.AppSettings["AccountVariantList"].ToString();
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"{_MethodName} [URL]:  {url}", _MethodName);
+                var requestData = new { data = new { codeTypeId = 1082, codeOrder = 1, codeDescription = "C" } };
+
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Sending Request: " + JsonConvert.SerializeObject(requestData), _MethodName);
+
+                var apiResponse = await apiService.SendRestTransaction(url, HttpMethods.POST, requestData, KioskId, "");
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject jsonResponse = JObject.Parse(apiResponse.ResponseContent);
+                    var IslamicCurrentAccountVariants = jsonResponse["data"];
+
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "IslamicCurrentAccountVariants List Retrieved Successfully.", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Message Status: {jsonResponse["message"]?["status"]}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, $"Description: {jsonResponse["message"]?["description"]}", _MethodName);
+
+                    if (IslamicCurrentAccountVariants != null)
+                    {
+                        foreach (var Account in IslamicCurrentAccountVariants)
+                        {
+                            var genderEntry = new Dictionary<string, object>
+                            {
+                                { "id", Account["id"] },
+                                { "name", Account["name"] },
+                                { "description", Account["description"] }
+                            };
+                            GenderList.Add(genderEntry);
+                        }
+                    }
+                }
+                else
+                {
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "No response received from the API." + apiResponse.ResponseContent, _MethodName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Parsing Error: " + ex, _MethodName);
+            }
+
+            return GenderList;
+        }
+
+
+        #endregion
+
+
+
         #endregion
 
         #region Functions
+
+        #region Extract Error Message
         public static string ExtractErrorMessage(dynamic responseJson, string KioskId)
         {
             string _MethodName = "ExtractErrorMessage";
             try
             {
-                Logs.WriteLogEntry("info", KioskId, "Step 1: ", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Step 1: ", _MethodName);
 
                 var rsp = responseJson?.ABLDebitCardIssuanceRsp ?? responseJson;
 
@@ -5384,26 +4693,23 @@ namespace AlliedAdapter
                     return "Success";
                 }
 
-                Logs.WriteLogEntry("info", KioskId, "Extracting HostDesc", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Extracting HostDesc", _MethodName);
 
                 JToken hostDesc = rsp?["HostData"]?["HostDesc"];
 
                 if (hostDesc == null)
-                    return "UnableToProcessRequest";
+                    return ApiResponseConstants.Message_UnableToProcess;
 
-                // Case 1: HostDesc is a string
                 if (hostDesc.Type == JTokenType.String)
                 {
                     return hostDesc.ToString();
                 }
 
-                // Case 2: HostDesc is an object with 'content'
                 if (hostDesc.Type == JTokenType.Object)
                 {
                     return hostDesc["content"]?.ToString();
                 }
 
-                // Case 3: HostDesc is an array of objects with 'content'
                 if (hostDesc.Type == JTokenType.Array)
                 {
                     var messages = new List<string>();
@@ -5419,7 +4725,7 @@ namespace AlliedAdapter
                             {
                                 if (content.ToString().ToLower() == "atm required is not marked yes.")
                                 {
-                                    Logs.WriteLogEntry("info", KioskId, content.ToString(), _MethodName);
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, content.ToString(), _MethodName);
                                     message = content.ToString();
                                     return message;
                                 }
@@ -5435,25 +4741,22 @@ namespace AlliedAdapter
             }
             catch (Exception ex)
             {
-                return $"Error parsing response: {ex.Message}";
+                return $"Error parsing response: {ex}";
             }
         }
+        #endregion
 
         #region Import Excel
-
         public static DataTable ImportExcel(string KioskId)
         {
             string filePath = ConfigurationManager.AppSettings["ExcelFilePath"].ToString();
-            //string filePath = "C:\\inetpub\\wwwroot\\CEM\\Excel\\Account Mapping with Card.xlsx";
-
-            Logs.WriteLogEntry("Info", KioskId, "Excel File Path: Step 1" + filePath, "ImportExcel");
+            Logs.WriteLogEntry(LogType.Info, KioskId, "Excel File Path: Step 1" + filePath, "ImportExcel");
 
             DataTable dataTable = new DataTable();
 
-            // Ensure the file exists
             if (!System.IO.File.Exists(filePath))
             {
-                Logs.WriteLogEntry("Info", KioskId, "Excel File Path Not Found: Step 2" + filePath, "ImportExcel");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Excel File Path Not Found: Step 2" + filePath, "ImportExcel");
                 throw new FileNotFoundException("Excel file not found.");
             }
 
@@ -5476,17 +4779,16 @@ namespace AlliedAdapter
                     }
                     dataTable.Rows.Add(dataRow);
                 }
-                Logs.WriteLogEntry("Info", KioskId, "Excel Data: Step 2" + dataTable, "ImportExcel");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Excel Data: Step 2" + dataTable, "ImportExcel");
             }
             return dataTable;
         }
 
         #endregion
 
-        #region ExtractAndLogValues
+        #region Extract And Log Values
         static List<(string ID, string Content)> ExtractAndLogValues(string jsonResponse)
         {
-            // List to hold the id-content pairs
             var idContentList = new List<(string ID, string Content)>();
 
             using (var reader = new JsonTextReader(new StringReader(jsonResponse)))
@@ -5545,8 +4847,6 @@ namespace AlliedAdapter
                     }
                 }
             }
-
-            // Return the list of id-content pairs
             return idContentList;
         }
 
@@ -5569,36 +4869,36 @@ namespace AlliedAdapter
                     Directory.CreateDirectory(DraftedCardFiles);
                 }
 
-                Logs.WriteLogEntry("Info", KioskId, "Passphrase Key!: " + passphrase, "DecryptEmbossingFile");
-                Logs.WriteLogEntry("Info", KioskId, "Decrypted File Path!: " + DecryptedFilePath, "DecryptEmbossingFile");
-                Logs.WriteLogEntry("Info", KioskId, "Private Key!: " + privateKey, "DecryptEmbossingFile");
-                Logs.WriteLogEntry("Info", KioskId, "VSMCard Baes Url!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
-                Logs.WriteLogEntry("Info", KioskId, "Drafted Card Files!: " + DraftedCardFiles, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Passphrase Key!: " + passphrase, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Decrypted File Path!: " + DecryptedFilePath, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Private Key!: " + privateKey, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "VSMCard Baes Url!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Drafted Card Files!: " + DraftedCardFiles, "DecryptEmbossingFile");
                 DateTime startTime = DateTime.Now;
 
                 bool fileFound = false;
                 string expectedFileName = $"EN-{BranchCode}";
                 string expectedFileName1 = BranchCode;
 
-                Logs.WriteLogEntry("Info", KioskId, "InstantCardExportFiles Path!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Info, KioskId, "InstantCardExportFiles Path!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
                 if (Directory.Exists(VSMCardBaesUrl))
                 {
                     while ((DateTime.Now - startTime).TotalSeconds < 60)
                     {
                         string[] files = Directory.GetFiles(VSMCardBaesUrl);
                         var targetFile = files.Where(f => Path.GetFileName(f).Contains(ProductCode)).ToList();
-                        Logs.WriteLogEntry("Info", KioskId, "targetFile !: " + targetFile.Count, "DecryptEmbossingFile");
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "targetFile !: " + targetFile.Count, "DecryptEmbossingFile");
                         if (targetFile.Any())
                         {
                             Thread.Sleep(5000);
                             foreach (string file in targetFile)
                             {
-                                Logs.WriteLogEntry("Info", KioskId, "expectedFileName !: " + file, "DecryptEmbossingFile");
+                                Logs.WriteLogEntry(LogType.Info, KioskId, "expectedFileName !: " + file, "DecryptEmbossingFile");
                                 string Filename = Path.GetFileName(file);
                                 if (Filename.StartsWith(expectedFileName) || Filename.StartsWith(expectedFileName1))
                                 {
                                     VSMCardBaesUrl = Path.Combine(VSMCardBaesUrl, Path.GetFileName(file));
-                                    Logs.WriteLogEntry("Info", KioskId, "File Found For Decrypt!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
+                                    Logs.WriteLogEntry(LogType.Info, KioskId, "File Found For Decrypt!: " + VSMCardBaesUrl, "DecryptEmbossingFile");
                                     fileFound = true;
                                 }
                                 if (fileFound)
@@ -5606,9 +4906,7 @@ namespace AlliedAdapter
                                     break;
                                 }
                             }
-
                         }
-
                         if (fileFound)
                         {
                             break;
@@ -5617,15 +4915,15 @@ namespace AlliedAdapter
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, VSMCardBaesUrl + " Directory Not Found!: ", "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, VSMCardBaesUrl + " Directory Not Found!: ", "DecryptEmbossingFile");
                 }
 
                 if (fileFound)
                 {
                     string outputFile = $"{DecryptedFilePath}{BranchCode}{ProductCode}{DateTime.Now.ToString("ddMMyyyyHHmmss")}.txt";
-                    Logs.WriteLogEntry("Info", KioskId, outputFile + "Decrypt File Path", "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, outputFile + "Decrypt File Path", "DecryptEmbossingFile");
 
-                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 1", "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Decrypt Step 1", "DecryptEmbossingFile");
                     PGPDecryptor.DecryptFile(VSMCardBaesUrl, outputFile, privateKey, passphrase);
                     string filePath = outputFile;
                     string fileContent = System.IO.File.ReadAllText(filePath);
@@ -5714,7 +5012,7 @@ namespace AlliedAdapter
                     {
                         if (Scheme.ToLower() == "upi")
                         {
-                            Logs.WriteLogEntry("Info", KioskId, "Going to Get Co-Bage Card Data :" + ProductCode, "DecryptEmbossingFile");
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Going to Get Co-Bage Card Data :" + ProductCode, "DecryptEmbossingFile");
                             name = nameMatches[i].Groups[1].Value.Trim();
                             cardNumber = cardMatches[i].Groups[2].Value;
                             cvv1 = cvv1Matches[i].Groups[3].Value;
@@ -5731,7 +5029,7 @@ namespace AlliedAdapter
                         }
                         else
                         {
-                            Logs.WriteLogEntry("Info", KioskId, "Going to Get VISA Card Data :" + ProductCode, "DecryptEmbossingFile");
+                            Logs.WriteLogEntry(LogType.Info, KioskId, "Going to Get VISA Card Data :" + ProductCode, "DecryptEmbossingFile");
                             name = nameMatches[i].Groups[1].Value.Trim();
                             cardNumber = cardMatches[i].Groups[1].Value;
                             cvv1 = cardMatches[i].Groups[3].Value;
@@ -5761,7 +5059,7 @@ namespace AlliedAdapter
                         };
 
 
-                        Logs.WriteLogEntry("Info", KioskId,
+                        Logs.WriteLogEntry(LogType.Info, KioskId,
                             $"Decrypted Card Info:" +
                             $"\nCardHolderName: {cardList.CardHolderName}" +
                             $"\nPAN: {cardList.PAN}" +
@@ -5775,14 +5073,14 @@ namespace AlliedAdapter
                             "DecryptEmbossingFile");
 
                     }
-                    Logs.WriteLogEntry("Info", KioskId, "Decrypt Step 4", "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Decrypt Step 4", "DecryptEmbossingFile");
                     if (System.IO.File.Exists(VSMCardBaesUrl))
                     {
                         string fileName = Path.GetFileName(VSMCardBaesUrl);
                         string destinationPath = Path.Combine(DraftedCardFiles, fileName);
-                        Logs.WriteLogEntry("Info", KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
                         System.IO.File.Move(VSMCardBaesUrl, destinationPath);
-                        Logs.WriteLogEntry("Info", KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
 
                     }
 
@@ -5795,17 +5093,19 @@ namespace AlliedAdapter
                 {
                     string fileName = Path.GetFileName(VSMCardBaesUrl);
                     string destinationPath = Path.Combine(DraftedCardFiles, fileName);
-                    Logs.WriteLogEntry("Error", KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Error, KioskId, "Complete Drafted Card Files Path:" + destinationPath, "DecryptEmbossingFile");
                     System.IO.File.Move(VSMCardBaesUrl, destinationPath);
-                    Logs.WriteLogEntry("Error", KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
+                    Logs.WriteLogEntry(LogType.Error, KioskId, "File Move on Draft folder", "DecryptEmbossingFile");
 
                 }
-                Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!: " + ex.Message, "DecryptEmbossingFile");
-                Logs.WriteLogEntry("Error", KioskId, "Failed to Decrypt Embossing File!, Inner Exception: " + ex.InnerException, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Failed to Decrypt Embossing File!: " + ex.Message, "DecryptEmbossingFile");
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Failed to Decrypt Embossing File!, Inner Exception: " + ex.InnerException, "DecryptEmbossingFile");
             }
             return cardList;
         }
         #endregion
+
+        #region Get Accout List With Account Names
 
         public async Task<VariantInfo> GetAccoutListWithAccountNames(int accountType, string accountPurpose, string bankingMode, string GenderID, string occupationID, DateTime DateOfBirth, string KioskId)
         {
@@ -5821,7 +5121,7 @@ namespace AlliedAdapter
 
                 if (genderList.Any())
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Gender List Found: " + string.Join(", ", genderList), _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Gender List Found: " + string.Join(", ", genderList), _MethodName);
                     foreach (var gender in genderList)
                     {
                         if (gender.ContainsKey("id") && gender.ContainsKey("name") && int.TryParse(gender["id"].ToString(), out int genderId))
@@ -5834,7 +5134,7 @@ namespace AlliedAdapter
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Gender List Not Found!", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Gender List Not Found!", _MethodName);
                 }
 
                 Occupation occupationData = new Occupation();
@@ -5843,7 +5143,7 @@ namespace AlliedAdapter
 
                 if (occupationList.Any())
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Occupation List Found: " + string.Join(", ", occupationList), _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Occupation List Found: " + string.Join(", ", occupationList), _MethodName);
 
                     foreach (var occupation in occupationList)
                     {
@@ -5851,7 +5151,6 @@ namespace AlliedAdapter
                         {
                             string occupationValue = Convert.ToString(occupation["id"].ToString());
 
-                            // Assign the occupation ID based on the occupation value if it's not already set
                             if (occupationValue.Contains("101401"))
                                 occupationData.SelfEmployed = occupationId;
 
@@ -5876,20 +5175,17 @@ namespace AlliedAdapter
                             if (occupationValue.Contains("101409"))
                                 occupationData.SelfEmployedInformalSector = occupationId;
                         }
-                        Logs.WriteLogEntry("Info", KioskId, "occupationData.DailyWager " + occupationData.DailyWager + " occupationData.SelfEmployed" + occupationData.SelfEmployed, _MethodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "occupationData.DailyWager " + occupationData.DailyWager + " occupationData.SelfEmployed" + occupationData.SelfEmployed, _MethodName);
                     }
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, "Occupation List Not Found!", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Occupation List Not Found!", _MethodName);
                 }
-
-                // Create ACCOUNTS_SELECTION_LIST dynamically
                 var accountsSelectionList = new List<AccountVariant>
                 {
-                          
-
-                            #region Asaan Digital Account
+                 
+                   #region Asaan Digital Account
                             new AccountVariant
                             {
                                 Id = 108243,
@@ -5901,8 +5197,8 @@ namespace AlliedAdapter
 
                             },
                     #endregion
-
-                            #region Asaan Digital Saving Account
+                 
+                   #region Asaan Digital Saving Account
                             new AccountVariant
                             {
                                 Id = 108251,
@@ -5913,8 +5209,8 @@ namespace AlliedAdapter
                                 MinAge = 18
                             },
                             #endregion
-
-                            #region Allied Islamic Asaan Savings Account
+                 
+                   #region Allied Islamic Asaan Savings Account
                             new AccountVariant
                             {
                                 Id = 108226,
@@ -5927,8 +5223,8 @@ namespace AlliedAdapter
                             },
 
                             #endregion
-                   
-                            #region Allied Islamic Asaan Digital Account
+                 
+                   #region Allied Islamic Asaan Digital Account
                             new AccountVariant
                             {
                                 Id = 108247,
@@ -5941,8 +5237,8 @@ namespace AlliedAdapter
                             },
 
                     #endregion
-
-                            #region Asaan Digital Remittance Account
+                 
+                   #region Asaan Digital Remittance Account
                             new AccountVariant
                             {
                                 Id = 108244,
@@ -5954,8 +5250,8 @@ namespace AlliedAdapter
                             },
 
                     #endregion
-
-                            #region Asaan Digital Remittance Saving Account
+                 
+                   #region Asaan Digital Remittance Saving Account
                             new AccountVariant
                             {
                                 Id = 108252,
@@ -5967,8 +5263,8 @@ namespace AlliedAdapter
                             },
 
                     #endregion
-
-                            #region Allied Aitebar Asaan Digital Remittance Account (Remunerative Current) - Islamic
+                 
+                   #region Allied Aitebar Asaan Digital Remittance Account (Remunerative Current) - Islamic
                             new AccountVariant
                             {
                                 Id = 108248,
@@ -5980,8 +5276,8 @@ namespace AlliedAdapter
                             },
 
                             #endregion
-
-                            #region Allied Aitebar Asaan Digital Remittance Account (Remunerative Current) - Islamic
+                 
+                   #region Allied Aitebar Asaan Digital Remittance Account (Remunerative Current) - Islamic
                             new AccountVariant
                             {
                                 Id = 108248,
@@ -5994,23 +5290,21 @@ namespace AlliedAdapter
 
                             #endregion
 
-
-                 
                 };
 
-                // Get the selected variant ID
                 variantInfo = GetAsaanAccountVariantID(bankingMode, accountType, accountPurpose, DateOfBirth, accountsSelectionList, KioskId);
-
-
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error :" + ex.Message, _MethodName);
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Error :" + ex.Message, _MethodName);
             }
 
             return variantInfo;
         }
 
+        #endregion
+
+        #region Get Asaan Account Variant ID
         public VariantInfo GetAsaanAccountVariantID(string bankingModeId, int CustomerAccountTypeId, string purposeOfAccountId, DateTime DateOfBirth, List<AccountVariant> accountsSelectionList, string KioskId)
         {
             VariantInfo variantInfo = new VariantInfo();
@@ -6022,18 +5316,18 @@ namespace AlliedAdapter
                 int PurposeOfAccountId = int.Parse(purposeOfAccountId);
                 int consumerAge = GetAgeCountFromDate(DateOfBirth);
 
-                Logs.WriteLogEntry("info", KioskId, "consumerAge" + consumerAge, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "consumerAge" + consumerAge, _MethodName);
 
                 List<AccountVariant> variantsFiltered = new List<AccountVariant>();
                 foreach (var item in accountsSelectionList)
                 {
-                    Logs.WriteLogEntry("info", KioskId, "BankingModeId - " + item.BankingModeId + "_User -" + bankingModeId, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "CustomerAccountTypeId - " + item.CustomerAccountTypeId + "_User -" + CustomerAccountTypeId, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "PurposeOfAccount - " + item.PurposeOfAccount + "_User -" + PurposeOfAccountId, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "BankingModeId - " + item.BankingModeId + "_User -" + bankingModeId, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "CustomerAccountTypeId - " + item.CustomerAccountTypeId + "_User -" + CustomerAccountTypeId, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "PurposeOfAccount - " + item.PurposeOfAccount + "_User -" + PurposeOfAccountId, _MethodName);
 
                 }
 
-                Logs.WriteLogEntry("info", KioskId, "consumerAge step 1 " + consumerAge, _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "consumerAge step 1 " + consumerAge, _MethodName);
                 variantsFiltered = accountsSelectionList.Where(variant =>
                     variant.BankingModeId == BankingModeId &&
                     variant.CustomerAccountTypeId == CustomerAccountTypeId &&
@@ -6043,31 +5337,34 @@ namespace AlliedAdapter
                 ).ToList();
 
 
-                Logs.WriteLogEntry("info", KioskId, "Step 2", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, "Step 2", _MethodName);
                 if (variantsFiltered.Any())
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Step 3", _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "Step 3", _MethodName);
                     variantInfo.Id = variantsFiltered.First().Id;
                     variantInfo.Name = variantsFiltered.First().Name;
 
-                    Logs.WriteLogEntry("info", KioskId, "variantID " + variantInfo.Id, _MethodName);
-                    Logs.WriteLogEntry("info", KioskId, "variant Name  " + variantInfo.Name, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "variantID " + variantInfo.Id, _MethodName);
+                    Logs.WriteLogEntry(LogType.Info, KioskId, "variant Name  " + variantInfo.Name, _MethodName);
                 }
                 else
                 {
-                    Logs.WriteLogEntry("info", KioskId, "Variant Not Found", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, "Variant Not Found", _MethodName);
                 }
 
 
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, "Error :" + ex.Message, _MethodName);
+                Logs.WriteLogEntry(LogType.Error, KioskId, "Error :" + ex, _MethodName);
             }
 
             return variantInfo;
         }
 
+        #endregion
+
+        #region Get Age Count From Date
         private int GetAgeCountFromDate(DateTime birthDate)
         {
             var today = DateTime.Today;
@@ -6075,7 +5372,9 @@ namespace AlliedAdapter
             if (birthDate.Date > today.AddYears(-age)) age--;
             return age;
         }
+        #endregion
 
+        #region FreshCardListing
         public async Task<Card> FreshCardListing(string CnicNumber, string AccountNumber, string KioskId)
         {
             string _MethodName = "FreshCardListing";
@@ -6084,14 +5383,14 @@ namespace AlliedAdapter
             try
             {
                 string url = IrisUrl + ConfigurationManager.AppSettings["IRISExistingCardList"];
-                Logs.WriteLogEntry("Info", KioskId, $"Request URL: {url}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Request URL: {url}", _MethodName);
 
                 wsABLCARDSTATUSCHANGE webService = new wsABLCARDSTATUSCHANGE { Url = url };
                 var result = webService.FreshCardListing(CnicNumber);
                 string innerXml = XMLHelper.ExtractInnerXml(result);
                 string cleanedXml = XMLHelper.FixNestedCardInfo(innerXml);
 
-                Logs.WriteLogEntry("Info", KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"Cleaned XML: {cleanedXml}", _MethodName);
 
                 var responseObject = XMLHelper.DeserializeXml<Root>(cleanedXml);
 
@@ -6113,138 +5412,35 @@ namespace AlliedAdapter
                                 CARDSTATUS = card.CARDSTATUS
 
                             };
-                            Logs.WriteLogEntry("Info", KioskId, $"Fresh card found — ProductCode: {freshCardList.PRODUCTCODE}, AccountID: {freshCardList.ACCOUNTID}, CardStatus: {freshCardList.CARDSTATUS}, Expiry: {freshCardList.CARDEXPIRYDATE}", _MethodName);
+                            Logs.WriteLogEntry(LogType.Info, KioskId, $"Fresh card found — ProductCode: {freshCardList.PRODUCTCODE}, AccountID: {freshCardList.ACCOUNTID}, CardStatus: {freshCardList.CARDSTATUS}, Expiry: {freshCardList.CARDEXPIRYDATE}", _MethodName);
                         }
                     }
                     else
                     {
-                        Logs.WriteLogEntry("Info", KioskId, $"No fresh cards found Againts {AccountNumber} Account Number ", _MethodName);
+                        Logs.WriteLogEntry(LogType.Warning, KioskId, $"No fresh cards found Againts {AccountNumber} Account Number ", _MethodName);
                     }
-
                 }
                 else
                 {
-                    Logs.WriteLogEntry("Info", KioskId, $"No fresh cards found or response not approved for CNIC: {CnicNumber}", _MethodName);
+                    Logs.WriteLogEntry(LogType.Warning, KioskId, $"No fresh cards found or response not approved for CNIC: {CnicNumber}", _MethodName);
                 }
             }
             catch (Exception ex)
             {
-                Logs.WriteLogEntry("Error", KioskId, $"Exception in FreshCardListing: {ex}", _MethodName);
+                Logs.WriteLogEntry(LogType.Error, KioskId, $"Exception in FreshCardListing: {ex}", _MethodName);
             }
 
             return freshCardList;
         }
 
-        public static string ExtractDigitsOnly(string input)
-        {
-            return new string(input.Where(char.IsDigit).ToArray());
-        }
+        #endregion
 
-        //private VariantInfo GetDefaultAsaanAccountVariantID(int bankingModeId, int customerAccountTypeId, int purposeOfAccountId, List<AccountVariant> accountsSelectionList, string KioskId)
-        //{
-        //    VariantInfo variantInfo = new VariantInfo();
-        //    try
-        //    {
-        //        var defaultVariant = accountsSelectionList.FirstOrDefault(v =>
-        //      v.BankingModeId == bankingModeId &&
-        //      v.CustomerAccountTypeId == customerAccountTypeId &&
-        //      v.PurposeOfAccount == purposeOfAccountId);
-
-        //        variantInfo.Id = defaultVariant?.Id ?? 0;
-        //        variantInfo.Name = defaultVariant?.Name ?? "";
-        //    }
-        //    catch (Exception ex)
-        //    {
-
-        //        Logs.WriteLogEntry("Error", KioskId, "Error :" + ex.Message, "GetDefaultAsaanAccountVariantID");
-        //    }
-
-
-
-        //    return variantInfo;
-        //}
-
-        public VariantInfo GetDefaultAsaanAccountVariantID(int bankingModeId, int customerAccountTypeId, int purposeOfAccountId, string KioskId)
-        {
-            VariantInfo variantInfo = new VariantInfo();
-            int variantID = 0;
-            string variantName = "";
-
-            try
-            {
-                if (bankingModeId == (int)BankingMode.CONVENTIONAL)
-                {
-                    if (purposeOfAccountId == (int)EnumPurposeOfAccountIdList.FOREIGN_REMITTANCE)
-                    {
-                        variantID = 108244;
-                        variantName = "Asaan Digital Remittance Account";
-                    }
-                    else if (customerAccountTypeId == (int)AccountsTypes.CURRENT)
-                    {
-                        variantID = 108243;
-                        variantName = "Asaan Digital Account";
-                    }
-                    else
-                    {
-                        variantID = 108215;
-                        variantName = "Allied Asaan Account - Saving";
-                    }
-                }
-                else if (bankingModeId == (int)BankingMode.ISLAMIC)
-                {
-                    if (purposeOfAccountId == (int)EnumPurposeOfAccountIdList.FOREIGN_REMITTANCE)
-                    {
-                        variantID = 108248;
-                        variantName = "Allied Aitebar Asaan Digital Remittance Account (Remunerative Current) - Islamic";
-                    }
-                    else if (customerAccountTypeId == (int)AccountsTypes.CURRENT)
-                    {
-                        variantID = 108247;
-                        variantName = "Allied Islamic Asaan Digital Account";
-                    }
-                    else
-                    {
-                        variantID = 108226;
-                        variantName = "Allied Islamic Asaan Savings Account";
-                    }
-                }
-
-                if (variantName != "" && variantID != 0)
-                {
-                    variantInfo.Id = variantID;
-                    variantInfo.Name = variantName;
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-
-                Logs.WriteLogEntry("Error", KioskId, "Error :" + ex.Message, "GetDefaultAsaanAccountVariantID");
-            }
-            return variantInfo;
-        }
-
-
-        public static dynamic GetCustomerDetails(string jsonResponse)
-        {
-            try
-            {
-                var data = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
-                //  var json = JsonConvert.SerializeObject(apiResponse.ResponseContent);
-                return data["data"]["consumerList"];
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error parsing JSON: {ex.Message}");
-                return null;
-            }
-        }
+        #region  Convert Image To Base64
         public static string ConvertImageToBase64(string filePath, string methodName, string KioskId)
         {
             if (System.IO.File.Exists(filePath))
             {
-                Logs.WriteLogEntry("info", KioskId, $"File Found: {filePath}", methodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"File Found: {filePath}", methodName);
 
                 try
                 {
@@ -6253,22 +5449,26 @@ namespace AlliedAdapter
                     {
                         image.Save(memoryStream, image.RawFormat);
                         byte[] imageBytes = memoryStream.ToArray();
-                        Logs.WriteLogEntry("info", KioskId, "Image processed successfully", methodName);
+                        Logs.WriteLogEntry(LogType.Info, KioskId, "Image processed successfully", methodName);
                         return Convert.ToBase64String(imageBytes);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logs.WriteLogEntry("error", KioskId, $"Error processing image: {ex.Message}", methodName);
+                    Logs.WriteLogEntry(LogType.Error, KioskId, $"Error processing image: {ex}", methodName);
                     return null;
                 }
             }
             else
             {
-                Logs.WriteLogEntry("info", KioskId, $"File Not Found: {filePath}", methodName);
+                Logs.WriteLogEntry(LogType.Info, KioskId, $"File Not Found: {filePath}", methodName);
                 return null;
             }
         }
+        #endregion
+
+        #region Get Iso Code
+
         public static int? GetIsoCode(string currencyCode)
         {
             Dictionary<string, int> currencyMap = new Dictionary<string, int>
@@ -6309,7 +5509,9 @@ namespace AlliedAdapter
 
             return currencyMap.TryGetValue(currencyCode, out int isoCode) ? isoCode : (int?)null;
         }
+        #endregion
 
+        #region Decrypt
         public static string Decrypt(string cipherText)
         {
             byte[] Key = Encoding.UTF8.GetBytes("4dweqdxcerfvc3rw");
@@ -6332,6 +5534,9 @@ namespace AlliedAdapter
                 }
             }
         }
+        #endregion
+
+        #region Encrypt Using AES256
 
         public static string EncryptUsingAES256(string message)
         {
@@ -6355,29 +5560,94 @@ namespace AlliedAdapter
                 }
             }
         }
-        private static void ConnectToNetworkShare(string networkPath, string username, string password, string KioskId)
+
+        #endregion
+
+        #region  Map To ABL Card Info
+
+        private static ABLCardInfo MapToABLCardInfo(DataRow row, string productcode)
         {
-            var psi = new ProcessStartInfo("net", $"use {networkPath} /user:{username} {password}")
+            return new ABLCardInfo
             {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                IrisCardProductCode = row["IRIS Card Product Code"]?.ToString(),
+                name = row["IRIS Card Product Description (Card Variant)"]?.ToString(),
+                KgsName = row["KGS Card Format Name (Card plastic)"]?.ToString(),
+                t24AccountCategoryCode = productcode,
+                Currency = row["Currency"]?.ToString(),
+                t24CardCode = row["T24 Card Code"]?.ToString(),
+                issuanceCharges = row["Issuance Charges"]?.ToString(),
+                scheme = row["Scheme"]?.ToString(),
+                variant = row["Variant"]?.ToString(),
+                replacementCharges = row["Replacement Charges"]?.ToString(),
+                perDayFT = row["Per Day ATM IBF/FT"]?.ToString(),
+                billPaymentLimit = row["Bill Payment Limit/Donation"]?.ToString(),
+                cashWithdrawalLimit = row["ATM Cash Withdrawal Limit"]?.ToString(),
+                eCommerceLimit = row["POS/eCommerce Limit"]?.ToString(),
+                ImagePath = row["Card Image Name"]?.ToString()
             };
+        }
+        #endregion
 
-            using (var process = Process.Start(psi))
+        #region Get BankIMD
+
+        private string GetBankIMD(string productCode)
+        {
+            switch (productCode)
             {
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                Logs.WriteLogEntry("Info", KioskId, "Network share connect output: " + output, "ConnectToNetworkShare");
-                if (!string.IsNullOrEmpty(error))
-                {
-                    Logs.WriteLogEntry("Error", KioskId, "Network share connect error: " + error, "ConnectToNetworkShare");
-                }
+                case "0092": return "428638";
+                case "0071": return "407572";
+                case "0070": return "476215";
+                case "0075": return "476215";
+                case "0080": return "629240";
+                default: return "";
             }
         }
+        #endregion
+
+        #region Extract Digits Only
+        public static string ExtractDigitsOnly(string input)
+        {
+            return new string(input.Where(char.IsDigit).ToArray());
+        }
+
+        #endregion
+
+        #region  Get Account Type
+        private string GetAccountType(int categoryCode)
+        {
+            return (categoryCode >= 1000 && categoryCode <= 3015) ? "20" : "10";
+        }
+        #endregion
+
+        #endregion
+
+        #region Enum & Models
+
+        public enum BankingMode
+        {
+            CONVENTIONAL = 114201,
+            ISLAMIC = 114202
+        }
+
+        public enum AccountsTypes
+        {
+            CURRENT = 114301,
+            SAVINGS = 114302
+        }
+
+        public enum EnumPurposeOfAccountIdList
+        {
+            SAVINGS = 108106,
+
+            FOREIGN_REMITTANCE = 108104
+        }
+
+        public enum EnumGenderIdList
+        {
+            MALE = 1,
+            FEMALE = 2
+        }
+
         public class CardInfo
         {
             public string PAN { get; set; }
@@ -6392,31 +5662,126 @@ namespace AlliedAdapter
         }
 
 
-        public XDocument SetResponse(XDocument response, string resultCode, string apiResultCode, string message)
+        public class AccountVariant
         {
-            response.Element(TransactionTags.Response)
-                    .Element(TransactionTags.Header)
-                    .Element(TransactionTags.ResultCode).Value = resultCode;
-
-            response.Element(TransactionTags.Response)
-                    .Element(TransactionTags.Header)
-                    .Element(TransactionTags.APIResultCode).Value = apiResultCode;
-
-            response.Element(TransactionTags.Response)
-                    .Element(TransactionTags.Body)
-                    .Add(new XElement("RespMessage", apiResultCode));
-
-            if (!string.IsNullOrEmpty(message))
-            {
-                response.Element(TransactionTags.Response)
-                        .Element(TransactionTags.Body)
-                        .Add(new XElement("Message", message));
-            }
-            return response;
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public int BankingModeId { get; set; }
+            public int CustomerAccountTypeId { get; set; }
+            public int PurposeOfAccount { get; set; }
+            public int MinAge { get; set; }
+            public int? MaxAge { get; set; }
+            public List<int> Genders { get; set; }
+            public List<int> Occupations { get; set; }
         }
 
-        #endregion
+        public class Occupation
+        {
+            public int SelfEmployed { get; set; }
+            public int Salaried { get; set; }
+            public int Student { get; set; }
+            public int HouseWife { get; set; }
+            public int RetierdOrPensioner { get; set; }
+            public int Unemployed { get; set; }
+            public int DailyWager { get; set; }
+            public int SelfEmployedInformalSector { get; set; }
 
+        }
+        public class ImpersonationHelper
+        {
+            [DllImport("advapi32.dll", SetLastError = true)]
+            private static extern bool LogonUser(
+                string lpszUsername,
+                string lpszDomain,
+                string lpszPassword,
+                int dwLogonType,
+                int dwLogonProvider,
+                out IntPtr phToken);
+
+            [DllImport("advapi32.dll", SetLastError = true)]
+            private static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            private static extern bool CloseHandle(IntPtr hObject);
+
+            private const int LOGON32_LOGON_NEW_CREDENTIALS = 9;
+            private const int LOGON32_PROVIDER_WINNT50 = 3;
+
+            public static bool Impersonate(string domain, string username, string password, Action action)
+            {
+                IntPtr userToken = IntPtr.Zero;
+
+                bool success = LogonUser(
+                    username,
+                    domain,
+                    password,
+                    LOGON32_LOGON_NEW_CREDENTIALS,
+                    LOGON32_PROVIDER_WINNT50,
+                    out userToken);
+
+                if (!success)
+                {
+                    Logs.WriteLogEntry(LogType.Info, "5", $"LogonUser failed: {Marshal.GetLastWin32Error()}", "Impersonate");
+
+                    return false;
+                }
+
+                try
+                {
+                    if (ImpersonateLoggedOnUser(userToken))
+                    {
+                        using (var safeHandle = new SafeAccessTokenHandle(userToken))
+                        {
+                            WindowsIdentity.RunImpersonated(safeHandle, () =>
+                            {
+                                action.Invoke();
+                            });
+                        }
+
+                        return true;
+                    }
+                    else
+                    {
+                        Logs.WriteLogEntry(LogType.Info, "5", $"ImpersonateLoggedOnUser failed: {Marshal.GetLastWin32Error()}", "Impersonate");
+
+                        return false;
+                    }
+                }
+                finally
+                {
+                    CloseHandle(userToken);
+                }
+            }
+
+
+
+        }
+        public class Card
+        {
+            public string CARDNUMBER { get; set; }
+            public string ACCOUNTID { get; set; }
+            public string CARDNAME { get; set; }
+            public string CARDSTATUS { get; set; }
+            public string PRODUCTCODE { get; set; }
+            public string CARDEXPIRYDATE { get; set; }
+        }
+
+        public class ApplicantData
+        {
+            public PrimaryData Primary { get; set; }
+        }
+
+        public class PrimaryData
+        {
+            public DateTime DateOfBirth { get; set; }
+            public int GenderId { get; set; }
+            public int OccupationId { get; set; }
+        }
+
+        public class AccountVariantCacheItem
+        {
+            public int CodeId { get; set; }
+        }
 
 
         public class VariantInfo
@@ -6424,154 +5789,7 @@ namespace AlliedAdapter
             public int Id { get; set; }
             public string Name { get; set; }
         }
+        #endregion
 
     }
 }
-
-public enum BankingMode
-{
-    CONVENTIONAL = 114201,
-    ISLAMIC = 114202
-}
-
-public enum AccountsTypes
-{
-    CURRENT = 114301,
-    SAVINGS = 114302
-}
-
-public enum EnumPurposeOfAccountIdList
-{
-    SAVINGS = 108106,
-
-    FOREIGN_REMITTANCE = 108104
-}
-
-public enum EnumGenderIdList
-{
-    MALE = 1,
-    FEMALE = 2
-}
-
-// Model representing an account variant.
-public class AccountVariant
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public int BankingModeId { get; set; }
-    public int CustomerAccountTypeId { get; set; }
-    public int PurposeOfAccount { get; set; }
-    public int MinAge { get; set; }
-    public int? MaxAge { get; set; }
-    public List<int> Genders { get; set; }
-    public List<int> Occupations { get; set; }
-}
-
-public class Occupation
-{
-    public int SelfEmployed { get; set; }
-    public int Salaried { get; set; }
-    public int Student { get; set; }
-    public int HouseWife { get; set; }
-    public int RetierdOrPensioner { get; set; }
-    public int Unemployed { get; set; }
-    public int DailyWager { get; set; }
-    public int SelfEmployedInformalSector { get; set; }
-
-}
-public class ImpersonationHelper
-{
-    [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool LogonUser(
-        string lpszUsername,
-        string lpszDomain,
-        string lpszPassword,
-        int dwLogonType,
-        int dwLogonProvider,
-        out IntPtr phToken);
-
-    [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool CloseHandle(IntPtr hObject);
-
-    private const int LOGON32_LOGON_NEW_CREDENTIALS = 9;
-    private const int LOGON32_PROVIDER_WINNT50 = 3;
-
-    public static bool Impersonate(string domain, string username, string password, Action action)
-    {
-        IntPtr userToken = IntPtr.Zero;
-
-        bool success = LogonUser(
-            username,
-            domain,
-            password,
-            LOGON32_LOGON_NEW_CREDENTIALS,
-            LOGON32_PROVIDER_WINNT50,
-            out userToken);
-
-        if (!success)
-        {
-            Logs.WriteLogEntry("Info", "5", $"LogonUser failed: {Marshal.GetLastWin32Error()}", "Impersonate");
-
-            return false;
-        }
-
-        try
-        {
-            if (ImpersonateLoggedOnUser(userToken))
-            {
-                using (var safeHandle = new SafeAccessTokenHandle(userToken))
-                {
-                    WindowsIdentity.RunImpersonated(safeHandle, () =>
-                    {
-                        action.Invoke();
-                    });
-                }
-
-                return true;
-            }
-            else
-            {
-                Logs.WriteLogEntry("Info", "5", $"ImpersonateLoggedOnUser failed: {Marshal.GetLastWin32Error()}", "Impersonate");
-
-                return false;
-            }
-        }
-        finally
-        {
-            CloseHandle(userToken);
-        }
-    }
-
-
-
-}
-public class Card
-{
-    public string CARDNUMBER { get; set; }
-    public string ACCOUNTID { get; set; }
-    public string CARDNAME { get; set; }
-    public string CARDSTATUS { get; set; }
-    public string PRODUCTCODE { get; set; }
-    public string CARDEXPIRYDATE { get; set; }
-}
-
-public class ApplicantData
-{
-    public PrimaryData Primary { get; set; }
-}
-
-public class PrimaryData
-{
-    public DateTime DateOfBirth { get; set; }
-    public int GenderId { get; set; }
-    public int OccupationId { get; set; }
-}
-
-public class AccountVariantCacheItem
-{
-    public int CodeId { get; set; }
-}
-
